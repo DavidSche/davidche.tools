@@ -1,0 +1,32 @@
+version: '3'
+
+services:
+  redis-master:
+    image: 'bitnami/redis:5.0.4'
+    ports:
+      - '6379:6379'
+    environment:
+      - REDIS_REPLICATION_MODE=master
+      - ALLOW_EMPTY_PASSWORD=yes
+    volumes:
+      - 'r_data:/bitnami/redis/data'
+    command: /run.sh --maxmemory 512mb
+
+  redis-replica:
+    image: 'bitnami/redis:5.0.4'
+    ports:
+      - '36379:6379'
+    depends_on:
+      - redis-master
+    environment:
+      - REDIS_REPLICATION_MODE=slave
+      - REDIS_MASTER_HOST=redis-master
+      - REDIS_MASTER_PORT_NUMBER=6379
+      - ALLOW_EMPTY_PASSWORD=yes
+    volumes:
+      - 'b_data:/bitnami/redis/data'
+    command: /run.sh --maxmemory 512mb
+
+volumes:
+  r_data:
+  b_data:
