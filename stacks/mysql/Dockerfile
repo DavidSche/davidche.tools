@@ -8,14 +8,28 @@ ENV BITNAMI_PKG_CHMOD="-R g+rwX" \
     OS_ARCH="amd64" \
     OS_FLAVOUR="debian-9" \
     OS_NAME="linux" \
-    TIMEZONE="Asia/Shanghai"
-# RUN rm -f /etc/localtime && 
-RUN ln -s /usr/share/zoneinfo/$TIMEZONE /etc/localtime
+    TIMEZONE="Asia/Hongkong"
+
+
+# User root is required for installing packages
+USER root
+#RUN install_packages vim
+
+RUN echo $TIMEZONE > /etc/timezone && \
+    dpkg-reconfigure -f noninteractive tzdata
+
+# RUN echo "Asia/Hongkong" > /etc/timezone && \
+#     dpkg-reconfigure -f noninteractive tzdata
+
 # RUN date
 # apt-get update && apt-get install -y iputils-ping
 
+# Return to previous non-root user
+USER 1001
+
 # Install required system packages
-#RUN install_packages tzdata ntpdate;ntpdate cn.pool.ntp.org curl
+#RUN install_packages ntpdate &&  ntpdate cn.pool.ntp.org
+#RUN install_packages curl
 
 # Copy application files
 #COPY /usr/share/zoneinfo/Asia/Shanghai /etc/localtime 

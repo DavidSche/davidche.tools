@@ -5,6 +5,12 @@
 echo "setting hostname !"
 hostnamectl --transient set-hostname centos-node-40 
 
+#如果没有安装ntp服务器，刚需要先执行以下命令：
+echo "set date !"
+sudo yum install ntp
+#同步时间使用ntpdate命令如下:
+sudo ntpdate cn.pool.ntp.org
+
 #yum update && yum install -y iputils-ping
 
 #diable firewall
