@@ -1,0 +1,57 @@
+version: '3'
+# https://github.com/bitnami/bitnami-docker-mongodb
+
+services:
+  mongodb-primary:
+    image: 'bitnami/mongodb:4.1.10'
+    environment:
+      - MONGODB_REPLICA_SET_MODE=primary
+      - MONGODB_ROOT_PASSWORD=password123
+      - MONGODB_REPLICA_SET_KEY=replicasetkey123
+#     - ALLOW_EMPTY_PASSWORD=yes
+    ports:
+      - "27017:27017"
+    volumes:
+      - 'mongodb_master_data:/bitnami'
+    # networks:
+    #   - app-tier
+
+  mongodb-secondary:
+    image: 'bitnami/mongodb:4.1.10'
+    depends_on:
+      - mongodb-primary
+    environment:
+      - MONGODB_REPLICA_SET_MODE=secondary
+      - MONGODB_PRIMARY_HOST=mongodb-primary
+      - MONGODB_PRIMARY_ROOT_PASSWORD=password123
+      - MONGODB_REPLICA_SET_KEY=replicasetkey123
+    ports:
+      - "27017"
+    volumes:
+      - 'mongodb_secondary_data:/bitnami'
+    # networks:
+    #   - app-tier
+
+  mongodb-arbiter:
+    image: 'bitnami/mongodb:4.1.10'
+    depends_on:
+      - mongodb-primary
+    environment:
+      - MONGODB_REPLICA_SET_MODE=arbiter
+      - MONGODB_PRIMARY_HOST=mongodb-primary
+      - MONGODB_PRIMARY_ROOT_PASSWORD=password123
+      - MONGODB_REPLICA_SET_KEY=replicasetkey123
+    ports:
+      - "27017"
+    volumes:
+      - 'mongodb_arbiter_data:/bitnami'
+    # networks:
+    #   - app-tier
+
+volumes:
+  mongodb_master_data:
+    driver: local
+  mongodb_secondary_data:
+    driver: local
+  mongodb_arbiter_data:
+    driver: local

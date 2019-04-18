@@ -5,11 +5,11 @@
 echo "setting hostname !"
 hostnamectl --transient set-hostname centos-node-40 
 
-#如果没有安装ntp服务器，刚需要先执行以下命令：
-echo "set date !"
-sudo yum install ntp
-#同步时间使用ntpdate命令如下:
-sudo ntpdate cn.pool.ntp.org
+# for 
+echo "setting vm.max_map_count=262144 !"
+
+echo "vm.max_map_count=262144" >> /etc/sysctl.conf
+sudo sysctl -p
 
 #yum update && yum install -y iputils-ping
 
@@ -33,17 +33,25 @@ echo "set firewall ok !"
 # update os kernel
 echo "update kernel to 4.x !"
 
-yum update -y
 
 sudo rpm --import https://www.elrepo.org/RPM-GPG-KEY-elrepo.org
 sudo rpm -Uvh http://www.elrepo.org/elrepo-release-7.0-3.el7.elrepo.noarch.rpm
 sudo yum --enablerepo=elrepo-kernel install kernel-ml -y 
+
+yum update -y
+
+#如果没有安装ntp服务器，刚需要先执行以下命令：
+echo "set date !"
+sudo yum install ntp
+#同步时间使用ntpdate命令如下:
+sudo ntpdate cn.pool.ntp.org
 
 echo "install system utils & tools!"
 sudo yum install net-tools -y
 sudo yum install psmisc -y
 sudo yum install wget -y
 sudo yum install yum-plugin-ovl -y
+sudo yum install yum-utils -y
 
 # install java
 #echo "install java 1.8.0 openjdk !"
@@ -58,7 +66,7 @@ sudo yum install git -y
 echo "git install ok !"
 # install docker
 echo "install docker engine ！"
-sudo yum -y install yum-utils
+
 sudo yum-config-manager --add-repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
 sudo yum install docker-ce -y
 
