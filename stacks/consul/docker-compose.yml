@@ -1,0 +1,52 @@
+version: '3.6'
+
+services:
+
+  server-bootstrap:
+    image: consul:1.4.3
+    volumes:
+      - consul-data:/consul/data
+    hostname: "{{.Node.Hostname}}"
+    networks:
+      - consul
+      - prod
+      - prod2
+    ports:
+      - 8500:8500
+    command: "agent -server -bootstrap-expect 3 -ui -client 0.0.0.0 -bind '{{ GetInterfaceIP \"eth0\" }}'"
+
+  server:
+    image: consul:1.4.3
+    networks:
+      - consul
+      - prod
+      - prod2     
+    command: "agent -server -retry-join server-bootstrap -client 0.0.0.0 -bind '{{ GetInterfaceIP \"eth0\" }}'"
+    deploy:
+      replicas: 2
+    depends_on:
+      - server-bootstrap
+
+  client:
+    image: consul:1.4.3
+    networks:
+      - consul
+      - prod
+      - prod2
+    command: "agent -retry-join server-bootstrap -client 0.0.0.0 -bind '{{ GetInterfaceIP \"eth0\" }}'"
+    deploy:
+      replicas: 2
+    depends_on:
+      - server-bootstrap
+
+# network  info
+networks:
+  consul:
+  prod:
+    external: true
+  prod2:
+    external: true
+
+# data volume info
+volumes:
+  consul-data:
