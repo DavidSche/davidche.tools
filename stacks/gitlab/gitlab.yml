@@ -1,0 +1,68 @@
+version: '3'
+services:
+  gitlab:
+    environment:
+      DEBUG: 'false'
+      GITLAB_PORT: 10080
+      GITLAB_SECRETS_DB_KEY_BASE: qcs-gitlab-app
+      GITLAB_SECRETS_OTP_KEY_BASE: qcs-gitlab-app
+      GITLAB_SECRETS_SECRET_KEY_BASE: qcs-gitlab-app
+      GITLAB_SSH_PORT: 10022
+      GITLAB_OMNIBUS_CONFIG: |
+                      external_url 'http://127.0.0.1:10080'
+                      gitlab_rails['gitlab_shell_ssh_port'] = 23
+                      nginx['listen_port'] = 80
+                      gitlab_rails['smtp_enable'] = true
+                      gitlab_rails['smtp_address'] = "smtp.gmail.com"
+                      gitlab_rails['smtp_port'] = 587
+                      gitlab_rails['smtp_user_name'] = "gmail帳號"
+                      gitlab_rails['smtp_password'] = "gmail密碼"
+                      gitlab_rails['smtp_domain'] = "smtp.gmail.com"
+                      gitlab_rails['gitlab_email_from'] = "寄送者mail address"
+                      gitlab_rails['smtp_authentication'] = "login"
+                      gitlab_rails['smtp_enable_starttls_auto'] = true
+                      gitlab_rails['smtp_tls'] = false
+                      gitlab_rails['smtp_openssl_verify_mode'] = 'peer'
+    image: gitlab/gitlab-ce:latest
+    links:
+    - redis:redisio
+    - postgresql:postgresql
+    ports:
+    - '10080:80'
+    - '10022:22'
+    restart: always
+    hostname: '127.0.0.1:10080'
+    deploy:
+        resources:
+          limits:
+            cpus: '0.3'
+            memory: 1024M
+          reservations:
+            cpus: '0.3'
+            memory: 1024M
+  postgresql:
+    environment:
+      DB_EXTENSION: pg_trgm
+      DB_NAME: gitlabhq_production
+      DB_PASS: password
+      DB_USER: gitlab
+    image: sameersbn/postgresql:9.6-2
+    restart: always
+  redis:
+    command:
+    - --loglevel warning
+    image: sameersbn/redis:latest
+    restart: always
+
+  gitlab-runner:
+    image: gitlab/gitlab-runner:latest
+    volumes:
+      # mkdir -p gitlab-runner/etc/gitlab-runner
+      - "./gitlab-runner/etc/gitlab-runner:/etc/gitlab-runner"
+      - /var/run/docker.sock:/var/run/docker.sock
+
+# Set default network so that containers can resolve each other's hostname.
+networks:
+  default:
+    external:
+      name: gitlab

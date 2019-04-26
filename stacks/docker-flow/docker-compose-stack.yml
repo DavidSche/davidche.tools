@@ -1,0 +1,30 @@
+version: '3'
+
+services:
+
+  main:
+    image: vfarcic/go-demo
+    environment:
+      - DB=db
+    networks:
+    # 需要加入docker-flow 代理使用的网络
+      - proxy
+      - default
+    deploy:
+      replicas: 3
+# 使用标签来备注服务地址和其他信息
+      labels:
+        - com.df.notify=true
+        - com.df.servicePath=/demo
+        - com.df.port=8080
+
+  db:
+    image: mongo
+    networks:
+      - default
+
+networks:
+  default:
+    external: false
+  proxy:
+    external: true

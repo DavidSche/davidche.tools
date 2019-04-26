@@ -1,0 +1,100 @@
+version: '3.2'
+
+services:
+  redis:
+    restart: always
+    image: redis:alpine
+    container_name: gitlab_redis
+    networks:
+      - gitlab
+    #labels:
+    #  - "traefik.enable=false"
+
+  postgresql:
+    restart: always
+    image: postgres:alpine
+    container_name: gitlab_postgresql
+    environment:
+      - POSTGRES_USER=gitlab
+      - POSTGRES_PASSWORD=gitlab
+      - POSTGRES_DB=gitdb
+    volumes:
+      - ./postgresql:/var/lib/postgresql/data:Z
+    networks:
+      - gitlab
+    #labels:
+    #  - "traefik.enable=false"
+  
+  gitlab:
+    image: gitlab/gitlab-ce
+    #build: . (For Dockerfile)
+    container_name: gitlab_server
+    restart: always
+    environment:
+      TZ: America/Santiago
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://10.10.68.203'
+        # Database
+        postgresql['enable'] = false
+        gitlab_rails['db_username'] = 'gitlab'
+        gitlab_rails['db_password'] = 'gitlab'
+        gitlab_rails['db_host'] = 'postgresql'
+        gitlab_rails['db_port'] = '5432'
+        gitlab_rails['db_database'] = 'gitdb'
+        gitlab_rails['db_adapter'] = 'postgresql'
+        gitlab_rails['db_encoding'] = 'utf8'
+        # Redis
+        redis['enable'] = false
+        gitlab_rails['redis_host'] = 'redis'
+        gitlab_rails['redis_port'] = '6379'
+        # Mail
+        #gitlab_rails['smtp_enable'] = true
+        #gitlab_rails['smtp_address'] = 'mail.example.com'
+        #gitlab_rails['smtp_port'] = 465
+        #gitlab_rails['smtp_user_name'] = 'git@example.com'
+        #gitlab_rails['smtp_password'] = 'password'
+        #gitlab_rails['smtp_domain'] = 'mail.example.com'
+        #gitlab_rails['smtp_authentication'] = 'login'
+        #gitlab_rails['smtp_enable_starttls_auto'] = true
+        #gitlab_rails['smtp_tls'] = true
+        #gitlab_rails['smtp_openssl_verify_mode'] = 'peer'
+        #gitlab_rails['gitlab_email_from'] = 'git@example.com' 
+        # SSH
+        gitlab_rails['gitlab_shell_ssh_port'] = '2222'
+        # Nginx
+        nginx['listen_https'] = false
+        nginx['listen_port'] = 80
+        #nginx['proxy_set_headers'] = {
+        #          "X-Forwarded-Proto" => "https",
+        #          "X-Forwarded-Ssl" => "on"
+        #}
+    volumes:
+      - ./config:/etc/gitlab:Z
+      - ./data:/var/opt/gitlab:Z
+      - ./logs:/var/log/gitlab:Z
+    networks:
+      - gitlab
+      #- traefik
+    ports:
+      - "2222:22"
+      - "9090:80"
+    depends_on:
+      - postgresql
+      - redis
+    #labels:
+     # - "traefik.gitlab_backend=git.example.com"
+     # - "traefik.frontend.rule=Host:git.example.com"
+     # - "traefik.docker.network=traefik"
+     # - "traefik.port=80"
+
+networks:
+  gitlab:
+  #traefik:
+  #  external:
+  #    name: traefik
+
+volumes:
+  config:
+  data:
+  logs:
+  postgresql:

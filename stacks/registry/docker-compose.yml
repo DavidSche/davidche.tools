@@ -1,0 +1,55 @@
+version: '3.0'
+
+# https://github.com/Joxit/docker-registry-ui
+
+services:
+  registry:
+    image: registry:2.6.2
+    volumes:
+      - registry-data:/var/lib/registry
+    ports:
+      - 5000:5000
+    networks:
+      - docker-registry-ui
+    environment:
+      - REGISTRY_HTTP_HEADERS_X-Content-Type-Options=[nosniff]
+      - REGISTRY_HTTP_HEADERS_Access-Control-Allow-Origin=['*']
+      - REGISTRY_HTTP_HEADERS_Access-Control-Allow-Methods=['HEAD', 'GET', 'OPTIONS', 'DELETE']
+      - REGISTRY_HTTP_HEADERS_Access-Control-Expose-Headers=['Docker-Content-Digest']
+      - REGISTRY_HTTP_HEADERS_Access-Control-Max-Age=[1728000]
+#      - REGISTRY_HTTP_HEADERS_Access-Control-Allow-Credentials=[true]
+      - REGISTRY_STORAGE_DELETE_ENABLED=true
+
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        # constraints: [node.labels.pm-node == true]  # 部署标签约束
+        constraints: [node.labels.registry-node == true]  # 部署标签约束
+
+  ui:
+    image: joxit/docker-registry-ui:static
+    ports:
+      - 1080:80
+    environment:
+      - REGISTRY_TITLE=My Private Docker Registry
+      - REGISTRY_URL=http://registry:5000
+      - DELETE_IMAGES=true
+    depends_on:
+      - registry
+    networks:
+      - docker-registry-ui
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        # constraints: [node.labels.pm-node == true]  # 部署标签约束
+        constraints: [node.labels.registry-node == true]  # 部署标签约束
+
+networks:
+  docker-registry-ui:
+
+volumes:
+  registry-data:
+    external: true
+  

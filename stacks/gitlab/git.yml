@@ -1,0 +1,37 @@
+# stack.yaml
+
+version: "3.4"
+
+services:
+  gitlab:
+    image: "gitlab/gitlab-ce:10.3.3-ce.0"
+    volumes:
+      - "gitlab_data:/var/opt/gitlab"
+      - "gitlab_logs:/var/log/gitlab"
+      - "gitlab_config:/etc/gitlab"
+    ports:
+      - "2222:22"
+    configs:
+      - source: "gitlab.rb"
+        target: "/etc/gitlab/gitlab.rb"
+    networks:
+      - default
+      - proxy
+      
+  redis:
+    image: "redis"
+  postgres:
+    image: "postgres:10"
+    volumes:
+      - "gitlab-postgres_data:/data"
+    environment:
+      POSTGRES_USER: "gitlab"
+      POSTGRES_PASSWORD: "gitlab"
+      PGDATA: "/data"
+      POSTGRES_DB: "gitlab"
+
+volumes:
+  gitlab_config:
+  gitlab-data:
+  gitlab-redis:
+  gitlab-postgres_data:
