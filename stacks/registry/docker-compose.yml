@@ -12,6 +12,7 @@ services:
     networks:
       - docker-registry-ui
     environment:
+#      - TZ=${TIME_ZONE}
       - REGISTRY_HTTP_HEADERS_X-Content-Type-Options=[nosniff]
       - REGISTRY_HTTP_HEADERS_Access-Control-Allow-Origin=['*']
       - REGISTRY_HTTP_HEADERS_Access-Control-Allow-Methods=['HEAD', 'GET', 'OPTIONS', 'DELETE']

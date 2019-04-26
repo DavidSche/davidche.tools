@@ -60,3 +60,8 @@ $ docker exec registry bin/registry garbage-collect /etc/docker/registry/config.
 -----
 
 原文：https://blog.csdn.net/l6807718/article/details/52886546 
+
+registry api
+
+GET /v2/_catalog
+GET /v2/<name>/tags/list
