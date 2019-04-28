@@ -67,6 +67,14 @@ echo "git install ok !"
 # install docker
 echo "install docker engine ！"
 
+
+#wget  https://download.docker.com/linux/static/stable/x86_64/docker-18.09.5.tgz 
+#tar xzvf docker-18.09.5.tgz 
+#sudo cp -rf docker/* /usr/local/bin/
+#sudo dockerd &
+#docker version
+#sudo docker swarm init --advertise-addr 10.140.0.6 --listen-addr 10.140.0.6:2377
+
 sudo yum-config-manager --add-repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
 sudo yum install docker-ce -y
 
@@ -112,7 +120,10 @@ echo "restart docker ok! "
 echo "install docker-compose ! "
 curl -L https://github.com/docker/compose/releases/download/1.24.0/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose
 chmod +x /usr/local/bin/docker-compose
-
+#
+#curl -L https://github.com/docker/compose/releases/download/1.24.0/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose
+#chmod +x /usr/local/bin/docker-compose
+#
 echo "install docker-compose ok !"
 
 #install node

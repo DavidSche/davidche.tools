@@ -2,6 +2,7 @@ version: '3'
 
 services:
   redis-master:
+    hostname: redis-master
     image: 'bitnami/redis:5.0.4'
     ports:
       - '6379:6379'
@@ -26,6 +27,16 @@ services:
     volumes:
       - 'b_data:/bitnami/redis/data'
     command: /run.sh --maxmemory 512mb
+
+# redis commander ui tools
+  redis-commander:
+    hostname: redis-commander
+    image: rediscommander/redis-commander:latest
+    restart: always
+    environment:
+    - REDIS_HOSTS=local:redis-master:6379
+    ports:
+    - "8081:8081"
 
 volumes:
   r_data:
