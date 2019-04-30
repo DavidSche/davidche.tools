@@ -16,7 +16,10 @@ services:
   #  - runs on manager node
   ################################################################
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:6.6.1
+    image: docker.elastic.co/
+    
+    
+    git clone /elasticsearch:6.6.1
     environment:
       ES_JAVA_OPTS: '-Xms512m -Xmx512m'
       

@@ -1,0 +1,50 @@
+version: '3.3'
+
+services:
+  influxdb:
+    image: "influxdb:1.7-alpine"
+    ports: ['8086:8086']
+    volumes:
+      - "influxdb:/var/lib/influxdb"
+    environment:
+      - TZ=Asia/Shanghai
+      - GOGC=10
+      - INFLUXDB_DATA_INDEX_VERSION=tsi1
+    # restart: "always"
+
+  chronograf:
+    image: "chronograf:1.7-alpine"
+    restart: always
+    container_name: chronograf
+    hostname: chronograf
+    ports:
+      - "8888:8888"
+    volumes:
+      - chronograf:/var/lib/chronograf:rw
+    depends_on:
+      - influxdb
+
+  kapacitor:
+    image: kapacitor:1.7-alpine
+    restart: always
+    container_name: kapacitor
+    hostname: kapacitor
+    ports: ['9092:9092']
+    environment:
+      - VIRTUAL_HOST=kapacitor
+      - VIRTUAL_PORT=9092
+      - LETSENCRYPT_HOST=kapacitor
+      # - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+    volumes:
+      # - ./volumes/config/kapacitor.conf:/etc/kapacitor/kapacitor.conf:ro
+      - kapacitor:/var/lib/kapacitor:rw
+    depends_on:
+      - influxdb
+
+    # net: host
+    # restart: "always"
+
+volumes:
+  influxdb:
+  chronograf:
+  kapacitor:

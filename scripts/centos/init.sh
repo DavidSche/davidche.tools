@@ -7,6 +7,7 @@ hostnamectl --transient set-hostname centos-node-40
 
 # for 
 echo "setting vm.max_map_count=262144 !"
+sysctl -w vm.max_map_count=262144
 
 echo "vm.max_map_count=262144" >> /etc/sysctl.conf
 sudo sysctl -p
@@ -90,6 +91,70 @@ echo "write  docker config to /etc/docker/daemon.json "
 #echo -e " \"registry-mirrors\": [\"https://um1k3l1w.mirror.aliyuncs.com\"]   " >> /etc/docker/daemon.json
 #echo -e "}" >> /etc/docker/daemon.json
 
+# Get yum repo
+cat << EOF > /etc/yum.repos.d/td-agent-bit.repo
+[td-agent-bit]
+name = TD Agent Bit
+baseurl = http://packages.fluentbit.io/centos/7
+gpgcheck=1
+gpgkey=http://packages.fluentbit.io/fluentbit.key
+enabled=1
+EOF
+
+# Install
+yum -y install td-agent-bit
+
+#!/usr/bin/env bash
+echo "install td-agent-bit " 
+
+echo "[td-agent-bit]
+name = TD Agent Bit
+baseurl = http://packages.fluentbit.io/centos/7
+gpgcheck=1
+gpgkey=http://packages.fluentbit.io/fluentbit.key
+enabled=1" > /etc/yum.repos.d/td-agent-bit.repo
+
+yum install td-agent-bit -y
+
+# service td-agent-bit start
+# service td-agent-bit status
+
+
+#/etc/td-agent-bit/td-agent-bit.conf
+#The configuration file
+
+echo "td-agent-bit install ok" 
+
+echo "
+
+[INPUT]
+    Name   forward
+    Listen 0.0.0.0
+    Port   24224
+
+[INPUT]
+    Name              tail
+    Tag               docker.*
+    path              /var/lib/docker/containers/**/*.log
+    Parser            docker
+    DB                /var/log/flb_kube.db
+    Mem_Buf_Limit     5MB
+    Skip_Long_Lines   On
+    Refresh_Interval  10
+    Docker_Mode       on
+
+[OUTPUT]
+    Name         file
+    Match        *
+    Path         /tmp/output.txt " >> /etc/td-agent-bit/td-agent-bit.conf
+
+# systemctl
+systemctl enable td-agent-bit
+systemctl restart td-agent-bit
+systemctl status td-agent-bit
+
+#sudo systemctl start td-agent-bit
+
 # >> 追加文件写入 > 覆盖文件写入
 
 echo "{
@@ -112,8 +177,8 @@ echo "{
 
 echo "write daemon.json setting success ! "
 
-
 systemctl daemon-reload && systemctl restart docker
+
 echo "restart docker ok! "
 
 # docker-compose
