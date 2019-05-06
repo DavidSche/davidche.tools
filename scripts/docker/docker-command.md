@@ -59,3 +59,12 @@ docker run -v [volume-name]:/volume --rm loomchild/volume-backup backup -c gz - 
 
 [脚本出处](https://github.com/loomchild/volume-backup#miscellaneous)
 
+scp 传输文件
+
+拷贝文件到本地
+
+scp -r root@43.224.34.73:/home/lk /root
+
+拷贝文件到远程机器
+
+scp -r /root/lk root@43.224.34.73:/home/lk/cpfile

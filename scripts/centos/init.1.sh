@@ -51,6 +51,7 @@ echo "install system utils & tools!"
 sudo yum install net-tools -y
 sudo yum install psmisc -y
 sudo yum install wget -y
+sudo yum install curl -y
 sudo yum install yum-plugin-ovl -y
 sudo yum install yum-utils -y
 
@@ -60,49 +61,19 @@ sudo yum install yum-utils -y
 # install java
 #echo "install maven !"
 #sudo yum install maven -y
-
-#install git
-echo "install git !"
-sudo yum install git -y
-echo "git install ok !"
-# install docker
-echo "install docker engine ！"
-
-
-#wget  https://download.docker.com/linux/static/stable/x86_64/docker-18.09.5.tgz 
-#tar xzvf docker-18.09.5.tgz 
-#sudo cp -rf docker/* /usr/local/bin/
-#sudo dockerd &
-#docker version
-#sudo docker swarm init --advertise-addr 10.140.0.6 --listen-addr 10.140.0.6:2377
-
-sudo yum-config-manager --add-repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
-sudo yum install docker-ce -y
-
-echo "config docker"
-sudo systemctl enable docker
-sudo systemctl start docker
-sudo systemctl stop docker
-
-echo "write  docker config to /etc/docker/daemon.json "
-
-#echo "{ " > /etc/docker/daemon.json
-#echo -e " \"insecure-registries\": [\"172.19.4.40:5000\"],  " >> /etc/docker/daemon.json
-#echo -e " \"registry-mirrors\": [\"https://um1k3l1w.mirror.aliyuncs.com\"]   " >> /etc/docker/daemon.json
-#echo -e "}" >> /etc/docker/daemon.json
-
+#----------------
 # Get yum repo
-cat << EOF > /etc/yum.repos.d/td-agent-bit.repo
-[td-agent-bit]
-name = TD Agent Bit
-baseurl = http://packages.fluentbit.io/centos/7
-gpgcheck=1
-gpgkey=http://packages.fluentbit.io/fluentbit.key
-enabled=1
-EOF
+# cat << EOF > /etc/yum.repos.d/td-agent-bit.repo
+# [td-agent-bit]
+# name = TD Agent Bit
+# baseurl = http://packages.fluentbit.io/centos/7
+# gpgcheck=1
+# gpgkey=http://packages.fluentbit.io/fluentbit.key
+# enabled=1
+# EOF
 
-# Install
-yum -y install td-agent-bit
+# # Install
+# yum -y install td-agent-bit
 
 #!/usr/bin/env bash
 echo "install td-agent-bit " 
@@ -128,11 +99,6 @@ echo "td-agent-bit install ok"
 echo "
 
 [INPUT]
-    Name   forward
-    Listen 0.0.0.0
-    Port   24224
-
-[INPUT]
     Name              tail
     Tag               docker.*
     path              /var/lib/docker/containers/**/*.log
@@ -146,7 +112,7 @@ echo "
 [OUTPUT]
     Name         file
     Match        *
-    Path         /tmp/output.txt " >> /etc/td-agent-bit/td-agent-bit.conf
+    Path         /tmp/logoutput.txt " >> /etc/td-agent-bit/td-agent-bit.conf
 
 # systemctl
 systemctl enable td-agent-bit
@@ -154,6 +120,36 @@ systemctl restart td-agent-bit
 systemctl status td-agent-bit
 
 #sudo systemctl start td-agent-bit
+#----------------
+#install git
+echo "install git !"
+sudo yum install git -y
+echo "git install ok !"
+# install docker
+echo "install docker engine ！"
+
+#wget  https://download.docker.com/linux/static/stable/x86_64/docker-18.09.5.tgz 
+#tar xzvf docker-18.09.5.tgz 
+#sudo cp -rf docker/* /usr/local/bin/
+#sudo dockerd &
+#docker version
+#sudo docker swarm init --advertise-addr 10.140.0.6 --listen-addr 10.140.0.6:2377
+
+sudo yum-config-manager --add-repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+sudo yum install docker-ce -y
+
+echo "config docker"
+sudo systemctl enable docker
+sudo systemctl start docker
+sudo systemctl stop docker
+
+echo "write  docker config to /etc/docker/daemon.json "
+
+#echo "{ " > /etc/docker/daemon.json
+#echo -e " \"insecure-registries\": [\"172.19.4.40:5000\"],  " >> /etc/docker/daemon.json
+#echo -e " \"registry-mirrors\": [\"https://um1k3l1w.mirror.aliyuncs.com\"]   " >> /etc/docker/daemon.json
+#echo -e "}" >> /etc/docker/daemon.json
+
 
 # >> 追加文件写入 > 覆盖文件写入
 
@@ -168,11 +164,7 @@ echo "{
     "storage-driver": "overlay2",
     "storage-opts": [
         "overlay2.override_kernel_check=true"
-    ],
-    "log-driver": "fluentd",
-    "log-opts": {
-        "fluentd-address": "192.168.5.113:24224"
-    }
+    ]
 }" > /etc/docker/daemon.json
 
 echo "write daemon.json setting success ! "
@@ -238,5 +230,4 @@ echo "init golang lib success ! "
 
 # ----over !
 echo "init os lib success ok! "
-
 
