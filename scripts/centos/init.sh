@@ -164,7 +164,7 @@ systemctl status td-agent-bit
 
 # >> 追加文件写入 > 覆盖文件写入
 cat << EOF > /etc/docker/daemon.json
-"{
+{
     "insecure-registries": [
         "192.168.5.101:5000",
         "124.133.33.114:3101"
@@ -176,7 +176,7 @@ cat << EOF > /etc/docker/daemon.json
     "storage-opts": [
         "overlay2.override_kernel_check=true"
     ]
-}"
+}
 EOF
 
 echo " write daemon.json setting success ! "

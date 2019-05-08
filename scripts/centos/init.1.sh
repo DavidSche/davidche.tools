@@ -154,7 +154,7 @@ echo "write  docker config to /etc/docker/daemon.json "
 # >> 追加文件写入 > 覆盖文件写入
 
 cat << EOF > /etc/docker/daemon.json
-"{
+{
     "insecure-registries": [
         "192.168.5.101:5000",
         "192.168.9.10:5000"
@@ -166,7 +166,7 @@ cat << EOF > /etc/docker/daemon.json
     "storage-opts": [
         "overlay2.override_kernel_check=true"
     ]
-}"
+}
 EOF
 
 export DOCKER_BUILDKIT=1
