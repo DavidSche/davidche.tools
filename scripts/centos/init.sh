@@ -3,7 +3,7 @@
 # 使用 *hostnamectl* 命令设置主机名称信息
 
 echo "setting hostname !"
-hostnamectl --transient set-hostname devops-node-40 
+hostnamectl --static set-hostname devops-node-40 
 
 # for 
 echo "setting vm.max_map_count=262144 !"
@@ -92,6 +92,7 @@ echo "write  docker config to /etc/docker/daemon.json "
 #echo -e "}" >> /etc/docker/daemon.json
 
 # Get yum repo
+#!/usr/bin/env bash
 cat << EOF > /etc/yum.repos.d/td-agent-bit.repo
 [td-agent-bit]
 name = TD Agent Bit
@@ -155,9 +156,15 @@ systemctl status td-agent-bit
 
 #sudo systemctl start td-agent-bit
 
-# >> 追加文件写入 > 覆盖文件写入
+    # ],
+    # "log-driver": "fluentd",
+    # "log-opts": {
+    #     "fluentd-address": "192.168.5.113:24224"
+    # }
 
-echo "{
+# >> 追加文件写入 > 覆盖文件写入
+cat << EOF > /etc/docker/daemon.json
+"{
     "insecure-registries": [
         "192.168.5.101:5000",
         "124.133.33.114:3101"
@@ -168,14 +175,11 @@ echo "{
     "storage-driver": "overlay2",
     "storage-opts": [
         "overlay2.override_kernel_check=true"
-    ],
-    "log-driver": "fluentd",
-    "log-opts": {
-        "fluentd-address": "192.168.5.113:24224"
-    }
-}" > /etc/docker/daemon.json
+    ]
+}"
+EOF
 
-echo "write daemon.json setting success ! "
+echo " write daemon.json setting success ! "
 
 systemctl daemon-reload && systemctl restart docker
 

@@ -3,7 +3,7 @@
 # 使用 *hostnamectl* 命令设置主机名称信息
 
 echo "setting hostname !"
-hostnamectl --transient set-hostname devops-node-40 
+hostnamectl --static set-hostname cqy-devlop-db 
 
 # for 
 echo "setting vm.max_map_count=262144 !"
@@ -43,7 +43,7 @@ yum update -y
 
 #如果没有安装ntp服务器，刚需要先执行以下命令：
 echo "set date !"
-sudo yum install ntp
+sudo yum install ntp -y
 #同步时间使用ntpdate命令如下:
 sudo ntpdate cn.pool.ntp.org
 
@@ -153,10 +153,11 @@ echo "write  docker config to /etc/docker/daemon.json "
 
 # >> 追加文件写入 > 覆盖文件写入
 
-echo "{
+cat << EOF > /etc/docker/daemon.json
+"{
     "insecure-registries": [
         "192.168.5.101:5000",
-        "124.133.33.114:3101"
+        "192.168.9.10:5000"
     ],
     "registry-mirrors": [
         "https://um1k3l1w.mirror.aliyuncs.com"
@@ -165,7 +166,10 @@ echo "{
     "storage-opts": [
         "overlay2.override_kernel_check=true"
     ]
-}" > /etc/docker/daemon.json
+}"
+EOF
+
+export DOCKER_BUILDKIT=1
 
 echo "write daemon.json setting success ! "
 

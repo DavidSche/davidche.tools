@@ -13,7 +13,13 @@ services:
       - POSTGRESQL_REPLICATION_PASSWORD=repl_password
       - POSTGRESQL_USERNAME=my_user
       - POSTGRESQL_PASSWORD=my_password
-      - POSTGRESQL_DATABASE=my_database
+      - POSTGRESQL_DATABASE=confluence
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        # constraints: [node.labels.pm-node == true]  # 部署标签约束
+        constraints: [node.labels.db-node == true]  # 部署标签约束
 
   postgresql-slave:
     image: 'bitnami/postgresql:11.2.0'
@@ -29,6 +35,13 @@ services:
       - POSTGRESQL_MASTER_PORT_NUMBER=5432
     volumes:
       - 'postgresql_slave_data:/bitnami'
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        # constraints: [node.labels.pm-node == true]  # 部署标签约束
+        constraints: [node.labels.db-node == true]  # 部署标签约束
+
 volumes:
   postgresql_master_data:
     driver: local

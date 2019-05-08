@@ -1,0 +1,84 @@
+version: '3'
+
+services:
+ minio1:
+  image: minio/minio
+  volumes:
+   - minio-data1:/export
+  ports:
+   - "9001:9000"
+  networks:
+   - minio_distributed
+  environment:
+   MINIO_ACCESS_KEY: 6ZJSUP7DF1FOGIPZN2TN
+   MINIO_SECRET_KEY: dM6uaqupwjZ1FCXeDxgSmCZV6qWH9j4gwRyRIqgV
+  deploy:
+   restart_policy:
+    delay: 10s
+    max_attempts: 10
+    window: 60s
+  command: server http://minio1/export http://minio2/export http://minio3/export http://minio4/export 
+
+ minio2:
+  image: minio/minio
+  volumes:
+   - minio-data2:/export
+  ports:
+   - "9002:9000"
+  networks:
+   - minio_distributed
+  environment:
+   MINIO_ACCESS_KEY: 6ZJSUP7DF1FOGIPZN2TN
+   MINIO_SECRET_KEY: dM6uaqupwjZ1FCXeDxgSmCZV6qWH9j4gwRyRIqgV
+  deploy:
+   restart_policy:
+    delay: 10s
+    max_attempts: 10
+    window: 60s
+  command: server http://minio1/export http://minio2/export http://minio3/export http://minio4/export 
+
+ minio3:
+  image: minio/minio
+  volumes:
+   - minio-data3:/export
+  ports:
+   - "9003:9000"
+  networks:
+   - minio_distributed
+  environment:
+   MINIO_ACCESS_KEY: 6ZJSUP7DF1FOGIPZN2TN
+   MINIO_SECRET_KEY: dM6uaqupwjZ1FCXeDxgSmCZV6qWH9j4gwRyRIqgV
+  deploy:
+   restart_policy:
+    delay: 10s
+    max_attempts: 10
+    window: 60s
+  command: server http://minio1/export http://minio2/export http://minio3/export http://minio4/export 
+
+ minio4:
+  image: minio/minio
+  volumes:
+   - minio-data4:/export
+  ports:
+   - "9004:9000"
+  networks:
+   - minio_distributed
+  environment:
+   MINIO_ACCESS_KEY: 6ZJSUP7DF1FOGIPZN2TN
+   MINIO_SECRET_KEY: dM6uaqupwjZ1FCXeDxgSmCZV6qWH9j4gwRyRIqgV
+  deploy:
+   restart_policy:
+    delay: 10s
+    max_attempts: 10
+    window: 60s
+  command: server http://minio1/export http://minio2/export http://minio3/export http://minio4/export 
+
+volumes:
+  minio-data1:
+  minio-data2:
+  minio-data3:
+  minio-data4:
+
+networks:
+ minio_distributed:
+  driver: overlay

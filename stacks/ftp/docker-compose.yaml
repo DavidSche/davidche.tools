@@ -1,0 +1,77 @@
+# To create machine using VirtualBox instead of Hyper-V run following commands in PowerShell as admin:
+# docker-machine create --driver virtualbox --virtualbox-cpu-count "2" --virtualbox-memory "2048" --virtualbox-disk-size "10000" default
+# docker-machine env | Invoke-Expression
+#
+# To later start your docker machine run:
+# docker-machine start
+# docker-machine env | Invoke-Expression
+
+version: "3"
+services:
+    mariadb: #more info: https://hub.docker.com/_/mariadb/
+        image: mariadb:10
+        ports:
+            - "0.0.0.0:3306:3306"
+        volumes:
+            - db-data:/var/lib/mysql/data
+        environment:
+            - MYSQL_ROOT_PASSWORD=root
+        container_name: mj-mariadb
+
+    web: #more info: http://dockerfile.readthedocs.io/en/latest/content/DockerImages/dockerfiles/php-apache-dev.html
+        # To login to this container as web-server user run command:
+        #   docker exec -t -i -u application mj-web bash
+        image: webdevops/php-apache-dev:ubuntu-16.04
+        ports:
+            - "0.0.0.0:80:80"
+            - "0.0.0.0:443:443"
+            - "0.0.0.0:9000:9000"
+        environment:
+            - WEB_ALIAS_DOMAIN=docker.loc
+            - WEB_DOCUMENT_ROOT=/var/www/web
+            - PHP_DISPLAY_ERRORS=1
+            - PHP_DEBUGGER=xdebug
+            - XDEBUG_REMOTE_AUTOSTART=on
+            - XDEBUG_REMOTE_CONNECT_BACK=off
+            - XDEBUG_REMOTE_PORT=9090
+            - XDEBUG_REMOTE_HOST=10.0.75.1
+        links:
+            - mariadb:mysql
+        volumes:
+            - web-data:/var/www
+        container_name: mj-web
+
+    ftp: #more info: https://hub.docker.com/r/stilliard/pure-ftpd/
+        # To create user `mjftp` with password `mjpass` run following commands to login inside container:
+        #   docker exec -t -i mj-ftp bash
+        # Then run:
+        #   chown 1000:1000 /var/www/ -R; chmod og+rwx /var/www/ -R
+        #   ( echo mjpass ; echo mjpass ) | pure-pw useradd mjftp -f /etc/pure-ftpd/passwd/pureftpd.passwd -m -u ftpuser -d /var/www
+
+        image: stilliard/pure-ftpd
+        ports:
+            - "0.0.0.0:21:21"
+            - "0.0.0.0:30000-30009:30000-30009"
+        environment:
+            - PUBLICHOST=192.168.99.100
+        volumes:
+            - ftp-user-data:/etc/pure-ftpd/passwd
+            - web-data:/var/www
+        container_name: mj-ftp
+
+    ssh:
+        image: jeroenpeeters/docker-ssh
+        environment:
+          - CONTAINER=mj-web
+          - AUTH_MECHANISM=noAuth
+        ports:
+          - "0.0.0.0:222:22"
+          - "0.0.0.0:8022:8022"
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock
+        container_name: mj-ssh
+
+volumes:
+    db-data:
+    web-data:
+    ftp-user-data:
