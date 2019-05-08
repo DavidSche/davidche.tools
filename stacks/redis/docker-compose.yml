@@ -12,6 +12,12 @@ services:
     volumes:
       - 'r_data:/bitnami/redis/data'
     command: /run.sh --maxmemory 512mb
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        # constraints: [node.labels.pm-node == true]  # 部署标签约束
+        constraints: [node.labels.db-node == true]  # 部署标签约束
 
   redis-replica:
     image: 'bitnami/redis:5.0.4'
@@ -27,6 +33,12 @@ services:
     volumes:
       - 'b_data:/bitnami/redis/data'
     command: /run.sh --maxmemory 512mb
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        # constraints: [node.labels.pm-node == true]  # 部署标签约束
+        constraints: [node.labels.db-node == true]  # 部署标签约束
 
 # redis commander ui tools
   redis-commander:
@@ -37,6 +49,12 @@ services:
     - REDIS_HOSTS=local:redis-master:6379
     ports:
     - "8081:8081"
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        # constraints: [node.labels.pm-node == true]  # 部署标签约束
+        constraints: [node.labels.db-node == true]  # 部署标签约束
 
 volumes:
   r_data:

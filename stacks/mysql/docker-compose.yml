@@ -11,12 +11,19 @@ services:
       - MYSQL_REPLICATION_MODE=master
       - MYSQL_REPLICATION_USER=repl_user
       - MYSQL_REPLICATION_PASSWORD=repl_password
-      - MYSQL_ROOT_PASSWORD=master_root_password
+      - MYSQL_ROOT_PASSWORD=root_password
       - MYSQL_USER=my_user
       - MYSQL_PASSWORD=my_password
       - MYSQL_DATABASE=my_database
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        # constraints: [node.labels.pm-node == true]  # 部署标签约束
+        constraints: [node.labels.db-node == true]  # 部署标签约束
+
   mysql-slave:
-    image: 'bitnami/mysql:latest'
+    image: 'bitnami/mysql:5.7'
     ports:
       - '3307:3306'
     depends_on:
@@ -27,9 +34,15 @@ services:
       - MYSQL_REPLICATION_PASSWORD=repl_password
       - MYSQL_MASTER_HOST=mysql-master
       - MYSQL_MASTER_PORT_NUMBER=3306
-      - MYSQL_MASTER_ROOT_PASSWORD=master_root_password
+      - MYSQL_MASTER_ROOT_PASSWORD=root_password
     volumes:
       - mysql_data1:/bitnami/mysql/data
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        # constraints: [node.labels.pm-node == true]  # 部署标签约束
+        constraints: [node.labels.db-node == true]  # 部署标签约束
 
 volumes:
   mysql_data:
