@@ -1,0 +1,69 @@
+version: '3.5'
+
+services:
+
+  gitlab:
+    image: gitlab/gitlab-ce:11.10.4-ce.0 
+    container_name: gitlab
+    restart: always
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://192.168.9.144'
+        registry_external_url 'http://192.168.9.144:5001'
+        gitlab_rails['initial_root_password'] = 'passw0rd'
+        gitlab_rails['initial_shared_runners_registration_token'] = 't0ken'
+    ports:
+      - "80:80"
+      - "22:22"
+      - "443:443"
+    volumes:
+      - gitlab-config:/etc/gitlab
+      - gitlab-logs:/var/log/gitlab
+      - gitlab-data:/var/opt
+    networks:
+      gitlab-net:
+        aliases:
+          - "192.168.9.144"
+          - "${REGISTRY_HOST}"
+
+  gitlab-runner:
+    image: gitlab/gitlab-runner:alpine
+    container_name: gitlab-runner
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - gitlab-runner-config:/etc/gitlab-runner
+    depends_on:
+      - gitlab
+
+  register-gitlab-runner:
+    image: gitlab/gitlab-runner:alpine
+    volumes:
+      - gitlab-runner-config:/etc/gitlab-runner
+    command:
+      - register
+      - --non-interactive
+      - --locked=false
+      - --run-untagged
+      - --name=GitLab Runner
+      - --tag-list=docker,dind
+      - --executor=docker
+      - --docker-image=docker:stable
+      - --docker-volumes=/var/run/docker.sock:/var/run/docker.sock
+      - --docker-network-mode=gitlab-net
+    environment:
+      - "CI_SERVER_URL=http://192.168.9.144"
+      - "REGISTRATION_TOKEN=t0ken"
+    depends_on:
+      - gitlab
+
+networks:
+  gitlab-net:
+    name: gitlab-net
+
+volumes:
+    gitlab-config:
+    gitlab-logs:
+    gitlab-data:
+    gitlab-runner-config:
+    

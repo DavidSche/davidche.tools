@@ -1,0 +1,37 @@
+<configuration>
+    <property name="log.path" value="./log"></property>
+    <property name="context" value="spring-boot-docker-log"></property>
+
+    <!-- <contextName>${log.context}</contextName> -->
+
+    <!--控制台输出-->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>[${context}][%d{yyyy-MM-dd HH:mm:ss}][%-5level][%thread][%class.%method:%line]:%m%n</pattern>
+        </encoder>
+    </appender>
+
+    <!--每分钟打印一个log, yyyy/MM/dd/HH/mm 树形目录-->
+    <appender name="ALL" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${log.path}/%d{yyyy/MM/dd/HH/mm, aux}/%d{yyyyMMddHHmm}.log</fileNamePattern>
+            <!--<fileNamePattern>logs/archived/app.%d{yyyy-MM-dd}.%i.log</fileNamePattern>-->
+            <!-- <maxFileSize>10MB</maxFileSize> -->
+            <!-- total size of all archive files, if total size > 20GB, it will delete old archived file -->
+            <!-- <totalSizeCap>1GB</totalSizeCap> -->
+            <!-- 60 days to keep -->
+            <!-- <maxHistory>60</maxHistory> -->
+        </rollingPolicy>
+        <encoder>
+            <pattern>[%d{yyyy-MM-dd HH:mm:ss}][%-5level][%thread][%class.%method:%line]:%m%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="org.springframework" level="INFO"/>
+    <logger name="com.massclouds.logdemo" level="DEBUG"/>
+    <!--打印任意包日志-->
+    <root level="INFO">
+        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="ALL"/>
+    </root>
+</configuration>
