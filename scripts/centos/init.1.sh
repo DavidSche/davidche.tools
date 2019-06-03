@@ -22,8 +22,8 @@ sudo sysctl -p
 echo "setting firewall, add swarm port to firewall !"
 # 例如在centos 7下执行以下命令开放端口
 #!/usr/bin/env bash
-sudo systemctl enable  firewalld
-sudo systemctl start  firewalld
+# sudo systemctl enable  firewalld
+# sudo systemctl start  firewalld
 
 
 firewall-cmd --add-port=2376/tcp --permanent
@@ -41,6 +41,10 @@ firewall-cmd --add-port=3307/tcp --permanent
 firewall-cmd --add-port=8400/tcp --permanent
 firewall-cmd --add-port=8500/tcp --permanent
 firewall-cmd --add-port=8600/tcp --permanent
+
+# 批量开放端口
+# firewall-cmd --permanent --zone=public --add-port=100-500/tcp
+# firewall-cmd --permanent --zone=public --add-port=100-500/udp
 
 sudo firewall-cmd --reload
 sudo systemctl restart  firewalld
