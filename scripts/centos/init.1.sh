@@ -21,15 +21,39 @@ sudo sysctl -p
 
 echo "setting firewall, add swarm port to firewall !"
 # 例如在centos 7下执行以下命令开放端口
+#!/usr/bin/env bash
+sudo systemctl enable  firewalld
+sudo systemctl start  firewalld
+
+
 firewall-cmd --add-port=2376/tcp --permanent
 firewall-cmd --add-port=2377/tcp --permanent
 firewall-cmd --add-port=7946/tcp --permanent
 firewall-cmd --add-port=7946/udp --permanent
 firewall-cmd --add-port=4789/udp --permanent
 firewall-cmd --add-port=4789/tcp --permanent
+
+firewall-cmd --add-port=80/tcp --permanent
+firewall-cmd --add-port=9000/tcp --permanent
+firewall-cmd --add-port=9001/tcp --permanent
+firewall-cmd --add-port=3306/tcp --permanent
+firewall-cmd --add-port=3307/tcp --permanent
+firewall-cmd --add-port=8400/tcp --permanent
+firewall-cmd --add-port=8500/tcp --permanent
+firewall-cmd --add-port=8600/tcp --permanent
+
 sudo firewall-cmd --reload
+sudo systemctl restart  firewalld
+
+firewall-cmd --zone=public --list-ports
+ 
 #sudo reboot
 echo "set firewall ok !"
+
+
+
+# scp  root@192.168.9.127:~/setfirewall.sh  ./
+# cqyMASS2019
 
 # update os kernel
 echo "update kernel to 4.x !"
@@ -168,7 +192,7 @@ cat << EOF > /etc/docker/daemon.json
     ]
 }
 EOF
-
+#应用最新的BUILDKIT构建架构
 export DOCKER_BUILDKIT=1
 
 echo "write daemon.json setting success ! "
@@ -184,7 +208,7 @@ chmod +x /usr/local/bin/docker-compose
 #
 #curl -L https://github.com/docker/compose/releases/download/1.24.0/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose
 #chmod +x /usr/local/bin/docker-compose
-#
+# scp 192.168.9.20:/usr/local/bin/docker-compose  /usr/local/bin/
 echo "install docker-compose ok !"
 
 #install node
