@@ -21,6 +21,19 @@ sudo sysctl -p
 
 echo "setting firewall, add swarm port to firewall !"
 # 例如在centos 7下执行以下命令开放端口
+#查看所有打开的端口： firewall-cmd --zone=public --list-ports
+
+#添加
+#firewall-cmd --zone=public --add-port=80/tcp --permanent    （--permanent永久生效，没有此参数重启后失效）
+#重新载入
+#firewall-cmd --reload
+#查看
+#firewall-cmd --zone=public --query-port=80/tcp
+#删除
+#firewall-cmd --zone=public --remove-port=80/tcp --permanent
+#批量开放端口
+#firewall-cmd --permanent --zone=public --add-port=100-500/tcp
+
 #!/usr/bin/env bash
 # sudo systemctl enable  firewalld
 # sudo systemctl start  firewalld
@@ -262,4 +275,15 @@ echo "init golang lib success ! "
 
 # ----over !
 echo "init os lib success ok! "
+
+
+# Extra Packages for Enterprise Linux 
+# python 3 
+
+echo "Get Extra Packages for Enterprise Linux !"
+yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+#sudo yum install python36 -y 
+#curl -O https://bootstrap.pypa.io/get-pip.py
+#sudo /usr/bin/python3 get-pip.py
+# pip install -U pip
 
