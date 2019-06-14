@@ -1,0 +1,19 @@
+[mysqld]
+max_allowed_packet=32M
+
+open_files_limit = 30000
+max_connections = 2000
+max_user_connections=1500
+wait_timeout=200
+
+#log_error[=fileName]
+
+general_log
+slow_query_log
+log_bin
+server_id=1 #server_id=1是默认值，要保证和从数据库server_id不一致
+log_slave_updates=1
+
+#set-variable=max_connections=2000
+#set-variable=max_user_connections=1500
+#set-variable=wait_timeout=200
