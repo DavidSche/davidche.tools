@@ -1,4 +1,11 @@
-version: '3'
+version: '3.6'
+
+configs:
+  # my_first_config:
+  #   file: ./config_data
+  mysql_config:
+    external:
+      name: mysql_config
 
 services:
   mysql-master:
@@ -49,14 +56,11 @@ services:
       placement:
         # constraints: [node.labels.pm-node == true]  # 部署标签约束
         constraints: [node.labels.db-node == true]  # 部署标签约束
+    configs:
+      - source: mysql_config
+        target: /opt/bitnami/mysql/conf/my_custom.cnf
 
 volumes:
   mysql_data:
   mysql_data1:
 
-configs:
-  # my_first_config:
-  #   file: ./config_data
-  mysql_config:
-    external:
-      name: mysql_config

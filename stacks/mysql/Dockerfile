@@ -18,6 +18,8 @@ USER root
 RUN echo $TIMEZONE > /etc/timezone && \
     dpkg-reconfigure -f noninteractive tzdata
 
+COPY ./my_custom.cnf /opt/bitnami/mysql/conf/my_custom.cnf
+
 # RUN echo "Asia/Hongkong" > /etc/timezone && \
 #     dpkg-reconfigure -f noninteractive tzdata
 
