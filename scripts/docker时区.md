@@ -15,7 +15,7 @@ RUN apk --no-cache add tzdata  && \
 
 ##Ubuntu
 ``` Dockerfile
-RUN echo "Asia/Shanghai" > /etc/timezone && \
+RUN echo "Asia/Hong_Kong" > /etc/timezone && \
     dpkg-reconfigure -f noninteractive tzdata
 ```
 
@@ -28,3 +28,4 @@ RUN echo "Asia/Shanghai" > /etc/timezone;
 当然也可以将时区作为构建镜像的参数处理，这样可以带来更大的灵活性。
 
 -----
+Asia/Hong_Kong

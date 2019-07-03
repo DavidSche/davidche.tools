@@ -1,11 +1,13 @@
 version: '3'
 services:
   elasticsearch:
-    image: 'bitnami/elasticsearch:6'
+    image: 'bitnami/elasticsearch:7'
     volumes:
       - 'elasticsearch_data:/bitnami'
+    ports:
+      - '9200:9200'
   kibana:
-    image: 'bitnami/kibana:6'
+    image: 'bitnami/kibana:7'
     ports:
       - '5601:5601'
     volumes:

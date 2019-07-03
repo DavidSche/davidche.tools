@@ -26,12 +26,16 @@ COPY ./my_custom.cnf /opt/bitnami/mysql/conf/my_custom.cnf
 # RUN date
 # apt-get update && apt-get install -y iputils-ping
 
+RUN rm -f /etc/localtime
+RUN ln -s /usr/share/zoneinfo/Asia/Shanghai  /etc/localtime
+
+# Install required system packages
+RUN install_packages ntpdate &&  ntpdate cn.pool.ntp.org
+#RUN install_packages curl
+
 # Return to previous non-root user
 USER 1001
 
-# Install required system packages
-#RUN install_packages ntpdate &&  ntpdate cn.pool.ntp.org
-#RUN install_packages curl
 
 # Copy application files
 #COPY /usr/share/zoneinfo/Asia/Shanghai /etc/localtime 

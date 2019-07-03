@@ -3,7 +3,7 @@
 # 使用 *hostnamectl* 命令设置主机名称信息
 
 echo "setting hostname !"
-hostnamectl --static set-hostname cqy-test-manager
+hostnamectl --static set-hostname cqy-develop-log1
 
 # for 
 echo "setting vm.max_map_count=262144 !"
@@ -103,8 +103,7 @@ echo "write  docker config to /etc/docker/daemon.json "
 cat << EOF > /etc/docker/daemon.json
 {
     "insecure-registries": [
-        "192.168.9.10:5000",
-        "124.133.33.114:3101"
+        "192.168.9.10:5000"
     ],
     "registry-mirrors": [
         "https://um1k3l1w.mirror.aliyuncs.com"
