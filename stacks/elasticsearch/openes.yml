@@ -1,0 +1,38 @@
+version: '3'
+services:
+  kibana:
+    container_name: opendistroforelasticsearch-kibana-test
+    image: amazon/opendistro-for-elasticsearch-kibana:1.0.0
+    ports:
+      - 5601:5601
+    networks: [opendistroforelasticsearch]
+    environment:
+      ELASTICSEARCH_HOSTS: https://elasticsearch:9200
+
+    # Configure certificate and key files to enable SSL. The certificate
+    # provided in the example is self-signed, and thus insecure. It should
+    # only be used for experimentation, never in production.
+    #
+    # environment:
+    #   - SERVER_SSL_CERT=/usr/share/kibana/config/opendistroforelasticsearch.example.org.crt
+    #   - SERVER_SSL_KEY=/usr/share/kibana/config/opendistroforelasticsearch.example.org.key
+
+  elasticsearch:
+    container_name: opendistroforelasticsearch-test
+    image: amazon/opendistro-for-elasticsearch:1.0.0
+    networks: [opendistroforelasticsearch]
+    environment:
+      - discovery.type=single-node
+    ports:
+      - 9200:9200
+      - 9600:9600 # required for Performance Analyzer
+networks:
+  opendistroforelasticsearch:
+  
+
+#curl -XGET https://192.168.9.26:6200/_cat/indices?v -u admin:admin --insecure
+#curl -XGET https://192.168.9.26:9200/_cat/nodes?v -u admin:admin --insecure
+#curl -XGET https://192.168.9.26:9200/_cat/plugins?v -u admin:admin --insecure
+#curl -XPUT 'https://192.168.9.26:9200/logtest?pretty' -u admin:admin --insecure
+
+#admin/admin
