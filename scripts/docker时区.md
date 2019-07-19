@@ -29,3 +29,9 @@ RUN echo "Asia/Shanghai" > /etc/timezone;
 
 -----
 Asia/Hong_Kong
+
+
+apk add --update nodejs nodejs-npm
+
+
+apk add --update nodejs nodejs-npm
