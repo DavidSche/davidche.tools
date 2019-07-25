@@ -100,4 +100,6 @@ Step 2: Edit the documentation, save your files and then enter the following com
 docker run --rm -v ${PWD}/docs:/src portainer/docbuilder:latest make html
 This will create a local folder docs/build/html where you will find the generated static files for the documentation.
 
-​
+​docker run -d -p 9000:9000 -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer
+
+

@@ -35,3 +35,20 @@ apk add --update nodejs nodejs-npm
 
 
 apk add --update nodejs nodejs-npm
+
+
+cp /usr/share/zoneinfo/Asia/Shanghai  /etc/localtime
+
+
+  RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime 
+  
+  dockerfile 中增加一行
+  
+  RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime 
+  
+  ubuntu 
+  
+$ RUN ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && echo Asia/Shanghai > /etc/timezone && dpkg-reconfigure -f noninteractive tzdata
+
+$ dpkg-reconfigure --frontend noninteractive tzdata
+  

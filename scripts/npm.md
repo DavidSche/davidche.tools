@@ -85,6 +85,24 @@ Examples:
   kubectl get all
 
 
+Examples:
+  # Apply the configuration in pod.json to a pod.
+  kubectl apply -f ./pod.json
+  
+  # Apply the JSON passed into stdin to a pod.
+  cat pod.json | kubectl apply -f -
+  
+  # Note: --prune is still in Alpha
+  # Apply the configuration in manifest.yaml that matches label app=nginx and delete all the other resources that are
+not in the file and match label app=nginx.
+  kubectl apply --prune -f manifest.yaml -l app=nginx
+  
+  # Apply the configuration in manifest.yaml and delete all the other configmaps that are not in the file.
+  kubectl apply --prune -f manifest.yaml --all --prune-whitelist=core/v1/ConfigMap
+
+
+--------
+
 kubectl get deployments  redis-server-redis1 -o yaml 
 
 ```

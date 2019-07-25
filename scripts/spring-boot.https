@@ -1,0 +1,79 @@
+keytool -importkeystore -srckeystore d:\tomcat.key -destkeystore d:\tomcat.key -deststoretype pkcs12
+
+
+
+可以自己生成 SSL证书，但是这个不被官方存档认可的，有钱可以去阿里云买一个，一年也就个把千块哈哈
+
+keytool -genkeypair -alias david -keyalg pkcs12 -keystore D:\david.key
+
+keytool -genkeypair -alias david -keyalg RSA -keystore D:\david.key
+
+//其中-alias是证书的别名,RSA是加密算法,-keystore后是输出证书的路径所在
+
+
+application.yml添加
+
+
+server:
+  port: 8443
+  tomcat:
+    max-threads: 800
+    accept-count: 30000
+    min-spare-threads: 20
+    max-connections: 30000
+  servlet-path: /photography
+  ssl:
+#    证书路径
+    key-store: tomcat.key
+    key-store-type: JKS
+    key-alias: tomcat
+#    配置密码，就是在生成证书的时候输入的密码
+    key-store-password: imfjj201314
+	
+启动类配置
+	
+/**
+   * it's for set http url auto change to https
+   */
+  @Bean
+  public EmbeddedServletContainerFactory servletContainer(){
+      TomcatEmbeddedServletContainerFactory tomcat=new TomcatEmbeddedServletContainerFactory(){
+          @Override
+          protected void postProcessContext(Context context) {
+              SecurityConstraint securityConstraint=new SecurityConstraint();
+              securityConstraint.setUserConstraint("CONFIDENTIAL");//confidential
+              SecurityCollection collection=new SecurityCollection();
+              collection.addPattern("/*");
+              securityConstraint.addCollection(collection);
+              context.addConstraint(securityConstraint);
+          }
+      };
+      tomcat.addAdditionalTomcatConnectors(httpConnector());
+      return tomcat;
+  }
+ 
+  @Bean
+  public Connector httpConnector(){
+      Connector connector=new Connector("org.apache.coyote.http11.Http11NioProtocol");
+      connector.setScheme("http");
+      connector.setPort(8080);
+      connector.setSecure(false);
+      connector.setRedirectPort(8443);
+      return connector;
+  }
+
+  
+	
+
+https://www.cnblogs.com/imfjj/p/9058443.html
+
+
+
+
+
+
+https://www.jianshu.com/p/8d4aba3b972d
+
+
+
+
