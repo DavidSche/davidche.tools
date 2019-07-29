@@ -1,0 +1,33 @@
+version: '3.5'
+services:
+  master:
+    image: redis:5
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - db:/data
+    ports:
+      - target: 6379
+        published: 6379
+        mode: host
+    deploy:
+      mode: global
+      placement:
+        constraints: [node.labels.redis == master]
+  slave:
+    image: redis:5
+    command: ["redis-server", "--slaveof", "master", "6379", "--appendonly", "yes"]
+    volumes:
+      - db:/data
+    ports:
+      - target: 6379
+        published: 6379
+        mode: host
+    depends_on:
+      - master
+    deploy:
+      mode: global
+      placement:
+        constraints: [node.labels.redis == slave]
+volumes:
+  db: {}
+#https://gist.github.com/nickadam/aebc1a3290d42df529fa2c4afc6aab4f

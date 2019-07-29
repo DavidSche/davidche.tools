@@ -1,0 +1,59 @@
+version: "3.1"
+services:
+  redis-master-1:
+    build: ./
+    networks:
+      redisnet:
+        ipv4_address: 10.0.0.2
+    command: sh -c "redis-server /src/redis.conf --port 7000 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000"
+  redis-master-2:
+    build: ./
+    networks:
+      redisnet:
+        ipv4_address: 10.0.0.3
+    depends_on:
+      - redis-master-1
+    command: sh -c "redis-server /src/redis.conf --port 7001 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000"
+  redis-master-3:
+    build: ./
+    command: sh -c "redis-server /src/redis.conf --port 7002 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000"
+    networks:
+      redisnet:
+        ipv4_address: 10.0.0.4
+    depends_on:
+      - redis-master-2
+  redis-slave-1:
+    build: ./
+    command: sh -c "redis-server /src/redis.conf --port 7003 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000"
+    networks:
+      redisnet:
+        ipv4_address: 10.0.0.5
+    depends_on:
+      - redis-master-3
+  redis-slave-2:
+    build: ./
+    command: sh -c "redis-server /src/redis.conf --port 7004 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000"
+    networks:
+      redisnet:
+        ipv4_address: 10.0.0.6
+    depends_on:
+      - redis-master-3
+  redis-slave-3:
+    build: ./
+    command: sh -c "redis-server /src/redis.conf --port 7005 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --daemonize yes && yes yes | ./redis-trib.rb create --replicas 1 10.0.0.2:7000 10.0.0.3:7001 10.0.0.4:7002 10.0.0.5:7003 10.0.0.6:7004 10.0.0.7:7005 && while sleep 3600; do :; done"
+    networks:
+      redisnet:
+        ipv4_address: 10.0.0.7
+    depends_on:
+      - redis-master-1
+      - redis-master-2
+      - redis-master-3
+      - redis-slave-1
+      - redis-slave-2
+networks:
+  redisnet:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.0.0/16
+#https://gist.github.com/thelinuxlich/97779d91fb829beca381474f226ab388
