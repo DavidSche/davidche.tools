@@ -28,6 +28,8 @@ services:
     volumes:
       - portainer_data:/data
       - /certs:/certs
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/volumes:/var/lib/docker/volumes
     networks:
       - agent_network
     deploy:

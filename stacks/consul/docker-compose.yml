@@ -3,7 +3,7 @@ version: '3.6'
 services:
 
   server-bootstrap:
-    image: consul:1.5.1
+    image: consul:1.5.3
     volumes:
       - consul-data:/consul/data
     hostname: "{{.Node.Hostname}}"
@@ -16,7 +16,7 @@ services:
     command: "agent -server -bootstrap-expect 3 -ui -client 0.0.0.0 -bind '{{ GetInterfaceIP \"eth0\" }}'"
 
   server:
-    image: consul:1.5.1
+    image: consul:1.5.3
     networks:
       - consul
       - prod
@@ -28,7 +28,7 @@ services:
       - server-bootstrap
 
   client:
-    image: consul:1.5.1
+    image: consul:1.5.3
     networks:
       - consul
       - prod
