@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-
+++++++++++++++++----------------------------
 # 使用 *hostnamectl* 命令设置主机名称信息
 
 echo "setting hostname !"

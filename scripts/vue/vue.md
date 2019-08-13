@@ -128,28 +128,9 @@ We have had a comprehensive look at the new Vue CLI version and all the features
 
 
 
-### 安全方式启动portainer
-
-#### 生成证书
-
 ```
-$ mkdir -p /certs
-$ cd /certs
-$ openssl genrsa -out portainer.key 2048
-$ openssl ecparam -genkey -name secp384r1 -out portainer.key
-$ openssl req -new -x509 -sha256 -key portainer.key -out portainer.crt -days 3650
-$ ls 
-
+npm install chromedriver --chromedriver_cdnurl=http://cdn.npm.taobao.org/dist/chromedriver
 ```
-
-#### 启动 portainer
-
-```
- docker run -d -p 443:9000 -p 8000:8000 --name portainer --restart always -v /var/run/docker.sock:/var/run/docker.sock  -v /certs:/certs -v portainer_data:/data portainer/portainer --ssl --sslcert /certs/portainer.crt --sslkey /certs/portainer.key
-```
- 
- 
- 
 
 
 

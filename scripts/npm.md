@@ -13,7 +13,7 @@ choco install yarn
 choco upgrade chocolatey
 
 
-
+npm install chromedriver --chromedriver_cdnurl=http://cdn.npm.taobao.org/dist/chromedriver
 
 kubectl get pods -o wide
 
