@@ -1,0 +1,129 @@
+
+03 Docker镜像实操演示：
+
+
+1、查看镜像列表
+$ docker images
+$ docker images -a
+$ docker images nginx
+
+各个参数解析：
+-a :列出本地所有的镜像（含中间映像层，默认情况下，过滤掉中间映像层）
+--digests :显示镜像的摘要信息
+-f :显示满足条件的镜像
+--format :指定返回值的模板文件
+--no-trunc :显示完整的镜像信息
+-q :只显示镜像ID
+
+
+2、删除镜像
+$ docker rmi image name
+$ docker rmi -f image name
+
+
+3、搜索镜像【从Docker Hub中】
+$ docker search tomcat
+$ docker search -s 3 --automated --no-trunc nginx
+
+各个参数解析：
+--automated :只列出automated build类型的镜像
+--no-trunc :显示完整的镜像描述
+-s :列出收藏数不小于指定值的镜像
+
+备注：automated build类型是指仓库通过Dockerfile自动构建出来的镜像
+
+
+4、导出镜像为一个tar文件
+$ docker save -o nginx-1-13.tar nginx:1.13
+$ ls *.tar
+
+
+5、导入tar镜像文件，创建新镜像
+$ docker load -i nginx-1-13.tar nginx:1.13
+$ docker images  nginx
+
+save与load互为逆操作
+
+
+6、导出容器文件系统为一个tar文件
+$ docker export -o containername.tar container id
+$ ls *.tar
+
+
+7、导入tar文件，创建新镜像
+$ docker import  nginx-1-13.tar nginx:1.13
+$ docker images  nginx
+
+export与import互为逆操作
+导出容器文件系统与镜像的区别是，镜像是只读不可变的，容器文件系统是可能变化了的，是在镜像的基础上加了可读层的
+
+
+8、登录/登出镜像仓库
+$ docker login -u username -p password
+$ docker login harbor.com
+$ docker login harbor.com -u username -p password
+
+$ docker logout
+$ docker logout harbor.com
+
+
+9、拉取镜像
+$ docker pull nginx:1.13
+$ docker pull tomcat:7.0
+
+Docker Hub仓库是免密的，从私有仓库拉取要先登录
+镜像一般要指定镜像版本，如果不指定就是拉取latest的，即最新的
+
+
+10、打镜像标签，重命名
+$ docker tag ubuntu:15.10 my-ubuntu:15.10
+$ docker tag ubuntu:15.10 harbor.io/ubuntu:15.10
+$ docker images
+
+常用于标记本地镜像，提交私有仓库
+
+
+11、提交镜像到仓库
+$ docker push nginx:1.13
+$ docker push tomcat:7.0
+
+默认为Docker Hub，得注册自己的帐号，要先登录
+也可提交到私有仓库，也要先登录，但还有其它约定
+
+
+12、容器与主机之间拷贝文件
+将主机/root/king目录拷贝到容器96f7f14e99ab的/www目录下
+$ docker cp /root/king 96f7f14e99ab:/www/
+
+将主机/root/king目录拷贝到容器96f7f14e99ab中，目录重命名为song
+$ docker cp /root/king 96f7f14e99ab:/song
+
+将容器96f7f14e99ab的/www目录拷贝到主机的/root/temp/目录中
+$ docker cp 96f7f14e99ab:/www /root/temp/
+
+
+13、从容器创建一个新的镜像
+$ docker commit -a "songxiaojin" -m "new commit images" a404c6c174a2  ubuntu:15.11
+$ docker images ubuntu
+
+各个参数解析：
+-a :--author=""  提交的镜像作者
+-m :--message="" 提交时的说明文字
+-p :--pause=true 在commit时，将容器暂停
+默认情况下，在提交时，容器的执行将被暂停，以保证数据的完整性，当然你可以指定选项-p来禁止
+用途：基于现有镜像做稍微修改调整制做镜像，但镜像容量一般会比直接用Dockerfile大
+
+
+14、使用Dockerfile创建镜像
+使用当前目录的Dockerfile创建镜像，标签为 runoob/ubuntu:15.12
+$ docker build -t ubuntu:15.12 .
+
+这个命令参数特别多，课后最后详细研究
+
+
+15、查看指定镜像的构建历史记录
+$ docker history ubuntu:15.12
+显示镜像构建命令，提交记录等
+
+
+

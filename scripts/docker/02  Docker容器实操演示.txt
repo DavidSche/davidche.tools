@@ -1,0 +1,194 @@
+
+02 Docker容器实操演示：
+
+
+1、试运行一个容器
+$ docker run ubuntu:15.10 /bin/echo "Hello world"
+
+各个参数解析：
+docker: Docker 的二进制执行文件
+run:与前面的 docker 组合来运行一个容器
+ubuntu:15.10指定镜像，Docker首先从本地上查找镜像是否存在，如不存在，就会从镜像仓库Docker Hub下载
+/bin/echo "Hello world": 在启动的容器里执行的命令
+
+以上命令完整的意思可以解释为：
+Docker以ubuntu15.10镜像创建一个新容器，然后在容器里执行/bin/echo "Hello world"，然后输出结果。
+
+
+2、运行交互式的容器
+$ docker run -i -t ubuntu:15.10 /bin/bash
+$ docker run -it   ubuntu:15.10 /bin/bash
+
+各个参数解析：
+-t:在新容器内指定一个伪终端或终端
+-i:允许你对容器内的标准输入(STDIN)进行交互
+此时我们已进入一个 ubuntu15.10系统的容器，用ps -ef查看下进程列表试试
+
+
+3、启动容器--【daemon模式】
+$ docker run -d ubuntu:15.10 /bin/sh -c "while true; do date; sleep 1; done"
+
+输出结果中，我们没有看到date的返回值，而是一串长字符，它是容器ID，是唯一的，可通过容器ID来查看操作容器
+上述命令运行多次试试，意味着什么？容器与镜像的关系
+
+
+4、查看正在运行的容器及已生成的容器
+$ docker ps       #查看正在运行的容器
+$ docker ps -a    #查看所有容器，包括运行中(Up)及退出的(Exited)
+
+CONTAINER ID:容器ID
+NAMES:自动分配的容器名称
+PORTS:端口没配置为空
+容器是概念，静态，非动态
+
+
+5、创建一个容器，但不启动
+$ docker create ubuntu:15.10 /bin/sh -c "while true; do date; sleep 1; done"
+$ docker logs container id
+
+【docker ps -a】列表里有显示，状态为Created
+【docker ps】列表里没显示
+
+
+6、启动一个已创建的容器，变成运行状态
+$ docker start container id
+$ docker start container name
+$ docker start container01, container02,container03
+
+【docker ps -a】列表里有显示，状态为【Up XX seconds】
+【docker ps】列表里有显示，容器已经运行起来
+综上所述：run = create + start
+
+
+7、重启容器
+$ docker restart container id
+$ docker restart container name
+$ docker restart container01, container02,container03
+
+重启的容器状态改变，【docker ps】列表里的STATUS更新了时间
+重启一个不在运行状态的容器，相当于启动容器【docker start】
+重启的用途：
+Tomcat应用OOM了，重启应用会自愈
+重启会释放文件句柄
+
+
+8、暂停/恢复容器
+$ docker pause container id
+$ docker pause container name
+$ docker unpause container id
+$ docker unpause container name
+
+暂停容器中所有的进程，STATUS变为【Paused】
+恢复容器中所有的进程，STATUS恢复
+处于暂停状态的容器不会占用CPU资源，直到通过unpause恢复运行，但仍占用内存，相当于进程不调度使用CPU
+用途：
+对容器的文件系统打个快照，不运行程序，保持现场
+让渡CPU资源给其它容器，宿主机使用
+
+
+9、停止容器
+$ docker stop container id
+$ docker stop container name
+$ docker ps
+$ docker ps -a
+
+
+10、删除容器
+$ docker rm container id		#可删除不在运行状态的容器，运行中容器不能删除
+$ docker rm container name
+$ docker rm -f container id		#强制删除，无论容器是否在运行状态
+$ docker rm -f container name
+
+
+11、杀死一个或多个指定容器，实际上是发送信号给容器进程，默认SIGKILL
+docker kill -s KILL container id	#指定信号-s KILL
+docker kill container id			#默认信号为SIGKILL
+
+各个参数解析：
+-s, --signal=KILL: Signal to send to the container指定发送的信号
+本质就是Linux的杀死进程，效果相当于删除，区别就是rm优雅有收尾处理，kill简单快速
+
+
+12、进入容器
+$ docker attach container id
+$ docker exec -it container id  /bin/bash
+
+attach直接进入容器启动命令的终端，不会启动新的进程，可直接查看进程的标准输出
+exec则是在容器中打开新的终端，并且可以启动新的进程，类似SSH进VM，可操作
+如果想直接在终端中查看启动命令的输出用attach，其他情况使用exec
+/bin/bash：根据镜像的OS版本bash不同
+
+
+13、查看容器日志
+$ docker logs container id
+$ docker logs container name
+$ docker logs -f container id
+
+容器的标准输出日志，看看上述daemon模式启动的容器日志
+-f 的作用与 tail -f 类似，能够动态查看日志的产生
+容器启动的时候使用 --log-driver 来选择Docker日志驱动，默认的是json-file
+
+
+14、获取容器实时事件
+$ docker events --since="1467302400"
+$ docker events -f "image"="ubuntu" --since="1467302400"
+$ docker events -f "image"="ubuntu:15.10" --since="1467302400" --until="1468302400"
+
+OPTIONS说明：
+-f ：根据条件过滤事件
+--since ：从指定的时间戳后显示所有事件
+--until ：流水时间显示到指定的时间为止
+
+
+15、显示容器的进程信息
+$ docker top container id
+$ docker top container name
+
+
+16、显示容器文件系统的前后变化
+$ docker diff container id
+$ docker diff container name
+
+进入容器，做些mkdir，touch操作后，执行命令
+
+
+17、获取容器/镜像的元数据
+$ docker inspect container id
+$ docker inspect container name
+$ docker inspect image name
+
+docker inspect --format '{{.RootFS}}' ubuntu:15.10
+docker inspect --format="{{ .State.Status }}, {{.Id}}"  d1bc262e0a33
+
+
+18、查看容器的端口映射
+$ docker port container id
+$ docker port container name
+
+只有做了端口映射的才有显示
+$ docker run -d -p 80:80  nginx:1.13
+80/tcp -> 0.0.0.0:80
+
+
+19、容器重命名
+$ docker rename container01 container02
+
+
+20、查看容器实时资源使用情况
+$ docker stats
+$ docker stats container id
+$ docker stats container name
+
+监控相关，容器使用CPU，内存，网络，存储IO等
+
+
+21、查看本机全部容器使用的卷
+$ docker volume ls
+
+
+22、删除未被容器使用的卷
+$ docker volume prune
+
+
+
+

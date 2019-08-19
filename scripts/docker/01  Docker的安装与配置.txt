@@ -1,0 +1,157 @@
+
+01 Docker的安装与配置：
+
+
+1、Docker要求CentOS系统的内核版本高于3.10，查看本页面的前提条件来验证你的CentOS版本是否支持Docker
+   通过uname -r命令查看你当前的内核版本
+
+$ uname -r
+
+2、使用root权限登录Centos。确保yum包更新到最新
+$ yum update
+
+3、卸载旧版本(如果安装过旧版本的话)
+$ rpm -qa | grep docker
+$ yum remove docker docker-common docker-selinux docker-engine
+
+4、安装需要的软件包，yum-util提供yum-config-manager功能，另外两个是devicemapper驱动依赖的
+$ yum install -y yum-utils device-mapper-persistent-data lvm2
+
+5、设置yum源
+$ yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+
+6、更新yum缓存，查看所有仓库中所有docker版本，并选择特定版本安装
+$ yum makecache fast
+$ yum list docker-ce --showduplicates | sort -r
+
+7、安装最新稳定版docker
+$ yum install docker-ce-18.06.1.ce
+
+8、启动并加入开机启动
+$ sudo systemctl start  docker
+$ sudo systemctl enable docker
+
+9、验证安装是否成功(有client和service两部分表示docker安装启动都成功了)
+$ docker version
+$ docker info
+$ docker -h
+
+
+10、删除Docker CE
+$ sudo yum remove docker-ce
+$ sudo rm -rf /var/lib/docker
+
+
+
+
+
+二、Docker配置
+
+1、/usr/lib/systemd/system/docker.service
+
+
+2、/etc/docker/daemon.json
+{
+    "authorization-plugins": [],
+    "data-root": "",   #Docker运行时使用的根路径,根路径下的内容稍后介绍，默认/var/lib/docker
+    "dns": [],         #设定容器DNS的地址，在容器的 /etc/resolv.conf文件中可查看
+    "dns-opts": [],    #容器/etc/resolv.conf文件，其他设置
+    "dns-search": [],  #设定容器的搜索域，当设定搜索域为 .example.com 时，在搜索一个名为host的主机时，DNS不仅搜索host，还会搜索host.example.com
+	                   #注意：如果不设置，Docker会默认用主机上的/etc/resolv.conf来配置容器
+    "exec-opts": [],
+    "exec-root": "",
+    "experimental": false,
+    "features": {},
+    "storage-driver": "",
+    "storage-opts": [],
+    "labels": [],      #docker主机的标签，很实用的功能,例如定义：–label nodeName=host-121
+    "live-restore": true,
+    "log-driver": "",
+    "log-opts": {},
+    "mtu": 0,
+    "pidfile": "",     #Docker守护进程的PID文件
+    "cluster-store": "",
+    "cluster-store-opts": {},
+    "cluster-advertise": "",
+    "max-concurrent-downloads": 3,
+    "max-concurrent-uploads": 5,
+    "default-shm-size": "64M",
+    "shutdown-timeout": 15,
+    "debug": true,     #启用debug的模式，启用后，可以看到很多的启动信息。默认false
+    "hosts": [],       #设置容器hosts
+    "log-level": "",   #日志级别【error/warn/info】
+    "tls": true,       #默认false, 启动TLS认证开关
+    "tlscacert": "",   #默认 ~/.docker/ca.pem，通过CA认证过的的certificate文件路径
+    "tlscert": "",     #默认 ~/.docker/cert.pem ，TLS的certificate文件路径
+    "tlskey": "",      #默认 ~/.docker/key.pem，TLS的key文件路径
+    "tlsverify": true, #默认false，使用TLS并做后台进程与客户端通讯的验证
+    "tls": true,
+    "tlsverify": true,
+    "tlscacert": "",
+    "tlscert": "",
+    "tlskey": "",
+    "swarm-default-advertise-addr": "",
+    "api-cors-header": "",
+    "selinux-enabled": false,   #默认 false，启用selinux支持
+    "userns-remap": "",
+    "group": "",                #Unix套接字的属组,仅指/var/run/docker.sock
+    "cgroup-parent": "",
+    "default-ulimits": {
+        "nofile": {
+            "Name": "nofile",
+            "Hard": 64000,
+            "Soft": 64000
+        }
+    },
+    "init": false,
+    "init-path": "/usr/libexec/docker-init",
+    "ipv6": false,
+    "iptables": false,
+    "ip-forward": false,    #默认true, 启用 net.ipv4.ip_forward ,进入容器后使用sysctl -a|grepnet.ipv4.ip_forward查看
+    "ip-masq": false,
+    "userland-proxy": false,
+    "userland-proxy-path": "/usr/libexec/docker-proxy",
+    "ip": "0.0.0.0",
+    "bridge": "",
+    "bip": "",
+    "fixed-cidr": "",
+    "fixed-cidr-v6": "",
+    "default-gateway": "",
+    "default-gateway-v6": "",
+    "icc": false,
+    "raw-logs": false,
+    "allow-nondistributable-artifacts": [],
+    "registry-mirrors": [],    #镜像加速的地址，增加后在 docker info中可查看。
+    "seccomp-profile": "",
+    "insecure-registries": [], #配置docker的私库地址
+    "no-new-privileges": false,
+    "default-runtime": "runc",
+    "oom-score-adjust": -500,
+    "node-generic-resources": ["NVIDIA-GPU=UUID1", "NVIDIA-GPU=UUID2"],
+    "runtimes": {
+        "cc-runtime": {
+            "path": "/usr/bin/cc-runtime"
+        },
+        "custom": {
+            "path": "/usr/local/bin/my-runc-replacement",
+            "runtimeArgs": [
+                "--debug"
+            ]
+        }
+    },
+    "default-address-pools":[{"base":"172.80.0.0/16","size":24},
+    {"base":"172.90.0.0/16","size":24}]
+}
+
+
+实际配置展示
+{
+	"storage-driver": "overlay",
+	"insecure-registries": ["http://harbor.io"],
+	"registry-mirrors": ["https://hub-mirror.c.163.com", "https://v7y38rs4.mirror.aliyuncs.com"],  #镜像加速，鉴于国内网络问题，后续拉取Docker 镜像十分缓慢，我们可以需要配置加速器来解决
+	"max-concurrent-downloads": 20,
+	"max-concurrent-uploads": 5,
+}
+
+
+

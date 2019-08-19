@@ -1,0 +1,43 @@
+
+05 Docker高阶实操演示：
+
+
+1、运行容器
+[root@master02 ~]# docker run -d --name=nginx-server -p 80:80 harbor.io/k8s/nginx:1.11
+[root@master02 ~]# docker run -d --name=tomcat-server -p 8080:8080 harbor.io/k8s/tomcat:7.0
+
+访问：
+http://localhost:80
+http://localhost:8080
+
+2、挂载Volume
+[root@master02 ~]# docker run -d -v /opt/www:/var/www -p 80:80 harbor.io/k8s/nginx:1.11
+
+
+3、传入环境变量
+[root@master02 ~]# docker run -d -e key1=value1 -e key2=value2 -p 80:80 harbor.io/k8s/nginx:1.11
+
+
+4、进入容器查看
+[root@master02 ~]# docker exec -it nginx-server /bin/bash
+[root@master02 ~]# docker exec -it tomcat-server /bin/bash
+
+
+5、使用主机网络运行
+[root@master02 ~]# docker run -d --name=nginx-server --net=host -p 80:80 harbor.io/k8s/nginx:1.11
+
+
+6、注入/etc/hosts 
+[root@master02 ~]# docker run -d --name=nginx-server --add-host master.com:192.168.80.61 -p 80:80 harbor.io/k8s/nginx:1.11
+[root@master02 ~]# docker run -d --name=nginx-server --add-host master.com:192.168.80.61 -p 80:80 harbor.io/k8s/nginx:1.11 cat /etc/hosts
+可以注入多行
+--net="container:redis"
+--ipc="host": container:<name|id>
+--cap-add: Add Linux capabilities
+--cap-drop: Drop Linux capabilities
+--privileged=false: Give extended privileges to this container
+eg:
+--cap-add=ALL --cap-drop=MKNOD
+
+
+
