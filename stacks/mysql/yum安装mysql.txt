@@ -1,0 +1,23 @@
+mysql
+ 
+ yum install mysql mysql-server mysql-devel 
+
+
+完成后，用  /etc/init.d/mysqld start    启动mysql
+
+
+启动mysql控制台： 
+      mysql
+mysql>; USE mysql; 
+mysql>; UPDATE user SET Password=PASSWORD('newpassword') WHERE user='root'; 
+mysql>; FLUSH PRIVILEGES; 
+     允许远程登录 
+mysql -u root -p 
+Enter Password: <your new password> 
+mysql>GRANT ALL PRIVILEGES ON *.* TO '用户名'@'%' IDENTIFIED BY '密码' WITH GRANT OPTION; 
+    完成后就能远程管理mysql了。
+
+   mysql服务名字   service  mysqld start
+   
+   
+   GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '密码' WITH GRANT OPTION; 

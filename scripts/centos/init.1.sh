@@ -287,3 +287,4 @@ yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.r
 #sudo /usr/bin/python3 get-pip.py
 # pip install -U pip
 
+history -c

@@ -1,0 +1,67 @@
+version: '3.6'
+
+services:
+  consul-node1:
+    image: bitnami/consul:1
+    command: [ "consul", "agent", "-bootstrap-expect=3", "-server", "-bind={{ GetInterfaceIP \"eth0\" }}", "-client=0.0.0.0", "-ui", "-data-dir=/bitnami", "-join=consul-node2", "-join=consul-node3",]
+    environment:
+      - CONSUL_BOOTSTRAP_EXPECT=3
+      - CONSUL_CLIENT_LAN_ADDRESS=0.0.0.0
+      - CONSUL_DISABLE_KEYRING_FILE=true
+      - CONSUL_RETRY_JOIN=consul-node1
+    ports:
+      - '8300:8300'
+      - '8301:8301'
+      - '8301:8301/udp'
+      - '8500:8500'
+      - '8600:8600'
+      - '8600:8600/udp'
+    networks:
+      - consul
+      - prod
+    volumes:
+      - 'consul-node1_data:/bitnami'
+
+  consul-node2:
+    image: bitnami/consul:1
+    command: [ "consul", "agent", "-bootstrap-expect=3", "-server", "-bind={{ GetInterfaceIP \"eth0\" }}", "-client=0.0.0.0", "-ui", "-data-dir=/bitnami", "-join=consul-node1","-join=consul-node3",]
+    environment:
+      - CONSUL_BOOTSTRAP_EXPECT=3
+      - CONSUL_CLIENT_LAN_ADDRESS=0.0.0.0
+      - CONSUL_DISABLE_KEYRING_FILE=true
+      - CONSUL_RETRY_JOIN=consul-node1
+      - CONSUL_UI=false
+    networks:
+      - consul
+      - prod
+    volumes:
+      - 'consul-node2_data:/bitnami'
+
+  consul-node3:
+    image: bitnami/consul:1
+    command: [ "consul", "agent", "-bootstrap-expect=3", "-server", "-bind={{ GetInterfaceIP \"eth0\" }}", "-client=0.0.0.0", "-ui", "-data-dir=/bitnami", "-join=consul-node2", "-join=consul-node1",]
+    networks:
+      - consul
+      - prod
+    environment:
+      - CONSUL_BOOTSTRAP_EXPECT=3
+      - CONSUL_CLIENT_LAN_ADDRESS=0.0.0.0
+      - CONSUL_DISABLE_KEYRING_FILE=true
+      - CONSUL_RETRY_JOIN=consul-node1
+      - CONSUL_UI=false
+    volumes:
+      - 'consul-node3_data:/bitnami'
+
+networks:
+  consul:
+  prod:
+    external: true
+    
+volumes:
+  consul-node1_data:
+    driver: local
+  consul-node2_data:
+    driver: local
+  consul-node3_data:
+    driver: local
+    

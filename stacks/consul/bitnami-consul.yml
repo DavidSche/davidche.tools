@@ -1,0 +1,36 @@
+version: '3.6'
+services:
+  consul:
+    image:  bitnami/consul:1
+    hostname: "{{.Node.Hostname}}"
+    environment:
+      - CONSUL_BOOTSTRAP_EXPECT=3
+      - CONSUL_CLIENT_LAN_ADDRESS=0.0.0.0
+      - CONSUL_DISABLE_KEYRING_FILE=true
+      - CONSUL_RETRY_JOIN=consul-node1
+      - CONSUL_UI=true
+    networks:
+      - consul
+      - prod
+      - prod2
+    ports:
+      - 8400:8400
+      - 8500:8500
+      - 8600:8600
+    volumes:
+      - consul-node_data:/bitnami
+    deploy:
+      mode: global
+      placement:
+        constraints: [node.labels.consul == true]
+    command: [ "consul", "agent", "-server", "-bootstrap-expect=3", "-retry-max=3", "-retry-interval=10s", "-datacenter=prod", "-join=consul", "-retry-join=consul", "-bind={{ GetInterfaceIP \"eth0\" }}", "-client=0.0.0.0", "-ui"]
+networks:
+  consul:
+  prod:
+    external: true
+  prod2:
+    external: true
+volumes:
+  consul-data:
+
+# demo
