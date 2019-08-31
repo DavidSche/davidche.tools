@@ -1,0 +1,640 @@
+
+06 Kubernetes集群部署实操演示（一） ---- 系统初始化/部署Etcd && Flanneld
+
+
+*****************************************************************
+1、Kubernetes相关组件版本
+*****************************************************************
+
+	OS：
+	CentOS		7.5 (1804)
+
+	Plugins：
+	Kubernetes	1.13.0
+	Docker		18.06.0-ce
+	Etcd		3.3.7
+	Flanneld	0.10.0
+	Harbor		1.7.3
+
+	AddOn：
+	Coredns		
+	Dashboard	
+
+
+*****************************************************************
+2、系统初始化和全局变量
+*****************************************************************
+
+	2.1：集群机器
+	Master01	192.168.80.61
+	Master02	192.168.80.62
+	Master03	192.168.80.63
+	Node01		192.168.80.64
+	Node02		192.168.80.65
+	Node03		192.168.80.66
+	Node04		192.168.80.67
+
+	2.2：设置各主机名:
+	# cat /etc/hostname
+	master01
+
+	# cat /etc/hosts
+	127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+	::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+
+	192.168.80.61 master01 master01
+	192.168.80.62 master02 master02
+	192.168.80.63 master03 master03
+	192.168.80.64 node01   node01
+	192.168.80.65 node02   node02
+	192.168.80.66 node03   node03
+	192.168.80.67 node04   node04
+	192.168.80.41 harbor.io
+
+
+	2.3：免密登录其它结点
+	配置master01可以免密SSH登录其它结点，方便远程分发文件及执行命令
+	[root@master01 ~]# ssh-keygen -t rsa
+	[root@master01 ~]# ssh-copy-id root@master01
+	[root@master01 ~]# ssh-copy-id root@master02
+	[root@master01 ~]# ssh-copy-id root@master03
+	[root@master01 ~]# ssh-copy-id root@node01
+	[root@master01 ~]# ssh-copy-id root@node02
+	[root@master01 ~]# ssh-copy-id root@node03
+	[root@master01 ~]# ssh-copy-id root@node04
+
+
+	2.4：安装依赖包 && 关闭防火墙 && 关闭SWAP分区 && 关闭SELinux && 加载内核模块
+	[root@master01 ~]# yum install -y epel-release
+	[root@master01 ~]# yum install -y conntrack ipvsadm ipset jq sysstat curl iptables libseccomp
+
+	[root@master01 ~]# systemctl stop firewalld
+	[root@master01 ~]# systemctl disable firewalld
+	[root@master01 ~]# iptables -F && iptables -X && iptables -F -t nat && iptables -X -t nat
+	[root@master01 ~]# iptables -P FORWARD ACCEPT
+
+	[root@master01 ~]# swapoff -a
+	[root@master01 ~]# sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+	防止开机自动挂载swap分区，注释/etc/fstab中相应的条目
+	
+	[root@master01 ~]# setenforce 0
+	[root@master01 ~]# vim /etc/selinux/config 
+	SELINUX=disabled
+
+	[root@master01 ~]# modprobe br_netfilter
+	[root@master01 ~]# modprobe ip_vs
+
+
+	2.5：设置系统参数
+	[root@master01 ~]# cat > kubernetes.conf <<EOF
+net.bridge.bridge-nf-call-iptables=1
+net.bridge.bridge-nf-call-ip6tables=1
+net.ipv4.ip_forward=1
+net.ipv4.tcp_tw_recycle=0
+vm.swappiness=0
+vm.overcommit_memory=1
+vm.panic_on_oom=0
+fs.inotify.max_user_watches=89100
+fs.file-max=52706963
+fs.nr_open=52706963
+net.ipv6.conf.all.disable_ipv6=1
+net.netfilter.nf_conntrack_max=2310720
+EOF
+	[root@master01 ~]# cp kubernetes.conf  /etc/sysctl.d/kubernetes.conf
+	[root@master01 ~]# sysctl -p /etc/sysctl.d/kubernetes.conf
+
+
+	2.6：创建目录，修改和分发集群环境变量定义脚本
+
+	[root@master01 ~]# vim environment.sh
+	内容另详
+	[root@master01 ~]# source environment.sh
+	[root@master01 ~]# mkdir -p /etc/kubernetes
+	[root@master01 ~]# mkdir -p /etc/kubernetes/cert
+	[root@master01 ~]# cp environment.sh /etc/kubernetes/
+	[root@master01 ~]# cat .bash_profile
+# .bash_profile
+
+# Get the aliases and functions
+if [ -f ~/.bashrc ]; then
+	. ~/.bashrc
+fi
+
+######################################
+source  /etc/kubernetes/environment.sh
+######################################
+
+PATH=$PATH:$HOME/bin
+
+export PATH
+
+	全部结点创建目录
+	[root@master01 ~]# for node_ip in ${K8S_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		mkdir -p /etc/kubernetes
+		mkdir -p /etc/kubernetes/cert
+	done
+
+	Master结点创建目录
+	[root@master01 ~]# for node_ip in ${MASTER_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		mkdir -p /etc/etcd
+		mkdir -p /etc/etcd/cert
+		mkdir -p /opt/etcd
+	done
+
+	Master结点创建目录
+	[root@master01 ~]# for node_ip in ${MASTER_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		mkdir -p /etc/flanneld
+		mkdir -p /etc/flanneld/cert
+	done
+
+	分发文件environment.sh
+	[root@master01 ~]# for node_ip in ${NODE_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		scp environment.sh root@${node_ip}:/etc/kubernetes/
+		ssh root@${node_ip} "chmod +x /etc/kubernetes/*"
+	done
+
+
+*****************************************************************
+3、创建CA证书和秘钥
+*****************************************************************
+
+	3.1：安装CFSSL
+	[root@master01 ~]# mkdir -p /root/soft
+	[root@master01 ~]# mkdir -p /root/soft/cfssl
+	[root@master01 ~]# cd /root/soft/cfssl
+	[root@master01 ~]# wget https://pkg.cfssl.org/R1.2/cfssl_linux-amd64
+	[root@master01 ~]# mv cfssl_linux-amd64 /usr/local/bin/cfssl
+	[root@master01 ~]# wget https://pkg.cfssl.org/R1.2/cfssljson_linux-amd64
+	[root@master01 ~]# mv cfssljson_linux-amd64 /usr/local/bin/cfssljson
+	[root@master01 ~]# wget https://pkg.cfssl.org/R1.2/cfssl-certinfo_linux-amd64
+	[root@master01 ~]# mv cfssl-certinfo_linux-amd64 /usr/local/bin/cfssl-certinfo
+	[root@master01 ~]# chmod +x /usr/local/bin/*
+
+	3.2：创建根证书 (CA)
+	[root@master01 ~]# mkdir -p /root/cert
+	[root@master01 ~]# touch ca-config.json
+	[root@master01 ~]# vim ca-config.json
+	{
+		"signing": {
+			"default": {
+				"expiry": "87600h"
+			},
+			"profiles": {
+				"kubernetes": {
+					"usages": [
+						"signing",
+						"key encipherment",
+						"server auth",
+						"client auth"
+					],
+					"expiry": "87600h"
+				}
+			}
+		}
+	}
+
+	3.3：创建证书签名请求文件
+	[root@master01 ~]# touch ca-csr.json
+	[root@master01 ~]# vim ca-csr.json
+	{
+		"CN": "kubernetes",
+		"key": {
+			"algo": "rsa",
+			"size": 2048
+		},
+		"names": [{
+			"C" : "CN",
+			"ST": "GuangDong",
+			"L" : "ShenZheng",
+			"O" : "pingan",
+			"OU": "caas"
+		}]
+	}
+	CN：Common Name，kube-apiserver从证书中提取该字段作为请求的用户名 (User Name)，浏览器使用该字段验证网站是否合法
+	O ：Organization，kube-apiserver从证书中提取该字段作为请求用户所属的组 (Group)
+	kube-apiserver将提取的User、Group作为RBAC授权的用户标识
+
+	3.4：生成CA证书和私钥 && 分发证书文件
+	[root@master01 ~]# cfssl gencert -initca ca-csr.json | cfssljson -bare ca
+	[root@master01 ~]# ls ca*
+	ca-config.json  ca.csr  ca-csr.json  ca-key.pem  ca.pem
+	[root@master01 ~]# for node_ip in ${K8S_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		scp ca*.pem ca-config.json root@${node_ip}:/etc/kubernetes/cert
+	done
+
+
+*****************************************************************
+4、部署kubectl命令行工具
+*****************************************************************
+
+	4.1：安装kubectl && 分发到所有使用kubectl的结点
+	[root@master01 ~]# mkdir -p /root/soft/cfssl
+	[root@master01 ~]# cd /root/soft/cfssl
+	[root@master01 ~]# wget https://dl.k8s.io/v1.13.0/kubernetes-client-linux-amd64.tar.gz
+	[root@master01 ~]# tar -xzvf kubernetes-client-linux-amd64.tar.gz
+
+	[root@master01 ~]# for node_ip in ${K8S_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		scp kubernetes/client/bin/kubectl root@${node_ip}:/usr/local/bin/
+		ssh k8s@${node_ip} "chmod +x /usr/local/bin/*"
+	done
+
+	4.2：创建admin证书和私钥
+	[root@master01 ~]# touch ca-csr.json
+	[root@master01 ~]# vim ca-csr.json
+	{
+		"CN": "admin",
+		"hosts": [],
+		"key": {
+			"algo": "rsa",
+			"size": 2048
+		},
+		"names": [{
+			"C" : "CN",
+			"ST": "GuangDong",
+			"L" : "ShenZheng",
+			"O" : "system:masters",
+			"OU": "caas"
+		}]
+	}
+
+	O为system:masters，kube-apiserver收到该证书后将请求的Group设置为 system:masters
+	预定义的ClusterRoleBinding cluster-admin 将Group system:masters与Role cluster-admin绑定，该Role授予所有API的权限
+	该证书只会被kubectl当做client证书使用，所以hosts字段为空
+
+	[root@master01 ~]# cfssl gencert -ca=/etc/kubernetes/cert/ca.pem \
+	-ca-key=/etc/kubernetes/cert/ca-key.pem \
+	-config=/etc/kubernetes/cert/ca-config.json \
+	-profile=kubernetes admin-csr.json | cfssljson -bare admin
+	[root@master01 ~]# ls admin*
+	admin.csr  admin-csr.json  admin-key.pem  admin.pem
+
+	4.3：创建kubeconfig文件 && 分发kubeconfig文件
+	kubeconfig为kubectl的配置文件，包含访问apiserver的所有信息，如apiserver地址、CA证书和自身使用的证书
+	默认位置：/root/.kube/config，config是文件
+
+	# 设置集群参数
+	[root@master01 ~]# kubectl config set-cluster kubernetes \
+	--certificate-authority=/etc/kubernetes/cert/ca.pem \
+	--embed-certs=true \
+	--server=${KUBE_APISERVER} \
+	--kubeconfig=kubectl.kubeconfig
+
+	# 设置客户端认证参数
+	[root@master01 ~]# kubectl config set-credentials admin \
+	--client-certificate=admin.pem \
+	--client-key=admin-key.pem \
+	--embed-certs=true \
+	--kubeconfig=kubectl.kubeconfig
+
+	# 设置上下文参数
+	[root@master01 ~]# kubectl config set-context kubernetes \
+	--cluster=kubernetes \
+	--user=admin \
+	--kubeconfig=kubectl.kubeconfig
+
+	# 设置默认上下文
+	[root@master01 ~]# kubectl config use-context kubernetes --kubeconfig=kubectl.kubeconfig
+
+	# 分发kubeconfig文件
+	[root@master01 ~]# for node_ip in ${K8S_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		ssh root@${node_ip} "mkdir -p ~/.kube"
+		scp kubectl.kubeconfig root@${node_ip}:~/.kube/config
+	done
+
+
+*****************************************************************
+5、部署etcd集群
+*****************************************************************
+
+	5.1：安装etcd && 分发3个安装结点（Master结点）
+	[root@master01 ~]# wget https://github.com/coreos/etcd/releases/download/v3.3.7/etcd-v3.3.7-linux-amd64.tar.gz
+	[root@master01 ~]# tar -xvf etcd-v3.3.7-linux-amd64.tar.gz
+	[root@master01 ~]# for node_ip in ${MASTER_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		scp etcd-v3.3.7-linux-amd64/etcd* root@${node_ip}:/usr/local/bin
+		ssh root@${node_ip} "chmod +x /usr/local/bin/*"
+	done
+
+	5.2：创建etcd证书和私钥，并分发到部署结点
+	[root@master01 ~]# touch etcd-csr.json
+	[root@master01 ~]# vim etcd-csr.json
+	{
+		"CN": "etcd",
+		"hosts": [
+			"127.0.0.1",
+			"192.168.80.61",
+			"192.168.80.62",
+			"192.168.80.63"
+		],
+		"key": {
+			"algo": "rsa",
+			"size": 2048
+		},
+		"names": [{
+			"C" : "CN",
+			"ST": "GuangDong",
+			"L" : "ShenZheng",
+			"O" : "system:masters",
+			"OU": "caas"
+		}]
+	}
+
+	[root@master01 ~]# cfssl gencert -ca=/etc/kubernetes/cert/ca.pem \
+	-ca-key=/etc/kubernetes/cert/ca-key.pem \
+    -config=/etc/kubernetes/cert/ca-config.json \
+    -profile=kubernetes etcd-csr.json | cfssljson -bare etcd
+	[root@master01 ~]# ls etcd*
+	etcd.csr  etcd-csr.json  etcd-key.pem  etcd.pem
+
+	# 分发生成的证书和私钥到各etcd结点
+	[root@master01 ~]# for node_ip in ${MASTER_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		scp etcd*.pem root@${node_ip}:/etc/etcd/cert/
+	done
+
+	5.3：创建etcd的systemd unit模板
+	[root@master01 ~]# mkdir /root/service
+	[root@master01 ~]# mkdir /root/service/etcd
+	[root@master01 ~]# cd /root/service/etcd
+	[root@master01 ~]# touch etcd.service.template
+	[root@master01 ~]# vim etcd.service.template
+[Unit]
+Description=Etcd Server
+After=network.target
+After=network-online.target
+Wants=network-online.target
+Documentation=https://github.com/coreos
+
+[Service]
+User=root
+Type=notify
+WorkingDirectory=/opt/etcd/
+ExecStart=/usr/local/bin/etcd \
+  --data-dir=/opt/etcd/ \
+  --name=##NODE_NAME## \
+  --cert-file=/etc/etcd/cert/etcd.pem \
+  --key-file=/etc/etcd/cert/etcd-key.pem \
+  --trusted-ca-file=/etc/kubernetes/cert/ca.pem \
+  --peer-cert-file=/etc/etcd/cert/etcd.pem \
+  --peer-key-file=/etc/etcd/cert/etcd-key.pem \
+  --peer-trusted-ca-file=/etc/kubernetes/cert/ca.pem \
+  --peer-client-cert-auth \
+  --client-cert-auth \
+  --listen-peer-urls=https://##NODE_IP##:2380 \
+  --initial-advertise-peer-urls=https://##NODE_IP##:2380 \
+  --listen-client-urls=https://##NODE_IP##:2379,http://127.0.0.1:2379 \
+  --advertise-client-urls=https://##NODE_IP##:2379 \
+  --initial-cluster-token=etcd-cluster-0 \
+  --initial-cluster=master01=https://192.168.80.61:2380,master02=https://192.168.80.62:2380,master03=https://192.168.80.63:2380 \
+  --initial-cluster-state=new
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+
+WorkingDirectory、--data-dir：指定工作目录和数据目录为 /var/lib/etcd，需在启动服务前创建这个目录
+--name：指定节点名称，当 --initial-cluster-state值为new时，--name的参数值必须位于--initial-cluster列表中
+--cert-file、--key-file：etcd server与client通信时使用的证书和私钥
+--trusted-ca-file：签名client证书的CA证书，用于验证client证书
+--peer-cert-file、--peer-key-file：etcd与peer通信使用的证书和私钥
+--peer-trusted-ca-file：签名peer证书的CA证书，用于验证peer证书
+
+	5.4：创建和分发etcd systemd unit文件
+	[root@master01 ~]# for (( i=0; i < 3; i++ ))
+	do
+		sed -e "s/##NODE_NAME##/${MASTER_NAMES[i]}/" -e "s/##NODE_IP##/${MASTER_IPS[i]}/" etcd.service.template > etcd-${MASTER_IPS[i]}.service
+	done
+	[root@master01 ~]# ls *.service
+	etcd-192.168.80.61.service  etcd-192.168.80.62.service  etcd-192.168.80.63.service
+
+	[root@master01 ~]# for node_ip in ${MASTER_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		ssh root@${node_ip} "mkdir -p /opt/etcd"
+		scp etcd-${node_ip}.service root@${node_ip}:/usr/lib/systemd/system/etcd.service
+	done
+
+	5.5：启动etcd服务 &&  检查启动结果
+	# 启动etcd服务
+	[root@master01 ~]# for node_ip in ${MASTER_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		ssh root@${node_ip} "systemctl daemon-reload && systemctl enable etcd && systemctl restart etcd &"
+	done
+
+	# 检查服务进程
+	[root@master01 ~]# for node_ip in ${MASTER_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		ssh root@${node_ip} "systemctl status etcd|grep Active"
+	done
+	确保状态为active (running)，否则查看日志，确认原因：
+	[root@master01 ~]# journalctl -u etcd
+
+	# 验证服务状态
+	[root@master01 ~]# for node_ip in ${MASTER_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		ETCDCTL_API=3 /usr/local/bin/etcdctl \
+		--endpoints=https://${node_ip}:2379  \
+		--cacert=/etc/kubernetes/cert/ca.pem \
+		--cert=/etc/etcd/cert/etcd.pem       \
+		--key=/etc/etcd/cert/etcd-key.pem endpoint health
+	done
+
+	预期输出：
+	https://192.168.80.61:2379 is healthy: successfully committed proposal: took = 2.192932ms
+	https://192.168.80.62:2379 is healthy: successfully committed proposal: took = 3.546896ms
+	https://192.168.80.63:2379 is healthy: successfully committed proposal: took = 3.013667ms
+
+
+*****************************************************************
+6、部署flannel网络
+*****************************************************************
+
+	6.1：安装flannel到所有Worker Node
+	[root@master01 ~]# mkdir /root/soft/flannel
+	[root@master01 ~]# wget https://github.com/coreos/flannel/releases/download/v0.10.0/flannel-v0.10.0-linux-amd64.tar.gz
+	[root@master01 ~]# tar -xzvf flannel-v0.10.0-linux-amd64.tar.gz -C /root/soft/flannel
+	[root@master01 ~]# for node_ip in ${NODE_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		scp  flannel/{flanneld,mk-docker-opts.sh} root@${node_ip}:/usr/local/bin/
+		ssh root@${node_ip} "chmod +x /usr/local/bin/*"
+	done
+
+	6.2：创建flannel证书和私钥，并分发到部署结点
+	[root@master01 ~]# touch flanneld-csr.json
+	[root@master01 ~]# vim flanneld-csr.json
+	{
+		"CN": "flanneld",
+		"hosts": [],
+		"key": {
+			"algo": "rsa",
+			"size": 2048
+		},
+		"names": [{
+			"C" : "CN",
+			"ST": "GuangDong",
+			"L" : "ShenZheng",
+			"O" : "pingan",
+			"OU": "caas"
+		}]
+	}
+
+	# 生成证书和私钥：
+	[root@master01 ~]# cfssl gencert -ca=/etc/kubernetes/cert/ca.pem \
+	-ca-key=/etc/kubernetes/cert/ca-key.pem \
+	-config=/etc/kubernetes/cert/ca-config.json \
+	-profile=kubernetes flanneld-csr.json | cfssljson -bare flanneld
+	[root@master01 ~]# ls flanneld*
+	flanneld.csr  flanneld-csr.json  flanneld-key.pem  flanneld.pem
+
+	# 将生成的证书和私钥分发到所有Worker节点
+	[root@master01 ~]# for node_ip in ${NODE_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		scp flanneld*.pem root@${node_ip}:/etc/flanneld/cert
+	done
+
+
+	6.3：向etcd写入集群Pod网段信息【这步很关键，要理解深刻】
+	注意：本步骤只需执行一次
+	[root@master01 ~]# etcdctl \
+	--endpoints=${ETCD_ENDPOINTS} \
+	--ca-file=/etc/kubernetes/cert/ca.pem \
+	--cert-file=/etc/flanneld/cert/flanneld.pem \
+	--key-file=/etc/flanneld/cert/flanneld-key.pem \
+	set ${FLANNEL_ETCD_PREFIX}/config '{"Network":"'${CLUSTER_CIDR}'", "SubnetLen": 24, "Backend": {"Type": "vxlan"}}'
+
+	# flanneld当前版本(v0.10.0)不支持etcd v3，故使用etcd v2 API写入配置key和网段数据
+	# 写入的Pod网段${CLUSTER_CIDR}必须是/16段地址，必须与kube-controller-manager的--cluster-cidr参数值一致
+
+	6.3：创建flanneld的systemd unit文件
+	[root@master01 ~]# mkdir /root/service/flanneld
+	[root@master01 ~]# cd /root/service/flanneld
+	[root@master01 ~]# vim flanneld.service
+[Unit]
+Description=Flanneld overlay address etcd agent
+After=network.target
+After=network-online.target
+Wants=network-online.target
+After=etcd.service
+Before=docker.service
+
+[Service]
+Type=notify
+ExecStart=/usr/local/bin/flanneld \\
+  -etcd-cafile=/etc/kubernetes/cert/ca.pem \\
+  -etcd-certfile=/etc/flanneld/cert/flanneld.pem \\
+  -etcd-keyfile=/etc/flanneld/cert/flanneld-key.pem \\
+  -etcd-endpoints=${ETCD_ENDPOINTS} \\
+  -etcd-prefix=${FLANNEL_ETCD_PREFIX} \\
+  -iface=${IFACE}
+ExecStartPost=/opt/k8s/bin/mk-docker-opts.sh -k DOCKER_NETWORK_OPTIONS -d /run/flannel/docker
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+RequiredBy=docker.service
+
+	注意：
+	# mk-docker-opts.sh脚本将分配给flanneld的Pod子网网段信息写入/run/flannel/docker文件，后续docker 启动时使用这个文件中的环境变量配置docker0网桥；
+	# flanneld使用系统缺省路由所在的接口与其它节点通信，对于有多个网络接口（如内网和公网）的节点，可以用-iface 参数指定通信接口，如上面的eth0接口;
+
+	6.4：启动flanneld服务 && 检查启动结果
+	[root@master01 ~]# for node_ip in ${NODE_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		scp flanneld.service root@${node_ip}:/usr/lib/systemd/system/
+	done
+
+	[root@master01 ~]# for node_ip in ${NODE_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		ssh root@${node_ip} "systemctl daemon-reload && systemctl enable flanneld && systemctl restart flanneld"
+	done
+
+	[root@master01 ~]# for node_ip in ${NODE_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		ssh root@${node_ip} "systemctl status flanneld|grep Active"
+	done
+	# 确保状态为 active (running)，否则查看日志，确认原因：
+	[root@master01 ~]# journalctl -u flanneld
+
+	# 检查分配给各flanneld的Pod网段信息
+	[root@master01 ~]# etcdctl \
+	--endpoints=${ETCD_ENDPOINTS} \
+	--ca-file=/etc/kubernetes/cert/ca.pem \
+	--cert-file=/etc/flanneld/cert/flanneld.pem \
+	--key-file=/etc/flanneld/cert/flanneld-key.pem \
+	get ${FLANNEL_ETCD_PREFIX}/config
+	输出：
+	{"Network":"172.30.0.0/16", "SubnetLen": 24, "Backend": {"Type": "vxlan"}}
+
+	# 查看已分配的Pod子网段列表(/24):
+	[root@master01 ~]# etcdctl \
+	--endpoints=${ETCD_ENDPOINTS} \
+	--ca-file=/etc/kubernetes/cert/ca.pem \
+	--cert-file=/etc/flanneld/cert/flanneld.pem \
+	--key-file=/etc/flanneld/cert/flanneld-key.pem \
+	ls ${FLANNEL_ETCD_PREFIX}/subnets
+	输出：
+	/kubernetes/network/subnets/172.30.81.0-24
+	/kubernetes/network/subnets/172.30.29.0-24
+	/kubernetes/network/subnets/172.30.39.0-24
+	/kubernetes/network/subnets/172.30.87.0-24
+
+	# 查看某一Pod网段对应的节点IP和flannel接口地址
+	[root@master01 ~]# etcdctl \
+	--endpoints=${ETCD_ENDPOINTS} \
+	--ca-file=/etc/kubernetes/cert/ca.pem \
+	--cert-file=/etc/flanneld/cert/flanneld.pem \
+	--key-file=/etc/flanneld/cert/flanneld-key.pem \
+	get ${FLANNEL_ETCD_PREFIX}/subnets/172.30.81.0-24
+	输出：
+	{"PublicIP":"192.168.80.64","BackendType":"vxlan","BackendData":{"VtepMAC":"12:21:93:9e:b1:eb"}}
+
+	6.5：验证各节点能通过Pod网段互通
+	[root@master01 ~]# for node_ip in ${NODE_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		ssh ${node_ip} "/usr/sbin/ip addr show flannel.1|grep -w inet"
+	done
+	输出：
+	inet 172.30.81.0/32 scope global flannel.1
+	inet 172.30.29.0/32 scope global flannel.1
+	inet 172.30.39.0/32 scope global flannel.1
+	inet 172.30.87.0/32 scope global flannel.1
+
+	# 在各节点上ping所有flannel接口IP，确保能通
+	[root@master01 ~]# for node_ip in ${NODE_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		ssh ${node_ip} "ping -c 1 172.30.81.0"
+		ssh ${node_ip} "ping -c 1 172.30.29.0"
+		ssh ${node_ip} "ping -c 1 172.30.39.0"
+		ssh ${node_ip} "ping -c 1 172.30.87.0"
+	done
+
+
+

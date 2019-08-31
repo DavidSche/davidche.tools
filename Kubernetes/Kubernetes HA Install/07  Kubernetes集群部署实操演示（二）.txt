@@ -1,0 +1,508 @@
+
+07 Kubernetes集群部署实操演示（二） ---- 部署master结点
+
+
+*****************************************************************
+7、部署kube-apiserver
+*****************************************************************
+
+	7.1：下载kubernetes server二进制文件，包括kube-apiserver, kube-scheduler, kube-controller-manager
+	[root@master01 ~]# mkdir -p kubernetes-server
+	[root@master01 ~]# wget https://dl.k8s.io/v1.13.0/kubernetes-server-linux-amd64.tar.gz
+	[root@master01 ~]# tar -xzvf kubernetes-server-linux-amd64.tar.gz
+	[root@master01 ~]# cd kubernetes
+	[root@master01 ~]# tar -xzvf  kubernetes-src.tar.gz
+
+	# 分发到各Master结点
+	[root@master01 ~]# for node_ip in ${MASTER_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		scp /root/kubernetes-server/server/bin/* root@${node_ip}:/usr/local/bin/
+		ssh root@${node_ip} "chmod +x /usr/local/bin/*"
+	done
+
+	7.2：创建kubernetes证书和私钥，并分发到Master结点
+	[root@master01 ~]# cd /root/cert
+	[root@master01 ~]# touch kubernetes-csr.json
+	[root@master01 ~]# vim kubernetes-csr.json
+	{
+	  "CN": "kubernetes",
+	  "hosts": [
+		"127.0.0.1",
+		"192.168.80.61",
+		"192.168.80.62",
+		"192.168.80.63",
+		"192.168.80.64",
+		"192.168.80.65",
+		"192.168.80.66",
+		"192.168.80.67",
+		"${MASTER_VIP}",
+		"${CLUSTER_KUBERNETES_SVC_IP}",
+		"kubernetes",
+		"kubernetes.default",
+		"kubernetes.default.svc",
+		"kubernetes.default.svc.cluster",
+		"kubernetes.default.svc.cluster.local"
+	  ],
+	  "key": {
+		"algo": "rsa",
+		"size": 2048
+	  },
+	  "names": [{
+		  "C" : "CN",
+		  "ST": "GuangDong",
+		  "L" : "ShenZheng",
+		  "O" : "pingan",
+		  "OU": "caas"
+	  }]
+	}
+
+	hosts字段指定授权使用该证书的IP或域名列表，这里列出了VIP、apiserver节点IP、kubernetes服务IP和域名
+	域名最后字符不能是.(如不能为kubernetes.default.svc.cluster.local.)，否则解析时失败，提示：x509:cannot parse dnsName "kubernetes.default.svc.cluster.local."
+	如果使用非cluster.local域名，如pingan.com，则需要修改域名列表中的最后两个域名为：kubernetes.default.svc.opsnull、kubernetes.default.svc.pingan.com
+	kubernetes服务IP是apiserver自动创建的，一般是--service-cluster-ip-range参数指定的网段的第一个IP，后续可以通过如下命令获取
+	$ kubectl get svc kubernetes -n default
+	NAME         CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+	kubernetes   10.254.0.1   <none>        443/TCP   1d
+
+	# 生成证书和私钥：
+	[root@master01 ~]# cfssl gencert -ca=/etc/kubernetes/cert/ca.pem \
+	-ca-key=/etc/kubernetes/cert/ca-key.pem \
+	-config=/etc/kubernetes/cert/ca-config.json \
+	-profile=kubernetes kubernetes-csr.json | cfssljson -bare kubernetes
+	[root@master01 ~]# ls kubernetes*pem
+	kubernetes-key.pem  kubernetes.pem
+
+	#分发到Master结点
+	[root@master01 ~]# for node_ip in ${MASTER_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		scp kubernetes*.pem root@${node_ip}:/etc/kubernetes/cert/
+	done
+
+	7.3：创建加密配置文件
+	[root@master01 ~]# cd /root/kubeconfig
+	[root@master01 ~]# vim encryption-config.yaml
+	kind: EncryptionConfig
+	apiVersion: v1
+	resources:
+		- resources:
+			- secrets
+		providers:
+			- aescbc:
+				keys:
+					- name: key1
+					secret: ${ENCRYPTION_KEY}
+			- identity: {}
+
+	# 将加密配置文件拷贝到Master节点的/etc/kubernetes目录下
+	[root@master01 ~]# for node_ip in ${MASTER_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		scp encryption-config.yaml root@${node_ip}:/etc/kubernetes/
+	done
+
+
+	7.4：创建kube-apiserver的systemd unit文件
+	[root@master01 ~]# mkdir -p /root/service/apiserver
+	[root@master01 ~]# cd /root/service/apiserver
+	[root@master01 ~]# vim kube-apiserver.service.template
+[Unit]
+Description=Kubernetes API Server
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/kube-apiserver \
+  --enable-admission-plugins=Initializers,NamespaceLifecycle,NodeRestriction,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota \
+  --anonymous-auth=false \
+  --experimental-encryption-provider-config=/etc/kubernetes/encryption-config.yaml \
+  --advertise-address=##NODE_IP## \
+  --bind-address=##NODE_IP## \
+  --insecure-port=0 \
+  --authorization-mode=Node,RBAC \
+  --runtime-config=api/all \
+  --enable-bootstrap-token-auth \
+  --service-cluster-ip-range=${SERVICE_CIDR} \
+  --service-node-port-range=${NODE_PORT_RANGE} \
+  --tls-cert-file=/etc/kubernetes/cert/kubernetes.pem \
+  --tls-private-key-file=/etc/kubernetes/cert/kubernetes-key.pem \
+  --client-ca-file=/etc/kubernetes/cert/ca.pem \
+  --kubelet-client-certificate=/etc/kubernetes/cert/kubernetes.pem \
+  --kubelet-client-key=/etc/kubernetes/cert/kubernetes-key.pem \
+  --service-account-key-file=/etc/kubernetes/cert/ca-key.pem \
+  --etcd-cafile=/etc/kubernetes/cert/ca.pem \
+  --etcd-certfile=/etc/kubernetes/cert/kubernetes.pem \
+  --etcd-keyfile=/etc/kubernetes/cert/kubernetes-key.pem \
+  --etcd-servers=${ETCD_ENDPOINTS} \
+  --enable-swagger-ui=true \
+  --allow-privileged=true \
+  --apiserver-count=3 \
+  --audit-log-maxage=30 \
+  --audit-log-maxbackup=3 \
+  --audit-log-maxsize=100 \
+  --audit-log-path=/opt/logs/apiserver/kube-apiserver-audit.log
+  --event-ttl=1h \
+  --alsologtostderr=true \
+  --logtostderr=false \
+  --log-dir=/opt/logs/apiserver \
+  --v=2
+Restart=on-failure
+RestartSec=5
+Type=notify
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+
+	--experimental-encryption-provider-config：启用加密特性
+	--authorization-mode=Node,RBAC：开启 Node 和 RBAC 授权模式，拒绝未授权的请求
+	--enable-admission-plugins：启用ServiceAccount和NodeRestriction
+	--service-account-key-file：签名ServiceAccount Token的公钥文件，kube-controller-manager的--service-account-private-key-file指定私钥文件，两者配对使用
+	--tls-*-file：指定 apiserver 使用的证书、私钥和 CA 文件。--client-ca-file 用于验证 client(kue-controller-manager、kube-scheduler、kubelet、kube-proxy 等)请求所带的证书
+	--kubelet-client-certificate、--kubelet-client-key：如果指定，则使用https访问kubelet APIs；需要为证书对应的用户(上面kubernetes*.pem证书的用户为kubernetes)用户定义RBAC 规则，否则访问kubelet API时提示未授权
+	--bind-address： 不能为127.0.0.1，否则外界不能访问它的安全端口6443
+	--insecure-port=0：关闭监听非安全端口(8080)
+	--service-cluster-ip-range：指定Service Cluster IP地址段
+	--service-node-port-range：指定NodePort的端口范围
+	--runtime-config=api/all=true：启用所有版本的APIs，如autoscaling/v2alpha1
+	--enable-bootstrap-token-auth：启用kubelet bootstrap的token认证
+	--apiserver-count=3：指定集群运行模式，多台kube-apiserver会通过leader选举产生一个工作节点，其它节点处于阻塞状态
+
+	# 替换模板文件中的变量，为各节点创建和分发kube-apiserver systemd unit文件
+	[root@master01 ~]# for (( i=0; i < 3; i++ ))
+	do
+		sed -e "s/##NODE_NAMES_NAMES##/${MASTER_NAMES[i]}/" -e "s/##NODE_IP##/${MASTER_IPS[i]}/" kube-apiserver.service.template > kube-apiserver-${MASTER_IPS[i]}.service
+	done
+	[root@master01 ~]# ls kube-apiserver*.service
+
+	[root@master01 ~]# for node_ip in ${MASTER_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		ssh root@${node_ip} "mkdir -p /opt/logs/apiserver"
+		scp kube-apiserver-${node_ip}.service root@${node_ip}:/usr/lib/systemd/system/kube-apiserver.service
+	done
+
+
+	7.5：启动kube-apiserver服务 && 检查运行状态 && 检查集群信息
+	[root@master01 ~]# for node_ip in ${MASTER_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		ssh root@${node_ip} "systemctl daemon-reload && systemctl enable kube-apiserver && systemctl restart kube-apiserver"
+	done
+
+	[root@master01 ~]# for node_ip in ${MASTER_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		ssh root@${node_ip} "systemctl status kube-apiserver |grep 'Active:'"
+	done
+
+	# 确保状态为active (running)，否则到Master节点查看日志，确认原因：
+	[root@master01 ~]# journalctl -u kube-apiserver
+
+	#打印kube-apiserver写入etcd的数据
+	[root@master01 ~]# ETCDCTL_API=3 etcdctl \
+    --endpoints=${ETCD_ENDPOINTS} \
+    --cacert=/etc/kubernetes/cert/ca.pem \
+    --cert=/etc/etcd/cert/etcd.pem \
+    --key=/etc/etcd/cert/etcd-key.pem \
+    get /registry/ --prefix --keys-only
+
+	# 检查集群信息
+	[root@master01 ~]# kubectl cluster-info
+	[root@master01 ~]# kubectl get all --all-namespaces
+	[root@master01 ~]# kubectl get componentstatuses
+	[root@master01 ~]# netstat -lnpt|grep kube             #检查kube-apiserver监听的端口
+
+	# 授予kubernetes证书访问kubelet API的权限【关键注意点】
+	[root@master01 ~]# kubectl create clusterrolebinding kube-apiserver:kubelet-apis --clusterrole=system:kubelet-api-admin --user kubernetes
+
+
+*****************************************************************
+8、部署kube-controller-manager
+*****************************************************************
+
+	8.1：创建kube-controller-manager证书和私钥，并分发到Master结点
+	[root@master01 ~]# touch kube-controller-manager-csr.json
+	[root@master01 ~]# vim kube-controller-manager-csr.json
+	{
+		"CN": "system:kube-controller-manager",
+		"key": {
+			"algo": "rsa",
+			"size": 2048
+		},
+		"hosts": [
+		  "127.0.0.1",
+		  "192.168.80.61",
+		  "192.168.80.62",
+		  "192.168.80.63",
+		],
+		"names": [{
+			"C": "CN",
+		    "ST": "GuangDong",
+		    "L" : "ShenZheng",
+			"O": "system:kube-controller-manager",
+			"OU": "caas"
+		}]
+	}
+
+	CN为 system:kube-controller-manager、O为system:kube-controller-manager，kubernetes内置的ClusterRoleBindings system:kube-controller-manager赋予kube-controller-manager 工作所需的权限
+
+	[root@master01 ~]# cfssl gencert -ca=/etc/kubernetes/cert/ca.pem \
+	-ca-key=/etc/kubernetes/cert/ca-key.pem \
+	-config=/etc/kubernetes/cert/ca-config.json \
+	-profile=kubernetes kube-controller-manager-csr.json | cfssljson -bare kube-controller-manager
+	[root@master01 ~]# ls kube-controller-manager*pem
+
+	[root@master01 ~]# for node_ip in ${MASTER_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		scp kube-controller-manager*.pem root@${node_ip}:/etc/kubernetes/cert/
+	done
+
+
+	8.2：创建和分发kubeconfig文件
+	kubeconfig文件包含访问apiserver的所有信息，如apiserver地址、CA证书和自身使用的证书
+	[root@master01 ~]# mkdir -p /root/kubeconfig
+	[root@master01 ~]# cd /root/kubeconfig
+	[root@master01 ~]# kubectl config set-cluster kubernetes \
+	--certificate-authority=/etc/kubernetes/cert/ca.pem \
+	--embed-certs=true \
+	--server=${KUBE_APISERVER} \
+	--kubeconfig=kube-controller-manager.kubeconfig
+
+	[root@master01 ~]# kubectl config set-credentials system:kube-controller-manager \
+	--client-certificate=kube-controller-manager.pem \
+	--client-key=kube-controller-manager-key.pem \
+	--embed-certs=true \
+	--kubeconfig=kube-controller-manager.kubeconfig
+
+	[root@master01 ~]# kubectl config set-context system:kube-controller-manager \
+	--cluster=kubernetes \
+	--user=system:kube-controller-manager \
+	--kubeconfig=kube-controller-manager.kubeconfig
+
+	[root@master01 ~]# kubectl config use-context system:kube-controller-manager --kubeconfig=kube-controller-manager.kubeconfig
+	[root@master01 ~]# ls *kubeconfig
+
+	# 分发kubeconfig到所有master节点：
+	for node_ip in ${MASTER_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		scp kube-controller-manager.kubeconfig root@${node_ip}:/etc/kubernetes/
+	done
+
+
+	8.3：创建和分发kube-controller-manager systemd unit文件
+	[root@master01 ~]# mkdir /root/service/controller-manager
+	[root@master01 ~]# cd /root/service/controller-manager
+	[root@master01 ~]# vim kube-controller-manager.service
+[Unit]
+Description=Kubernetes Controller Manager
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+
+[Service]
+ExecStart=/usr/local/bin/kube-controller-manager \
+  --port=0 \
+  --secure-port=10252 \
+  --bind-address=127.0.0.1 \
+  --kubeconfig=/etc/kubernetes/kube-controller-manager.kubeconfig \
+  --service-cluster-ip-range=${SERVICE_CIDR} \
+  --cluster-name=kubernetes \
+  --cluster-signing-cert-file=/etc/kubernetes/cert/ca.pem \
+  --cluster-signing-key-file=/etc/kubernetes/cert/ca-key.pem \
+  --experimental-cluster-signing-duration=8760h \
+  --root-ca-file=/etc/kubernetes/cert/ca.pem \
+  --service-account-private-key-file=/etc/kubernetes/cert/ca-key.pem \
+  --leader-elect=true \
+  --feature-gates=RotateKubeletServerCertificate=true \
+  --controllers=*,bootstrapsigner,tokencleaner \
+  --horizontal-pod-autoscaler-use-rest-clients=true \
+  --horizontal-pod-autoscaler-sync-period=10s \
+  --tls-cert-file=/etc/kubernetes/cert/kube-controller-manager.pem \
+  --tls-private-key-file=/etc/kubernetes/cert/kube-controller-manager-key.pem \
+  --use-service-account-credentials=true \
+  --alsologtostderr=true \
+  --logtostderr=false \
+  --log-dir=/opt/logs/controller-manager \
+  --v=2
+Restart=on
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+
+	--port=0：关闭监听http/metrics的请求，同时--address参数无效，--bind-address参数有效
+	--secure-port=10252、--bind-address=0.0.0.0: 在所有网络接口监听 10252 端口的https /metrics请求
+	--kubeconfig：指定kubeconfig文件路径，kube-controller-manager使用它连接和验证kube-apiserver
+	--cluster-signing-*-file：签名TLS Bootstrap创建的证书
+	--experimental-cluster-signing-duration：指定TLS Bootstrap证书的有效期
+	--root-ca-file：放置到容器 ServiceAccount 中的CA证书，用来对kube-apiserver的证书进行校验
+	--service-account-private-key-file：签名ServiceAccount中Token的私钥文件，必须和kube-apiserver的--service-account-key-file指定的公钥文件配对使用
+	--service-cluster-ip-range ：指定 Service Cluster IP 网段，必须和 kube-apiserver 中的同名参数一致
+	--leader-elect=true：集群运行模式，启用选举功能；被选为leader的节点负责处理工作，其它节点为阻塞状态
+	--feature-gates=RotateKubeletServerCertificate=true：开启kublet server证书的自动更新特性
+	--controllers=*,bootstrapsigner,tokencleaner：启用的控制器列表，tokencleaner用于自动清理过期的Bootstrap token
+	--horizontal-pod-autoscaler-*：custom metrics相关参数，支持autoscaling/v2alpha1
+	--tls-cert-file、--tls-private-key-file：使用https输出metrics时使用的Server证书和秘钥
+	--use-service-account-credentials=true
+
+	# 分发systemd unit文件到所有master节点
+	[root@master01 ~]# for node_ip in ${MASTER_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		scp kube-controller-manager.service root@${node_ip}:/usr/lib/systemd/system/
+	done
+
+
+	8.4：启动kube-controller-manager服务 && 检查服务运行状态
+	[root@master01 ~]# for node_ip in ${MASTER_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		ssh root@${node_ip} "mkdir -p /opt/logs/controller-manager"
+		ssh root@${node_ip} "systemctl daemon-reload && systemctl enable kube-controller-manager && systemctl restart kube-controller-manager"
+	done
+
+	[root@master01 ~]# for node_ip in ${MASTER_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		ssh root@${node_ip} "systemctl status kube-controller-manager|grep Active"
+	done
+
+	# 确保状态为 active (running)，否则查看日志，确认原因：
+	[root@master01 ~]# journalctl -u kube-controller-manager
+	[root@master01 ~]# netstat -lnpt|grep kube-controll
+	
+	# 测试kube-controller-manager集群的高可用，查看当前的leader
+	[root@master01 ~]# kubectl get endpoints kube-controller-manager --namespace=kube-system  -o yaml
+
+
+
+*****************************************************************
+9、部署kube-scheduler
+*****************************************************************
+
+	9.1：创建kube-scheduler证书和私钥，并分发到各Master结点上
+	[root@master01 ~]# touch kube-scheduler-csr.json
+	[root@master01 ~]# vim kube-scheduler-csr.json
+	{
+	  "CN": "system:kube-scheduler",
+	  "key": {
+		  "algo": "rsa",
+		  "size": 2048
+	  },
+	  "hosts": [
+		"127.0.0.1",
+		"192.168.80.61",
+		"192.168.80.62",
+		"192.168.80.63",
+	  ],
+	  "names": [{
+		"C" : "CN",
+		"ST": "GuangDong",
+		"L" : "ShenZheng",
+		"O" : "system:kube-scheduler",
+		"OU": "caas"
+	  }]
+	}
+
+	# CN为system:kube-scheduler、O为system:kube-scheduler，kubernetes内置的ClusterRoleBindings system:kube-scheduler将赋予kube-scheduler工作所需的权限
+
+	# 生成证书和私钥
+	[root@master01 ~]# cfssl gencert -ca=/etc/kubernetes/cert/ca.pem \
+	-ca-key=/etc/kubernetes/cert/ca-key.pem \
+	-config=/etc/kubernetes/cert/ca-config.json \
+	-profile=kubernetes kube-scheduler-csr.json | cfssljson -bare kube-scheduler
+	[root@master01 ~]# ls kube-scheduler*pem
+
+
+	9.2：创建和分发 kubeconfig 文件
+	kubeconfig文件包含访问apiserver的所有信息，如apiserver地址、CA证书和自身使用的证书；
+	[root@master01 ~]# cd /root/kubeconfig
+	[root@master01 ~]# kubectl config set-cluster kubernetes \
+	--certificate-authority=/etc/kubernetes/cert/ca.pem \
+	--embed-certs=true \
+	--server=${KUBE_APISERVER} \
+	--kubeconfig=kube-scheduler.kubeconfig
+
+	[root@master01 ~]# kubectl config set-credentials system:kube-scheduler \
+	--client-certificate=kube-scheduler.pem \
+	--client-key=kube-scheduler-key.pem \
+	--embed-certs=true \
+	--kubeconfig=kube-scheduler.kubeconfig
+
+	[root@master01 ~]# kubectl config set-context system:kube-scheduler \
+	--cluster=kubernetes \
+	--user=system:kube-scheduler \
+	--kubeconfig=kube-scheduler.kubeconfig
+
+	[root@master01 ~]# kubectl config use-context system:kube-scheduler --kubeconfig=kube-scheduler.kubeconfig
+
+	分发kubeconfig到所有master节点：
+	[root@master01 ~]# for node_ip in ${MASTER_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		scp kube-scheduler.kubeconfig root@${node_ip}:/etc/kubernetes/
+	done
+
+
+	9.3：创建和分发kube-scheduler systemd unit文件
+	[root@master01 ~]# mkdir -p /root/service/scheduler
+	[root@master01 ~]# cd /root/service/scheduler
+	[root@master01 ~]# vim kube-scheduler.service
+[Unit]
+Description=Kubernetes Scheduler
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+
+[Service]
+ExecStart=/usr/local/bin/kube-scheduler \
+  --address=127.0.0.1 \
+  --kubeconfig=/etc/kubernetes/kube-scheduler.kubeconfig \
+  --leader-elect=true \
+  --alsologtostderr=true \
+  --logtostderr=false \
+  --log-dir=/opt/logs/scheduler \
+  --v=2
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+
+
+	--address：在127.0.0.1:10251端口接收http/metrics请求；kube-scheduler目前还不支持接收https请求
+	--kubeconfig：指定kubeconfig文件路径，kube-scheduler使用它连接和验证 kube-apiserver
+	--leader-elect=true：集群运行模式，启用选举功能；被选为leader的节点负责处理工作，其它节点为阻塞状态
+
+	#分发systemd unit文件到所有master节点
+	[root@master01 ~]# for node_ip in ${MASTER_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		scp kube-scheduler.service root@${node_ip}:/usr/lib/systemd/system/
+	done
+
+
+	9.4：启动kube-scheduler服务 && 检查服务运行状态
+	[root@master01 ~]# for node_ip in ${MASTER_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		ssh root@${node_ip} "mkdir -p /opt/logs/scheduler"
+		ssh root@${node_ip} "systemctl daemon-reload && systemctl enable kube-scheduler && systemctl restart kube-scheduler"
+	done
+
+	[root@master01 ~]# for node_ip in ${MASTER_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		ssh root@${node_ip} "systemctl status kube-scheduler|grep Active"
+	done
+
+	# 确保状态为active (running)，否则查看日志，确认原因：
+	[root@master01 ~]# journalctl -u kube-scheduler
+	[root@master01 ~]# netstat -lnpt|grep kube-sche
+	[root@master01 ~]# kubectl get endpoints kube-scheduler --namespace=kube-system  -o yaml
+
+
+
+
+

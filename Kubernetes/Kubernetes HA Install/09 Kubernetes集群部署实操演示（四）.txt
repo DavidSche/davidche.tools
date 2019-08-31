@@ -1,0 +1,266 @@
+
+09 Kubernetes集群部署实操演示（四） ---- 部署Addon
+
+
+
+*****************************************************************
+12、部署CoreDNS插件
+*****************************************************************
+
+	# 下载的kubernetes-server-linux-amd64.tar.gz解压后，再解压其中的kubernetes-src.tar.gz文件
+	# 所有的Addon插件都在cluster/addons/下面，coredns对应的目录是：cluster/addons/dns
+	[root@master01 ~]# cd /root/soft/kubernetes-server/cluster/addons/dns/coredns
+	[root@master01 ~]# cp coredns.yaml.base coredns.yaml
+	[root@master01 ~]# sed -i -e "s/__PILLAR__DNS__DOMAIN__/${CLUSTER_DNS_DOMAIN}/" -e "s/__PILLAR__DNS__SERVER__/${CLUSTER_DNS_SVC_IP}/" coredns.yaml
+
+	# 创建CoreDNS && 检查coredns功能
+	[root@master01 ~]# kubectl create -f coredns.yaml
+	[root@master01 ~]# kubectl get all -n kube-system
+
+
+*****************************************************************
+13、部署DashBoard插件
+*****************************************************************
+
+	[root@master01 ~]# cd /root/soft/kubernetes-server/cluster/addons/dns/dashboard
+	[root@master01 ~]# vim dashboard-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubernetes-dashboard
+  namespace: kube-system
+  labels:
+    k8s-app: kubernetes-dashboard
+    kubernetes.io/cluster-service: "true"
+    addonmanager.kubernetes.io/mode: Reconcile
+spec:
+  type: NodePort # 增加这一行
+  selector:
+    k8s-app: kubernetes-dashboard
+  ports:
+  - port: 443
+    targetPort: 8443
+
+	# 指定端口类型为NodePort，这样外界可以通过地址nodeIP:nodePort访问dashboard
+
+	[root@master01 ~]# ls *.yaml
+	dashboard-configmap.yaml  dashboard-controller.yaml  dashboard-rbac.yaml  dashboard-secret.yaml  dashboard-service.yaml
+	[root@master01 ~]# kubectl create -f  .
+
+	# 查看分配的NodePort
+	[root@master01 ~]# kubectl get deployment kubernetes-dashboard  -n kube-system
+	[root@master01 ~]# kubectl --namespace kube-system get pods -o wide
+	[root@master01 ~]# kubectl get services kubernetes-dashboard -n kube-system
+
+	# 访问dashboard
+	https://NodeIP:NodePort
+	# 强制HTTPS访问，要登录文件
+
+	# 创建登录Dashboard的token和kubeconfig配置文件
+
+	# 创建登录token
+	[root@master01 ~]# kubectl create sa dashboard-admin -n kube-system
+	[root@master01 ~]# kubectl create clusterrolebinding dashboard-admin --clusterrole=cluster-admin --serviceaccount=kube-system:dashboard-admin
+ADMIN_SECRET=$(kubectl get secrets -n kube-system | grep dashboard-admin | awk '{print $1}')
+DASHBOARD_LOGIN_TOKEN=$(kubectl describe secret -n kube-system ${ADMIN_SECRET} | grep -E '^token' | awk '{print $2}')
+echo ${DASHBOARD_LOGIN_TOKEN}
+
+	# 设置集群参数
+	[root@master01 ~]# kubectl config set-cluster kubernetes \
+	--certificate-authority=/etc/kubernetes/cert/ca.pem \
+	--embed-certs=true \
+	--server=${KUBE_APISERVER} \
+	--kubeconfig=dashboard.kubeconfig
+
+	# 设置客户端认证参数，使用上面创建的 Token
+	[root@master01 ~]# kubectl config set-credentials dashboard_user \
+	--token=${DASHBOARD_LOGIN_TOKEN} \
+	--kubeconfig=dashboard.kubeconfig
+
+	# 设置上下文参数
+	[root@master01 ~]# kubectl config set-context default \
+	--cluster=kubernetes \
+	--user=dashboard_user \
+	--kubeconfig=dashboard.kubeconfig
+
+	# 设置默认上下文
+	[root@master01 ~]# kubectl config use-context default --kubeconfig=dashboard.kubeconfig
+	[root@master01 ~]# ls dashboard.kubeconfig
+	dashboard.kubeconfig
+
+	# 这个就文件就是在页面里上传，然后可以登录的文件
+
+
+*****************************************************************
+14、部署Heapster插件
+*****************************************************************
+
+	# Heapster是一个收集者，将每个Node上的cAdvisor的数据进行汇总，然后导到第三方工具(如InfluxDB)
+	# Heapster是通过调用kubelet的http API来获取cAdvisor的metrics数据的。
+	# 由于kubelet只在10250端口接收https请求，故需要修改heapster的deployment配置。同时，需要赋予kube-system:heapster ServiceAccount调用kubelet API的权限
+
+	[root@master01 ~]# mkdir -p /root/soft/heapster
+	[root@master01 ~]# cd /root/soft/heapster
+	[root@master01 ~]# wget https://github.com/kubernetes/heapster/archive/v1.5.4.tar.gz
+	[root@master01 ~]# tar -xzvf v1.5.4.tar.gz
+	[root@master01 ~]# mv v1.5.4.tar.gz heapster-1.5.4.tar.gz
+	[root@master01 ~]# cd heapster-1.5.4/deploy/kube-config/influxdb
+
+	# 修改配置
+	[root@master01 ~]# cd heapster-1.5.4/deploy/kube-config/influxdb
+	[root@master01 ~]# cp grafana.yaml{,.orig}
+	[root@master01 ~]# diff grafana.yaml.orig grafana.yaml
+	67c67
+	<   # type: NodePort
+	---
+	>   type: NodePort
+
+	# 开启 NodePort
+
+
+	[root@master01 ~]# cp heapster.yaml{,.orig}
+	[root@master01 ~]# diff heapster.yaml.orig heapster.yaml
+	<         - --source=kubernetes:https://kubernetes.default
+	---
+	>         - --source=kubernetes:https://kubernetes.default?kubeletHttps=true&kubeletPort=10250
+	# 由于kubelet只在10250监听https请求，故添加相关参数；
+
+
+	# 执行所有定义文件
+	[root@master01 ~]# cd  /opt/k8s/work/heapster-1.5.4/deploy/kube-config/influxdb
+	[root@master01 ~]# ls *.yaml
+	grafana.yaml  heapster.yaml  influxdb.yaml
+	[root@master01 ~]# kubectl create -f  .
+
+	[root@master01 ~]# cd ../rbac/
+	[root@master01 ~]# cp heapster-rbac.yaml{,.orig}
+	[root@master01 ~]# diff heapster-rbac.yaml.orig heapster-rbac.yaml
+	12a13,26
+	> ---
+	> kind: ClusterRoleBinding
+	> apiVersion: rbac.authorization.k8s.io/v1beta1
+	> metadata:
+	>   name: heapster-kubelet-api
+	> roleRef:
+	>   apiGroup: rbac.authorization.k8s.io
+	>   kind: ClusterRole
+	>   name: system:kubelet-api-admin
+	> subjects:
+	> - kind: ServiceAccount
+	>   name: heapster
+	>   namespace: kube-system
+
+	[root@master01 ~]# kubectl create -f heapster-rbac.yaml
+
+	# 将serviceAccount kube-system:heapster与ClusterRole system:kubelet-api-admin绑定，授予它调用kubelet API的权限
+
+
+	# 检查执行结果
+	[root@master01 ~]# kubectl get pods -n kube-system | grep -E 'heapster|monitoring'
+	heapster-56c9dc749-j7hvz                1/1       Running   0          1m
+	monitoring-grafana-c797777db-lnwnc      1/1       Running   0          1m
+	monitoring-influxdb-cf9d95766-5wd28     1/1       Running   0          1m
+
+	# 检查kubernets dashboard界面，可以正确显示各Nodes、Pods的CPU、内存、负载等统计数据和图表
+
+
+	# 访问grafana，通过NodePort访问
+	[root@master01 ~]# kubectl get svc -n kube-system|grep -E 'monitoring|heapster'
+	heapster               ClusterIP   10.254.199.65    <none>        80/TCP          3m
+	monitoring-grafana     NodePort    10.254.116.161   <none>        80:31470/TCP    3m
+	monitoring-influxdb    ClusterIP   10.254.250.185   <none>        8086/TCP        3m
+
+	浏览器访问URL：http://master01:31470/?orgId=1
+
+
+
+*****************************************************************
+15、部署metrics-server插件
+*****************************************************************
+
+
+
+
+*****************************************************************
+16、部署EFK插件
+*****************************************************************
+
+
+
+*****************************************************************
+16、部署Traefik Ingress插件
+*****************************************************************
+
+[root@master01 ~]# mkdir -p /root/addons/traefik
+[root@master01 ~]# cd /root/addons/traefik
+[root@master01 ~]# wget https://github.com/containous/traefik/archive/v1.7.8.zip
+[root@master01 ~]# unzip v1.7.8.zip
+[root@master01 ~]# cd traefik-1.7.8/examples/k8s/
+
+
+[root@master01 ~]# kubectl apply -f traefik-rbac.yaml
+[root@master01 ~]# kubectl get clusterrole traefik-ingress-controller
+
+[root@master01 ~]# vim traefik-ds.yaml
+
+      nodeSelector:
+        kubernetes.io/hostname: "node01"
+      containers:
+      - image: harbor.io/k8s/traefik
+
+	指定结点部署
+	指定本地镜像，先下载好，部署更快
+
+[root@master01 ~]# kubectl apply -f traefik-ds.yaml
+[root@master01 ~]# kubectl get svc -n kube-system
+[root@master01 ~]# kubectl get ds -n kube-system -o wide
+[root@master01 ~]# kubectl get pods -n kube-system -o wide
+
+
+暴露traefik服务，即traefik-ui
+
+[root@master01 ~]# vim traefik-ui.yaml
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: traefik-web-ui
+  namespace: kube-system
+spec:
+  selector:
+    k8s-app: traefik-ingress-lb
+  ports:
+  - name: web
+    port: 80
+    targetPort: 8080
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: traefik-web-ui
+  namespace: kube-system
+spec:
+  rules:
+  # host根据实际情况进行修改。
+  - host: traefik-ui.com
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: traefik-web-ui
+          servicePort: web
+
+
+[root@master01 ~]# kubectl apply -f traefik-ui.yaml
+[root@master01 ~]# kubectl get svc -n kube-system
+[root@master01 ~]# kubectl get ing -n kube-system
+
+
+修改hosts
+192.168.80.41	harbor.io
+192.168.80.64	kube-dashboard.io
+192.168.80.64	traefik-ui.com
+
+访问：traefik-ui.com
+

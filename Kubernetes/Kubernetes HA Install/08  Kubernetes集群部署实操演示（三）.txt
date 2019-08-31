@@ -1,0 +1,504 @@
+
+08 Kubernetes集群部署实操演示（三） ---- 部署worker结点
+
+
+*****************************************************************
+10、部署docker组件
+*****************************************************************
+
+	10.1：下载和分发docker二进制文件
+	[root@master01 ~]# mkdir -p /root/soft/docker
+	[root@master01 ~]# cd /root/soft/docker
+	[root@master01 ~]# wget https://download.docker.com/linux/static/stable/x86_64/docker-18.06.0-ce.tgz
+	[root@master01 ~]# tar -xvf docker-18.03.1-ce.tgz
+
+	[root@master01 ~]# for node_ip in ${NODE_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		scp docker/docker*  root@${node_ip}:/usr/local/bin/
+		ssh root@${node_ip} "chmod +x /usr/local/bin/*"
+	done
+
+	10.2：创建和分发systemd unit文件
+	[root@master01 ~]# mkdir -p /root/service/docker
+	[root@master01 ~]# cd /root/service/docker
+	[root@master01 ~]# vim docker.service
+[Unit]
+Description=Docker Application Container Engine
+Documentation=http://docs.docker.io
+
+[Service]
+Environment="PATH=/usr/local/bin:/bin:/sbin:/usr/bin:/usr/sbin"
+EnvironmentFile=/run/flannel/docker
+ExecStart=/usr/local/bin/dockerd --log-level=error $DOCKER_NETWORK_OPTIONS
+ExecReload=/bin/kill -s HUP $MAINPID
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=infinity
+LimitNPROC=infinity
+LimitCORE=infinity
+Delegate=yes
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target
+
+	#flanneld 启动时将网络配置写入/run/flannel/docker文件中，dockerd启动前读取该文件中的环境变量DOCKER_NETWORK_OPTIONS ，然后设置docker0网桥网段
+	#可参照之前的Docker安装方法也行，即可直接用YUM安装，但配置文件/run/flannel/docker里的$DOCKER_NETWORK_OPTIONS得导入，这影响网络配置
+	#如果指定了多个EnvironmentFile选项，则必须将/run/flannel/docker放在最后(确保docker0使用flanneld生成的bip参数)
+
+	[root@master01 ~]# for node_ip in ${NODE_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		scp docker.service root@${node_ip}:/usr/lib/systemd/system/
+	done
+
+	10.3：配置和分发docker配置文件
+	使用国内的仓库镜像服务器以加快pull image的速度，同时增加下载的并发数(需要重启dockerd生效)
+	[root@master01 ~]# vim docker-daemon.json
+	{
+		"storage-driver": "overlay",
+		"insecure-registries": ["http://harbor.io"],
+		"registry-mirrors": ["https://hub-mirror.c.163.com", "http://harbor.io", "https://v7y38rs4.mirror.aliyuncs.com"],
+		"max-concurrent-downloads": 20
+	}
+
+	[root@master01 ~]# for node_ip in ${NODE_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		ssh root@${node_ip} "mkdir -p  /etc/docker/"
+		scp docker-daemon.json root@${node_ip}:/etc/docker/daemon.json
+	done
+
+	10.4：启动docker服务 && 检查服务运行状态
+	[root@master01 ~]# for node_ip in ${NODE_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		ssh root@${node_ip} "systemctl stop firewalld && systemctl disable firewalld"
+		ssh root@${node_ip} "systemctl daemon-reload && systemctl enable docker && systemctl restart docker"
+	done
+
+	[root@master01 ~]# for node_ip in ${NODE_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		ssh k8s@${node_ip} "systemctl status docker|grep Active"
+	done
+
+	# 确保状态为active (running)，否则查看日志，确认原因：
+	[root@master01 ~]# journalctl -u docker
+	# 检查docker0网桥
+	[root@master01 ~]# for node_ip in ${NODE_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		ssh root@${node_ip} "/usr/sbin/ip addr show flannel.1 && /usr/sbin/ip addr show docker0"
+	done
+
+
+*****************************************************************
+11、部署kubelet组件
+*****************************************************************
+
+	11.1：下载和分发kubelet二进制文件
+
+	7.1步骤已经操作过了，kubernetes server相关的二进制文件全部分发下去了
+
+
+	11.2：创建kubelet bootstrap kubeconfig文件
+	[root@master01 ~]# cd /root/kubeconfig
+	[root@master01 ~]# for node_name in ${NODE_NAMES[@]}
+	do
+		echo ">>> ${node_name}"
+
+		# 创建 token
+		export BOOTSTRAP_TOKEN=$(kubeadm token create \
+		--description kubelet-bootstrap-token \
+		--groups system:bootstrappers:${node_name} \
+		--kubeconfig ~/.kube/config)
+
+		# 设置集群参数
+		kubectl config set-cluster kubernetes \
+		--certificate-authority=/etc/kubernetes/cert/ca.pem \
+		--embed-certs=true \
+		--server=${KUBE_APISERVER} \
+		--kubeconfig=kubelet-bootstrap-${node_name}.kubeconfig
+
+		# 设置客户端认证参数
+		kubectl config set-credentials kubelet-bootstrap \
+		--token=${BOOTSTRAP_TOKEN} \
+		--kubeconfig=kubelet-bootstrap-${node_name}.kubeconfig
+
+		# 设置上下文参数
+		kubectl config set-context default \
+		--cluster=kubernetes \
+		--user=kubelet-bootstrap \
+		--kubeconfig=kubelet-bootstrap-${node_name}.kubeconfig
+
+		# 设置默认上下文
+		kubectl config use-context default --kubeconfig=kubelet-bootstrap-${node_name}.kubeconfig
+	done
+	[root@master01 ~]# ls *.kubeconfig
+
+	# 证书中写入Token而非证书，证书后续由kube-controller-manager创建
+
+	# 查看kubeadm为各节点创建的token
+	[root@master01 ~]# kubeadm token list --kubeconfig ~/.kube/config
+
+	# 创建的token有效期为1天，超期后将不能再被使用，且会被kube-controller-manager的tokencleaner清理
+	# kube-apiserver接收kubelet的bootstrap token后，将请求的user设置为system:bootstrap:，group设置为system:bootstrappers
+
+	# 查看各token关联的Secret
+	[root@master01 ~]# kubectl get secrets  -n kube-system|grep bootstrap-token
+	bootstrap-token-c77gx4                           bootstrap.kubernetes.io/token         7      54s
+	bootstrap-token-em63m9                           bootstrap.kubernetes.io/token         7      49s
+	bootstrap-token-mnpn4i                           bootstrap.kubernetes.io/token         7      46s
+
+	# 分发bootstrap kubeconfig文件到各worker节点
+	[root@master01 ~]# for node_name in ${NODE_NAMES[@]}
+	do
+		echo ">>> ${node_name}"
+		scp kubelet-bootstrap-${node_name}.kubeconfig root@${node_name}:/etc/kubernetes/kubelet-bootstrap.kubeconfig
+	done
+
+
+	11.3：创建和分发kubelet参数配置文件
+	# 创建kubelet参数配置模板文件
+	[root@master01 ~]# cd /root/kubeconfig
+	[root@master01 ~]# vim kubelet-config.yaml.template
+kind: KubeletConfiguration
+apiVersion: kubelet.config.k8s.io/v1beta1
+authentication:
+  anonymous:
+    enabled: false
+  webhook:
+    enabled: true
+  x509:
+    clientCAFile: "/etc/kubernetes/cert/ca.pem"
+authorization:
+  mode: Webhook
+clusterDomain: "${CLUSTER_DNS_DOMAIN}"
+clusterDNS:
+  - "${CLUSTER_DNS_SVC_IP}"
+serializeImagePulls: false
+hairpinMode: promiscuous-bridge
+cgroupDriver: cgroupfs
+runtimeRequestTimeout: "15m"
+rotateCertificates: true
+serverTLSBootstrap: true
+readOnlyPort: 0
+port: 10250
+address: "##NODE_IP##"
+
+	# 为各节点创建和分发kubelet配置文件
+	[root@master01 ~]# for node_ip in ${NODE_IPS[@]}
+	do 
+		echo ">>> ${node_ip}"
+		sed -e "s/##NODE_IP##/${node_ip}/" kubelet-config.yaml.template > kubelet-config-${node_ip}.yaml.template
+		scp kubelet-config-${node_ip}.yaml.template root@${node_ip}:/etc/kubernetes/kubelet-config.yaml
+	done
+
+
+	11.4：创建和分发kubelet systemd unit文件
+	[root@master01 ~]# mkdir -p /root/service/kubelet
+	[root@master01 ~]# cd /root/service/kubelet
+	[root@master01 ~]# vim kubelet.service.template
+[Unit]
+Description=Kubernetes Kubelet
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+After=docker.service
+Requires=docker.service
+
+[Service]
+WorkingDirectory=/opt/kubelet
+ExecStart=/usr/local/bin/kubelet \
+  --root-dir=/opt/kubelet \
+  --bootstrap-kubeconfig=/etc/kubernetes/kubelet-bootstrap.kubeconfig \
+  --cert-dir=/etc/kubernetes/cert \
+  --kubeconfig=/etc/kubernetes/kubelet.kubeconfig \
+  --config=/etc/kubernetes/kubelet-config.yaml \
+  --hostname-override=##NODE_NAME## \
+  --pod-infra-container-image=harbor.io/k8s/pause-amd64:3.0
+  --allow-privileged=true \
+  --event-qps=0 \
+  --kube-api-qps=2000 \
+  --kube-api-burst=5000 \
+  --registry-qps=0 \
+  --image-pull-progress-deadline=30m \
+  --logtostderr=true \
+  --v=2
+Restart=always
+RestartSec=5
+StartLimitInterval=0
+
+[Install]
+WantedBy=multi-user.target
+
+	[root@master01 ~]# for node_name in ${NODE_NAMES[@]}
+	do 
+		echo ">>> ${node_name}"
+		sed -e "s/##NODE_NAME##/${node_name}/" kubelet.service.template > kubelet-${node_name}.service
+		scp kubelet-${node_name}.service root@${node_name}:/usr/lib/systemd/system/kubelet.service
+	done
+
+	11.5：Bootstrap Token Auth和授予权限
+	# kublet 启动时查找配置的 --kubeletconfig 文件是否存在，如果不存在则使用 --bootstrap-kubeconfig 向 kube-apiserver 发送证书签名请求 (CSR)
+
+	# kube-apiserver 收到 CSR 请求后，对其中的 Token 进行认证（事先使用 kubeadm 创建的 token），认证通过后将请求的 user 设置为 system:bootstrap:，group 设置为 system:bootstrappers，这一过程称为 Bootstrap Token Auth
+
+	# 创建一个clusterrolebinding，将group system:bootstrappers和clusterrole system:node-bootstrapper绑定
+	[root@master01 ~]# kubectl create clusterrolebinding kubelet-bootstrap --clusterrole=system:node-bootstrapper --group=system:bootstrappers
+
+	11.6：启动kubelet服务 && 检查服务状况
+	[root@master01 ~]# for node_ip in ${NODE_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		ssh root@${node_ip} "mkdir -p /opt/kubelet"
+		ssh root@${node_ip} "/usr/sbin/swapoff -a"
+		ssh root@${node_ip} "systemctl daemon-reload && systemctl enable kubelet && systemctl restart kubelet"
+	done
+	[root@master01 ~]# netstat -lnpt|grep kubelet
+
+	# 关闭swap分区，否则kubelet会启动失败
+	# kubelet启动后使用--bootstrap-kubeconfig向kube-apiserver发送CSR请求，当这个CSR被approve 后，kube-controller-manager 为kubelet创建TLS客户端证书、私钥和--kubeletconfig文件。
+	#kube-controller-manager需要配置--cluster-signing-cert-file和--cluster-signing-key-file参数，才会为TLS Bootstrap 创建证书和私钥
+	[root@master01 ~]# kubectl get csr
+	NAME                                                   AGE       REQUESTOR                 CONDITION
+	node-csr--BjlTzxB5Y4op_6wYlDKbbQj1NtX-IOBMLmWhkupEWA   22s       system:bootstrap:8galm1   Pending
+	node-csr-a68FhmUgprTJkaLwnJOLQLOkDQuAviDdBy91ByVtWt0   28s       system:bootstrap:4ef7hj   Pending
+	node-csr-a7DI6d0QjBiPh58IBGYFPUKAZvKs6sfbqlnoc22erRs   27s       system:bootstrap:ai162m   Pending
+
+	[root@master01 ~]# kubectl get nodes
+	No resources found.
+
+	# 三个work节点的csr均处于pending状态
+	# 自动approve CSR请求，创建三个ClusterRoleBinding，分别用于自动approve client、renew client、renew server证书
+	[root@master01 ~]# cd /root/kubeconfig/
+	[root@master01 ~]# vim csr-crb.yaml
+# Approve all CSRs for the group "system:bootstrappers"
+ kind: ClusterRoleBinding
+ apiVersion: rbac.authorization.k8s.io/v1
+ metadata:
+   name: auto-approve-csrs-for-group
+ subjects:
+ - kind: Group
+   name: system:bootstrappers
+   apiGroup: rbac.authorization.k8s.io
+ roleRef:
+   kind: ClusterRole
+   name: system:certificates.k8s.io:certificatesigningrequests:nodeclient
+   apiGroup: rbac.authorization.k8s.io
+---
+ # To let a node of the group "system:nodes" renew its own credentials
+ kind: ClusterRoleBinding
+ apiVersion: rbac.authorization.k8s.io/v1
+ metadata:
+   name: node-client-cert-renewal
+ subjects:
+ - kind: Group
+   name: system:nodes
+   apiGroup: rbac.authorization.k8s.io
+ roleRef:
+   kind: ClusterRole
+   name: system:certificates.k8s.io:certificatesigningrequests:selfnodeclient
+   apiGroup: rbac.authorization.k8s.io
+---
+# A ClusterRole which instructs the CSR approver to approve a node requesting a
+# serving cert matching its client cert.
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: approve-node-server-renewal-csr
+rules:
+- apiGroups: ["certificates.k8s.io"]
+  resources: ["certificatesigningrequests/selfnodeserver"]
+  verbs: ["create"]
+---
+ # To let a node of the group "system:nodes" renew its own server credentials
+ kind: ClusterRoleBinding
+ apiVersion: rbac.authorization.k8s.io/v1
+ metadata:
+   name: node-server-cert-renewal
+ subjects:
+ - kind: Group
+   name: system:nodes
+   apiGroup: rbac.authorization.k8s.io
+ roleRef:
+   kind: ClusterRole
+   name: approve-node-server-renewal-csr
+   apiGroup: rbac.authorization.k8s.io
+
+	[root@master01 ~]# kubectl apply -f csr-crb.yaml
+
+	# auto-approve-csrs-for-group：自动approve node的第一次CSR，注意第一次CSR时，请求的Group为system:bootstrappers
+	# node-client-cert-renewal：自动approve node后续过期的client证书，自动生成的证书Group为system:nodes
+	# node-server-cert-renewal：自动approve node后续过期的server证书，自动生成的证书Group为system:nodes
+
+	[root@master01 ~]# kubectl get csr
+	NAME                                                   AGE       REQUESTOR                 CONDITION
+	node-csr--BjlTzxB5Y4op_6wYlDKbbQj1NtX-IOBMLmWhkupEWA   4m        system:bootstrap:8galm1   Approved,Issued
+	node-csr-a68FhmUgprTJkaLwnJOLQLOkDQuAviDdBy91ByVtWt0   4m        system:bootstrap:4ef7hj   Approved,Issued
+	node-csr-a7DI6d0QjBiPh58IBGYFPUKAZvKs6sfbqlnoc22erRs   4m        system:bootstrap:ai162m   Approved,Issued
+
+	[root@master01 ~]# kubectl get nodes
+	NAME              STATUS   ROLES    AGE     VERSION
+	node01            Ready    <none>   4m12s   v1.13.0
+	node02            Ready    <none>   4m12s   v1.13.0
+	node03            Ready    <none>   4m12s   v1.13.0
+	node04            Ready    <none>   4m12s   v1.13.0
+
+	# kube-controller-manager为各node生成了kubeconfig文件和公私钥
+	[root@master01 ~]# ls -l /etc/kubernetes/kubelet.kubeconfig
+	[root@master01 ~]# ls -l /etc/kubernetes/cert/|grep kubelet
+
+
+
+*****************************************************************
+12、部署kube-proxy组件
+*****************************************************************
+
+	12.1：创建kube-proxy证书，并分发到Worker结点
+	[root@master01 ~]# cd /root/cert
+	[root@master01 ~]# touch kube-proxy-csr.json
+	[root@master01 ~]# vim kubernetes-csr.json
+	{
+		"CN": "system:kube-proxy",
+		"key": {
+			"algo": "rsa",
+			"size": 2048
+		},
+		"names": [{
+			"C" : "CN",
+			"ST": "GuangDong",
+			"L" : "ShenZheng",
+			"O" : "pingan",
+			"OU": "caas"
+		}]
+	}
+
+	# CN：指定该证书的User为system:kube-proxy
+	# 预定义的RoleBinding system:node-proxier将User system:kube-proxy与Role system:node-proxier绑定，该Role授予了调用 kube-apiserver Proxy相关API的权限；
+	# 该证书只会被kube-proxy当做client证书使用，所以hosts字段为空
+	[root@master01 ~]# cfssl gencert -ca=/opt/k8s/work/ca.pem \
+	-ca-key=/opt/k8s/work/ca-key.pem \
+	-config=/opt/k8s/work/ca-config.json \
+	-profile=kubernetes  kube-proxy-csr.json | cfssljson -bare kube-proxy
+	[root@master01 ~]# ls kube-proxy*
+	kube-proxy.pem	kube-proxy-key.pem
+
+
+	12.2：创建和分发kubeconfig文件
+	[root@master01 ~]# kubectl config set-cluster kubernetes \
+	--certificate-authority=/opt/k8s/work/ca.pem \
+	--embed-certs=true \
+	--server=${KUBE_APISERVER} \
+	--kubeconfig=kube-proxy.kubeconfig
+
+	[root@master01 ~]# kubectl config set-credentials kube-proxy \
+	--client-certificate=kube-proxy.pem \
+	--client-key=kube-proxy-key.pem \
+	--embed-certs=true \
+	--kubeconfig=kube-proxy.kubeconfig
+
+	[root@master01 ~]# kubectl config set-context default \
+	--cluster=kubernetes \
+	--user=kube-proxy \
+	--kubeconfig=kube-proxy.kubeconfig
+
+	[root@master01 ~]# kubectl config use-context default --kubeconfig=kube-proxy.kubeconfig
+
+	# --embed-certs=true：将ca.pem和admin.pem证书内容嵌入到生成的kubectl-proxy.kubeconfig 文件中(不加时，写入的是证书文件路径)
+
+	# 分发kubeconfig文件
+	[root@master01 ~]# for node_name in ${NODE_NAMES[@]}
+	do
+		echo ">>> ${node_name}"
+		scp kube-proxy.kubeconfig root@${node_name}:/etc/kubernetes/
+	done
+
+
+	12.3：创建kube-proxy配置文件
+	[root@master01 ~]# cd /root/kubeconfig
+	[root@master01 ~]# vim kube-proxy-config.yaml.template
+kind: KubeProxyConfiguration
+apiVersion: kubeproxy.config.k8s.io/v1alpha1
+clientConnection:
+  kubeconfig: "/etc/kubernetes/kube-proxy.kubeconfig"
+bindAddress: ##NODE_IP##
+clusterCIDR: ${CLUSTER_CIDR}
+healthzBindAddress: ##NODE_IP##:10256
+hostnameOverride: ##NODE_NAME##
+metricsBindAddress: ##NODE_IP##:10249
+mode: "ipvs"
+
+	# bindAddress: 监听地址
+	# clientConnection.kubeconfig: 连接apiserver的kubeconfig文件
+	# clusterCIDR: kube-proxy根据--cluster-cidr判断集群内部和外部流量，指定--cluster-cidr或--masquerade-all选项后 kube-proxy才会对访问Service IP的请求做SNAT
+	# hostnameOverride: 参数值必须与kubelet的值一致，否则kube-proxy启动后会找不到该Node，从而不会创建任何ipvs规则
+	# mode: 使用ipvs模式
+
+	[root@master01 ~]# for (( i=0; i < 3; i++ ))
+	do 
+		echo ">>> ${NODE_NAMES[i]}"
+		sed -e "s/##NODE_NAME##/${NODE_NAMES[i]}/" -e "s/##NODE_IP##/${NODE_IPS[i]}/" kube-proxy-config.yaml.template > kube-proxy-config-${NODE_NAMES[i]}.yaml.template
+		scp kube-proxy-config-${NODE_NAMES[i]}.yaml.template root@${NODE_NAMES[i]}:/etc/kubernetes/kube-proxy-config.yaml
+	done
+
+
+	12.4：创建和分发kube-proxy systemd unit文件
+	[root@master01 ~]# mkdir -p /root/service/kube-proxy
+	[root@master01 ~]# cd /root/service/kube-proxy
+	[root@master01 ~]# vim kube-proxy.service
+[Unit]
+Description=Kubernetes Kube-Proxy Server
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/kube-proxy
+ExecStart=/usr/local/bin/kube-proxy \
+  --config=/etc/kubernetes/kube-proxy-config.yaml \
+  --logtostderr=true \
+  --v=2
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+
+	[root@master01 ~]# for node_name in ${NODE_NAMES[@]}
+	do 
+		echo ">>> ${node_name}"
+		scp kube-proxy.service root@${node_name}:/usr/lib/systemd/system/
+	done
+
+
+	12.5：启动kube-proxy服务 && 检查服务状况
+	[root@master01 ~]# for node_ip in ${NODE_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		ssh root@${node_ip} "mkdir -p /opt/kube-proxy"
+		ssh root@${node_ip} "systemctl daemon-reload && systemctl enable kube-proxy && systemctl restart kube-proxy"
+	done
+
+	[root@master01 ~]# for node_ip in ${NODE_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		ssh root@${node_ip} "systemctl status kube-proxy|grep Active"
+	done
+
+	# 确保状态为 active (running)，否则查看日志，确认原因：
+	[root@master01 ~]# journalctl -u kube-proxy
+	[root@master01 ~]# netstat -lnpt|grep kube-prox
+
+	# 查看ipvs路由规则
+	[root@master01 ~]# for node_ip in ${NODE_IPS[@]}
+	do
+		echo ">>> ${node_ip}"
+		ssh root@${node_ip} "/usr/sbin/ipvsadm -ln"
+	done
+
+
+
+
+
+
