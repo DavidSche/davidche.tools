@@ -46,6 +46,7 @@ firewall-cmd --add-port=7946/udp --permanent
 firewall-cmd --add-port=4789/udp --permanent
 firewall-cmd --add-port=4789/tcp --permanent
 
+firewall-cmd --add-port=443/tcp --permanent
 firewall-cmd --add-port=80/tcp --permanent
 firewall-cmd --add-port=9000/tcp --permanent
 firewall-cmd --add-port=9001/tcp --permanent
@@ -54,6 +55,12 @@ firewall-cmd --add-port=3307/tcp --permanent
 firewall-cmd --add-port=8400/tcp --permanent
 firewall-cmd --add-port=8500/tcp --permanent
 firewall-cmd --add-port=8600/tcp --permanent
+
+
+firewall-cmd --add-port=7474/tcp --permanent
+firewall-cmd --add-port=7373/tcp --permanent
+firewall-cmd --add-port=7687/tcp --permanent
+# docker run --name neo4j -p 7474:7474 -p 7373:7373 -p 7687:7687 bitnami/neo4j:3
 
 # 批量开放端口
 # firewall-cmd --permanent --zone=public --add-port=100-500/tcp
@@ -67,7 +74,7 @@ firewall-cmd --zone=public --list-ports
 #sudo reboot
 echo "set firewall ok !"
 
-
+yum install epel-release -y
 
 # scp  root@192.168.9.127:~/setfirewall.sh  ./
 # cqyMASS2019
@@ -95,7 +102,7 @@ sudo yum install wget -y
 sudo yum install curl -y
 sudo yum install yum-plugin-ovl -y
 sudo yum install yum-utils -y
-
+sudo yum -y install psmisc
 # install java
 #echo "install java 1.8.0 openjdk !"
 #sudo yum install java-1.8.0-openjdk -y
@@ -169,7 +176,8 @@ echo "git install ok !"
 # install docker
 echo "install docker engine ！"
 
-#wget  https://download.docker.com/linux/static/stable/x86_64/docker-18.09.5.tgz 
+#  docker-18.09.9.tgz              2019-09-04 18:23:09 53.7 MiB
+#wget  https://download.docker.com/linux/static/stable/x86_64/docker-19.03.2.tgz  
 #tar xzvf docker-18.09.5.tgz 
 #sudo cp -rf docker/* /usr/local/bin/
 #sudo dockerd &

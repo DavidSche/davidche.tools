@@ -3,7 +3,7 @@ version: '3'
 services:
   redis-master:
     hostname: redis-master
-    image: 'bitnami/redis:5.0.4'
+    image: 'bitnami/redis:5.0.5'
     ports:
       - '6379:6379'
     environment:
@@ -20,7 +20,7 @@ services:
         constraints: [node.labels.db-node == true]  # 部署标签约束
 
   redis-replica:
-    image: 'bitnami/redis:5.0.4'
+    image: 'bitnami/redis:5.0.5'
     ports:
       - '36379:6379'
     depends_on:

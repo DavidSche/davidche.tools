@@ -53,6 +53,7 @@ sudo yum install psmisc -y
 sudo yum install wget -y
 sudo yum install yum-plugin-ovl -y
 sudo yum install yum-utils -y
+sudo yum install psmisc -y 
 
 # install java
 #echo "install java 1.8.0 openjdk !"
@@ -215,9 +216,11 @@ curl -sL https://dl.yarnpkg.com/rpm/yarn.repo | sudo tee /etc/yum.repos.d/yarn.r
 # install tomcat
 #echo "install tomcat !"
 #cd /opt
-#wget http://mirrors.shu.edu.cn/apache/tomcat/tomcat-8/v8.5.34/bin/apache-tomcat-8.5.34.tar.gz
+#wget http://mirrors.shu.edu.cn/apache/tomcat/tomcat-8/v8.5.34/bin/apache-tomcat-8.5.46.tar.gz
+#wget http://mirrors.tuna.tsinghua.edu.cn/apache/tomcat/tomcat-8/v8.5.46/bin/apache-tomcat-8.5.46.tar.gz
 
-#tar -xvf apache-tomcat-8.5.34.tar.gz
+
+#tar -xvf apache-tomcat-8.5.46.tar.gz
 
 # /opt/run_npm.sh
 #!/usr/bin/env bash

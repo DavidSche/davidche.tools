@@ -107,49 +107,59 @@ server {
 
 ### 3. 通过openssl生成证书
 
+
+```
+# access_log  /var/log/nginx/access.log
+```
+
+-----------
+
+二、生成证书
+
+第一步：使用OpenSSL创建证书
+
 设置server.key，这里需要设置两遍密码:
 
+建立服务器私钥（过程需要输入密码，请记住这个密码）生成RSA密钥
 ```
-openssl genrsa -des3 -out server.key 1024 
+openssl genrsa -des3 -out server.key 1024
 ```
-
-参数设置，首先这里需要输入之前设置的密码:
-
+生成一个证书请求
 ```
 openssl req -new -key server.key -out server.csr
 ```
+需要依次输入国家，地区，组织，email。最重要的是有一个common name，可以写你的名字或者域名。如果为了https申请，这个必须和域名吻合，否则会引发浏览器警报。生成的csr文件交给CA签名后形成服务端自己的证书
+Enter pass phrase for server.key: #之前输入的密码
+Country Name (2 letter code) [XX]: #国家
+State or Province Name (full name) []: #区域或是省份
+Locality Name (eg, city) [Default City]: #地区局部名字
+Organization Name (eg, company) [Default Company Ltd]: #机构名称：填写公司名
+Organizational Unit Name (eg, section) []: #组织单位名称:部门名称
+Common Name (eg, your name or your server's hostname) []: #网站域名
+Email Address []: #邮箱地址
+A challenge password []: #输入一个密码，可直接回车
+An optional company name []: #一个可选的公司名称，可直接回车
 
-然后需要输入如下的信息，大概填一下就可以了，反正是测试用的
+输入完这些内容，就会在当前目录生成server.csr文件
 ```
-Country Name (2 letter code) [AU]: 国家名称
-State or Province Name (full name) [Some-State]: 省
-Locality Name (eg, city) []: 城市
-Organization Name (eg, company) [Internet Widgits Pty Ltd]: 公司名
-Organizational Unit Name (eg, section) []: 
-Common Name (e.g. server FQDN or YOUR name) []: 网站域名
-Email Address []: 邮箱
-
-Please enter the following 'extra' attributes
-to be sent with your certificate request
-A challenge password []: 这里要求输入密码
-An optional company name []:
+cp server.key server.key.org
+openssl rsa -in server.key.org -out server.key
+```
+使用上面的密钥和CSR对证书进行签名
+以下命令生成v1版证书
+```
+openssl x509 -req -days 365 -sha256 -in server.csr -signkey server.key -out servernew.crt
+```
+以下命令生成v3版证书（v1即可满足，小编未用到v3版本）
+```
+openssl x509 -req -days 365 -sha256 -extfile openssl.cnf -extensions v3_req -in server.csr -signkey server.key -out servernew.crt
 ```
 
-写RSA秘钥（这里也要求输入之前设置的密码）:
-
-```
-openssl rsa -in server.key -out server_nopwd.key
-```
-
-获取私钥:
-```
-openssl x509 -req -days 365 -in server.csr -signkey server_nopwd.key -out server.crt
-```
-
-完成这一步之后就得到了我们需要的证书文件和私钥了
-
-- server.crt
-- server.key
+      #  ssl_certificate      ./ssl/servernew.crt;
+      #  ssl_certificate_key  ./ssl/server.key;
+	  
+	  
+-------
 
 ### 配置nginx服务器，支持https访问
 
@@ -190,4 +200,42 @@ server {
 ```
 重启nginx容器，现在就可以通过https来访问nginx的服务器了
 
- 
+```
+location / {
+            proxy_pass http://192.168.9.20:8888/;
+			proxy_http_version 1.1;
+			proxy_set_header Upgrade $http_upgrade;
+			proxy_set_header Connection $http_connection;
+			proxy_set_header Origin '';
+        }
+location /personal/ {
+            proxy_pass http://192.168.9.20/
+			proxy_http_version 1.1;
+			proxy_set_header Upgrade $http_upgrade;
+			proxy_set_header Connection $http_connection;
+			proxy_set_header Origin '';
+        }
+location /manager/ {
+            proxy_pass http://192.168.9.20:8080/;
+			proxy_http_version 1.1;
+			proxy_set_header Upgrade $http_upgrade;
+			proxy_set_header Connection $http_connection;
+			proxy_set_header Origin '';
+        }
+location /server/ {
+            proxy_pass http://192.168.9.20:8700/;
+			proxy_http_version 1.1;
+			proxy_set_header Upgrade $http_upgrade;
+			proxy_set_header Connection $http_connection;
+			proxy_set_header Origin '';
+			
+			proxy_set_header X-Real-IP $remote_addr;
+			proxy_set_header X-Real-Port $remote_port;
+			proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+			
+        }
+```
+
+```
+nginx -s relaod 
+``` 
