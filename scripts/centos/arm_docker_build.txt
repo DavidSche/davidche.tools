@@ -1,0 +1,503 @@
+systemctl restart  network.service
+
+
+
+FROM openjdk:8-jdk-alpine
+# Author cheshuai
+VOLUME /tmp
+# ARG JAR_FILE
+COPY accounting-manager-0.0.1-SNAPSHOT.jar app.jar
+EXPOSE 8091
+ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
+
+
+
+
+
+docker build -t 192.168.200.151:5000/accounting-manager:0.0.1-SNAPSHOT .
+
+vi /etc/sysconfig/network-scripts/ifcfg-eth0
+
+
+hostnamectl --static set-hostname cqy-node4
+
+
+systemctl restart network
+
+docker build -t 192.168.200.151:5000/personal-ui:0.0.1-SNAPSHOT .
+
+docker build -t 192.168.200.151:5000/manager-ui:0.0.1-SNAPSHOT .
+
+docker build -t 192.168.200.151:5000/website-ui:0.0.1-SNAPSHOT .
+
+---------------
+
+FROM openjdk:8-jdk-alpine
+# Author cheshuai
+VOLUME /tmp
+# ARG JAR_FILE
+COPY asset-manager-0.0.1-SNAPSHOT.jar app.jar
+EXPOSE 9132
+ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
+
+ 
+docker build -t 192.168.200.151:5000/asset-manager:0.0.1-SNAPSHOT .
+
+---------------
+FROM openjdk:8-jdk-alpine
+# Author cheshuai
+VOLUME /tmp
+# ARG JAR_FILE
+COPY authentication-server-0.0.1-SNAPSHOT.jar app.jar
+EXPOSE 9100
+ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
+
+ 
+docker build -t 192.168.200.151:5000/authentication-server:0.0.1-SNAPSHOT .
+
+---------------
+FROM openjdk:8-jdk-alpine
+# Author cheshuai
+VOLUME /tmp
+# ARG JAR_FILE
+COPY bidding-manager-0.0.1-SNAPSHOT.jar app.jar
+EXPOSE 9120
+ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
+
+ 
+docker build -t 192.168.200.151:5000/bidding-manager:0.0.1-SNAPSHOT .
+
+---------------
+FROM openjdk:8-jdk-alpine
+# Author cheshuai
+VOLUME /tmp
+# ARG JAR_FILE
+COPY bidding-server-0.0.1-SNAPSHOT.jar app.jar
+EXPOSE 9121
+ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
+
+ 
+docker build -t 192.168.200.151:5000/bidding-server:0.0.1-SNAPSHOT .
+
+
+
+---------------
+FROM openjdk:8-jdk-alpine
+# Author cheshuai
+VOLUME /tmp
+# ARG JAR_FILE
+COPY commodity-manager-0.0.1-SNAPSHOT.jar app.jar
+EXPOSE 9150
+ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
+
+ 
+docker build -t 192.168.200.151:5000/commodity-manager:0.0.1-SNAPSHOT .
+
+ 
+---------------
+FROM openjdk:8-jdk-alpine
+# Author cheshuai
+VOLUME /tmp
+# ARG JAR_FILE
+COPY config-manager-0.0.1-SNAPSHOT.jar app.jar
+EXPOSE 9140
+ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
+
+ 
+docker build -t 192.168.200.151:5000/config-manager:0.0.1-SNAPSHOT .
+
+ 
+ 
+---------------
+FROM openjdk:8-jdk-alpine
+# Author cheshuai
+VOLUME /tmp
+# ARG JAR_FILE
+COPY gateway-0.0.1-SNAPSHOT.jar app.jar
+EXPOSE 8700
+ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
+
+ 
+docker build -t 192.168.200.151:5000/gateway:0.0.1-SNAPSHOT .
+
+
+
+---------------
+FROM openjdk:8-jdk-alpine
+# Author cheshuai
+VOLUME /tmp
+# ARG JAR_FILE
+COPY job-manager-0.0.1-SNAPSHOT.jar app.jar
+EXPOSE 8711
+ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
+
+ 
+docker build -t 192.168.200.151:5000/job-manager:0.0.1-SNAPSHOT .
+
+
+---------------
+FROM openjdk:8-jdk-alpine
+# Author cheshuai
+VOLUME /tmp
+# ARG JAR_FILE
+COPY member-manager-0.0.1-SNAPSHOT.jar app.jar
+EXPOSE 9110
+ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
+
+ 
+docker build -t 192.168.200.151:5000/member-manager:0.0.1-SNAPSHOT .
+
+
+
+---------------
+FROM openjdk:8-jdk-alpine
+# Author cheshuai
+VOLUME /tmp
+# ARG JAR_FILE
+COPY message-manager-0.0.1-SNAPSHOT.jar app.jar
+EXPOSE 8712
+ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
+
+ 
+docker build -t 192.168.200.151:5000/message-manager:0.0.1-SNAPSHOT .
+
+
+---------------
+FROM openjdk:8-jdk-alpine
+# Author cheshuai
+VOLUME /tmp
+# ARG JAR_FILE
+COPY tool-0.0.1-SNAPSHOT.jar app.jar
+EXPOSE 8710
+ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
+
+ 
+docker build -t 192.168.200.151:5000/tool:0.0.1-SNAPSHOT .
+
+
+---------------
+FROM openjdk:8-jdk-alpine
+# Author cheshuai
+VOLUME /tmp
+# ARG JAR_FILE
+COPY trade-manager-0.0.1-SNAPSHOT.jar app.jar
+EXPOSE 9130
+ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
+
+ 
+docker build -t 192.168.200.151:5000/trade-manager:0.0.1-SNAPSHOT .
+
+
+---------------
+FROM openjdk:8-jdk-alpine
+# Author cheshuai
+VOLUME /tmp
+# ARG JAR_FILE
+COPY user-manager-0.0.1-SNAPSHOT.jar app.jar
+EXPOSE 9101
+ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
+
+ 
+docker build -t 192.168.200.151:5000/user-manager:0.0.1-SNAPSHOT .
+
+
+---------------
+FROM openjdk:8-jdk-alpine
+# Author cheshuai
+VOLUME /tmp
+# ARG JAR_FILE
+COPY website-manager-0.0.1-SNAPSHOT.jar app.jar
+EXPOSE 9091
+ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
+
+ 
+docker build -t 192.168.200.151:5000/website-manager:0.0.1-SNAPSHOT .
+
+---------------
+FROM openjdk:8-jdk-alpine
+# Author cheshuai
+VOLUME /tmp
+# ARG JAR_FILE
+COPY website-server-0.0.1-SNAPSHOT.jar app.jar
+EXPOSE 9090
+ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
+
+ 
+docker build -t 192.168.200.151:5000/website-server:0.0.1-SNAPSHOT .
+
+
+---------------
+FROM openjdk:8-jdk-alpine
+# Author cheshuai
+VOLUME /tmp
+# ARG JAR_FILE
+COPY workflow-manager-0.0.1-SNAPSHOT.jar app.jar
+EXPOSE 9160
+ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
+
+ 
+docker build -t 192.168.200.151:5000/workflow-manager:0.0.1-SNAPSHOT .
+
+
+
+
+
+
+
+1	55.3 MB	
+ADD file:fcb9328ea4c1156709f3d04c3d9a5f3667e77fb36a4a83390ae2495555fc0238 in /
+2	0 B	
+CMD ["bash"]
+3	0 B	
+LABEL maintainer=NGINX Docker Maintainers <docker-maint@nginx.com>
+4	0 B	
+ENV NGINX_VERSION=1.15.12-1~stretch
+5	0 B	
+ENV NJS_VERSION=1.15.12.0.3.1-1~stretch
+6	54.1 MB	
+RUN set -x && apt-get update && apt-get install --no-install-recommends --no-install-suggests -y gnupg1 apt-transport-https c... 
+7	22 B	
+RUN ln -sf /dev/stdout /var/log/nginx/access.log && ln -sf /dev/stderr /var/log/nginx/error.log
+8	0 B	
+EXPOSE 80
+9	0 B	
+STOPSIGNAL SIGTERM
+10	0 B	
+CMD ["nginx" "-g" "daemon off;"]
+11	1.7 MB	
+RUN echo "Asia/Shanghai" > /etc/timezone && dpkg-reconfigure -f noninteractive tzdata
+12	3.4 kB	
+COPY file:b7de347f90b91359501434827835f680b181863efae11cfb68fed26ad7e85aca in /etc/nginx/nginx.conf
+13	9.8 MB	
+COPY dir:90a0b24991f8c9bbf5b8eff895979bfae431802d39e64513e522fe520c68c188 in /etc/nginx/html/personal
+14	0 B	
+EXPOSE 80
+
+2.unzip命令
+unzip -o -d /home/sunny myfile.zip
+
+https://www.cnblogs.com/bigc008/p/9879143.html
+
+
+docker启动的时候提示WARNING: IPv4 forwarding is disabled. Networking will not work.
+
+
+修改配置文件：
+
+vim /usr/lib/sysctl.d/00-system.conf
+
+追加
+
+ net.ipv4.ip_forward=1
+
+接着重启网络
+
+[root@localhost mytomcat]# systemctl restart network
+
+
+
+docker build -t 192.168.200.151:5000/workflow-ui:0.0.1-SNAPSHOT .
+
+
+sudo tar -xJvf node-v10.16.3-linux-arm64.tar.xz -C /usr/local/lib/nodejs 
+
+node-v10.16.3-linux-arm64.tar.xz
+
+VERSION=v10.16.3
+DISTRO=linux-arm64
+export PATH=/usr/local/lib/nodejs/node-v10.16.3-linux-arm64/bin:$PATH
+
+
+-----------------------
+
+处理方案：
+在命令结尾加 --unsafe-perm： npm install --unsafe-perm
+或者在package.json中添加：
+"config": {
+ 
+    "unsafe-perm":true
+ 
+}
+ 
+ 
+ 
+yum install gcc-c++
+
+
+通常情况下在centos下安装软件就用yum. 
+
+关键是，使用yum你的知道安装包的名字是什么。
+
+如果直接键入yum install g++,会告诉你没有这个包。
+
+所以你应该使用gcc-c++，这才是这个包的名字。
+
+所以应该是执行：yum install gcc-c++
+
+------------------------
+
+
+docker swarm init --advertise-addr 192.168.200.151
+
+docker swarm init --advertise-addr 192.168.200.151 
+Swarm initialized: current node (niaiu7ouzi6k0xvvhrbv4ea2u) is now a manager.
+
+To add a worker to this swarm, run the following command:
+
+    docker swarm join --token SWMTKN-1-4xg9r2w982mwb7xucru1gl8j7a3fixdneaec2943g6ka8g2xsw-89rq4ic6cjj4vyh5por70zdch 192.168.200.151:2377
+
+To add a manager to this swarm, run 'docker swarm join-token manager' and follow the instructions.
+
+
+解决方法：
+
+apt-get update
+
+apt install iputils-ping
+
+apt install net-tools
+
+
+docker push  192.168.200.151:5000/manager-ui:0.0.1-SNAPSHOT
+docker push  192.168.200.151:5000/personal-ui:0.0.1-SNAPSHOT
+docker push  192.168.200.151:5000/website-ui:0.0.1-SNAPSHOT
+
+
+docker push  192.168.200.151:5000/workflow-manager:0.0.1-SNAPSHOT
+docker push  192.168.200.151:5000/website-server:0.0.1-SNAPSHOT
+docker push  192.168.200.151:5000/website-manager:0.0.1-SNAPSHOT
+docker push  192.168.200.151:5000/user-manager:0.0.1-SNAPSHOT
+docker push  192.168.200.151:5000/trade-manager:0.0.1-SNAPSHOT
+
+docker push  192.168.200.151:5000/tool:0.0.1-SNAPSHOT
+docker push  192.168.200.151:5000/gateway:0.0.1-SNAPSHOT
+docker push  192.168.200.151:5000/message-manager:0.0.1-SNAPSHOT
+docker push  192.168.200.151:5000/member-manager:0.0.1-SNAPSHOT
+docker push  192.168.200.151:5000/job-manager:0.0.1-SNAPSHOT
+docker push  192.168.200.151:5000/config-manager:0.0.1-SNAPSHOT
+docker push  192.168.200.151:5000/commodity-manager:0.0.1-SNAPSHOT
+docker push  192.168.200.151:5000/bidding-server:0.0.1-SNAPSHOT
+docker push  192.168.200.151:5000/bidding-manager:0.0.1-SNAPSHOT
+
+docker push  192.168.200.151:5000/asset-manager:0.0.1-SNAPSHOT
+docker push  192.168.200.151:5000/accounting-manager:0.0.1-SNAPSHOT
+docker push  192.168.200.151:5000/authentication-server:0.0.1-SNAPSHOT
+
+
+
+
+192.168.200.151:5000/workflow-manager        0.0.1-SNAPSHOT      546bd0e9cd52        2 days ago          200MB
+192.168.200.151:5000/website-server          0.0.1-SNAPSHOT      9e5b00941648        2 days ago          190MB
+192.168.200.151:5000/website-manager         0.0.1-SNAPSHOT      1e37089c71b7        2 days ago          190MB
+192.168.200.151:5000/user-manager            0.0.1-SNAPSHOT      84f1bd0a763f        2 days ago          190MB
+192.168.200.151:5000/trade-manager           0.0.1-SNAPSHOT      ea336e351ce6        2 days ago          209MB
+192.168.200.151:5000/tool                    0.0.1-SNAPSHOT      d322218bfcec        2 days ago          181MB
+192.168.200.151:5000/message-manager         0.0.1-SNAPSHOT      f6bf472522c7        2 days ago          177MB
+192.168.200.151:5000/member-manager          0.0.1-SNAPSHOT      6f358eefe3da        2 days ago          190MB
+192.168.200.151:5000/job-manager             0.0.1-SNAPSHOT      195fe56beb41        2 days ago          190MB
+192.168.200.151:5000/gateway                 0.0.1-SNAPSHOT      d8e0f38c0e98        2 days ago          173MB
+192.168.200.151:5000/config-manager          0.0.1-SNAPSHOT      88c03749ddcd        2 days ago          190MB
+192.168.200.151:5000/commodity-manager       0.0.1-SNAPSHOT      97bc6aa67d97        2 days ago          202MB
+192.168.200.151:5000/bidding-server          0.0.1-SNAPSHOT      e992203f5753        2 days ago          190MB
+192.168.200.151:5000/bidding-manager         0.0.1-SNAPSHOT      7ed2ba21cc36        2 days ago          190MB
+192.168.200.151:5000/authentication-server   0.0.1-SNAPSHOT      2bba5158412f        2 days ago          195MB
+192.168.200.151:5000/asset-manager           0.0.1-SNAPSHOT      8203b620be65        2 days ago          190MB
+192.168.200.151:5000/accounting-manager      0.0.1-SNAPSHOT      67c2532d0a99        2 days ago          191MB
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

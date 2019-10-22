@@ -1,0 +1,231 @@
+
+
+docker service create --name="myservice" --network my-network  ubuntu:16.04
+
+
+docker run ubuntu --network=prod  ubuntu
+
+
+$ docker network create -d bridge my-net
+
+$ docker run --network=prod -itd --name=ubuntu ubuntu
+$ docker run --network=bridge -itd --name=ubuntu2 ubuntu
+
+docker run --network=bridge -itd --name=ubuntu2 ubuntu
+
+
+docker service create \
+  --replicas 1 \
+  --network prod \
+  --name my-web \
+  nginx
+
+docker network create -d overlay --attachable prod
+
+
+
+
+1   --------------------------
+ 
+docker service create \
+--name cqy-gateway \
+--publish 8700:8700 \
+--replicas 1 \
+--network prod \
+--env SPRING_PROFILES_ACTIVE=test \
+192.168.200.151:5000/gateway:0.0.1-SNAPSHOT
+
+2   --------------------------
+ 
+docker service create \
+--name cqy-config-manager \
+--publish 9140:9140 \
+--replicas 1 \
+--network prod \
+--env SPRING_PROFILES_ACTIVE=test \
+192.168.200.151:5000/config-manager:0.0.1-SNAPSHOT 
+
+3   ---------------------------------------
+docker service create \
+--name cqy-tool \
+--publish 8710:8710 \
+--replicas 1 \
+--network prod \
+--env SPRING_PROFILES_ACTIVE=test \
+192.168.200.151:5000/tool:0.0.1-SNAPSHOT
+
+4   ---------------------------------------
+docker service create \
+--name cqy-user-manager \
+--publish 9101:9101 \
+--replicas 1 \
+--network prod \
+--env SPRING_PROFILES_ACTIVE=test \
+192.168.200.151:5000/user-manager:0.0.1-SNAPSHOT
+
+
+5   ---------------------------------------
+docker service create \
+--name cqy-workflow-manager \
+--publish 9160:9160 \
+--replicas 1 \
+--network prod \
+--env SPRING_PROFILES_ACTIVE=test \
+192.168.200.151:5000/workflow-manager:0.0.1-SNAPSHOT
+
+6   ---------------------------------------
+docker service create \
+--name cqy-website-server \
+--publish 9090:9090 \
+--replicas 1 \
+--network prod \
+--env SPRING_PROFILES_ACTIVE=test \
+192.168.200.151:5000/website-server:0.0.1-SNAPSHOT
+
+
+7   ---------------------------------------
+docker service create \
+--name cqy-website-manager \
+--publish 9091:9091 \
+--replicas 1 \
+--network prod \
+--env SPRING_PROFILES_ACTIVE=test \
+192.168.200.151:5000/website-manager:0.0.1-SNAPSHOT
+
+
+8   ---------------------------------------
+docker service create \
+--name cqy-trade-manager \
+--publish 9130:9130 \
+--replicas 1 \
+--network prod \
+--env SPRING_PROFILES_ACTIVE=test \
+192.168.200.151:5000/trade-manager:0.0.1-SNAPSHOT
+
+
+9   ---------------------------------------
+docker service create \
+--name cqy-message-manager \
+--publish 8712:8712 \
+--replicas 1 \
+--network prod \
+--env SPRING_PROFILES_ACTIVE=test \
+192.168.200.151:5000/message-manager:0.0.1-SNAPSHOT
+
+
+10   ---------------------------------------
+docker service create \
+--name cqy-member-manager \
+--publish 9110:9110 \
+--replicas 1 \
+--network prod \
+--env SPRING_PROFILES_ACTIVE=test \
+192.168.200.151:5000/member-manager:0.0.1-SNAPSHOT
+
+
+11   ---------------------------------------
+docker service create \
+--name cqy-job-manager \
+--publish 8711:8711 \
+--replicas 1 \
+--network prod \
+--env SPRING_PROFILES_ACTIVE=test \
+192.168.200.151:5000/job-manager:0.0.1-SNAPSHOT
+
+
+12  ---------------------------------------
+docker service create \
+--name cqy-commodity-manager \
+--publish 9150:9150 \
+--replicas 1 \
+--network prod \
+--env SPRING_PROFILES_ACTIVE=test \
+192.168.200.151:5000/commodity-manager:0.0.1-SNAPSHOT
+
+13   ---------------------------------------
+docker service create \
+--name cqy-bidding-server \
+--publish 9121:9121 \
+--replicas 1 \
+--network prod \
+--env SPRING_PROFILES_ACTIVE=test \
+192.168.200.151:5000/bidding-server:0.0.1-SNAPSHOT
+
+14   ---------------------------------------
+docker service create \
+--name cqy-bidding-manager \
+--publish 9120:9120 \
+--replicas 1 \
+--network prod \
+--env SPRING_PROFILES_ACTIVE=test \
+192.168.200.151:5000/bidding-manager:0.0.1-SNAPSHOT
+
+
+15   ---------------------------------------
+docker service create \
+--name cqy-authentication-server \
+--publish 9100:9100 \
+--replicas 1 \
+--network prod \
+--env SPRING_PROFILES_ACTIVE=test \
+192.168.200.151:5000/authentication-server:0.0.1-SNAPSHOT
+
+
+16   ---------------------------------------
+docker service create \
+--name cqy-asset-manager \
+--publish 9132:9132 \
+--replicas 1 \
+--network prod \
+--env SPRING_PROFILES_ACTIVE=test \
+192.168.200.151:5000/asset-manager:0.0.1-SNAPSHOT
+
+
+17   ---------------------------------------
+docker service create \
+--name cqy-accounting-manager \
+--publish 8091:8091 \
+--replicas 1 \
+--network prod \
+--env SPRING_PROFILES_ACTIVE=test \
+192.168.200.151:5000/accounting-manager:0.0.1-SNAPSHOT
+
+
+
+18   ---------------------------------------
+docker service create \
+--name cqy-personal-ui \
+--publish 80:80 \
+--replicas 1 \
+--network prod \
+192.168.200.151:5000/personal-ui:0.0.1-SNAPSHOT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+---------------------------------------
+
+
+
+
+
+
+--mount type=bind,source=/home/data/zentao/data,target=/var/lib/mysql \
+--constraint 'node.labels.pm-node == true' \
+

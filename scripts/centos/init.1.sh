@@ -187,6 +187,9 @@ echo "install docker engine ！"
 sudo yum-config-manager --add-repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
 sudo yum install docker-ce -y
 
+# 桥接网络
+sysctl net.ipv4.conf.all.forwarding=1
+
 echo "config docker"
 sudo systemctl enable docker
 sudo systemctl start docker
@@ -217,10 +220,15 @@ cat << EOF > /etc/docker/daemon.json
     ]
 }
 EOF
-#应用最新的BUILDKIT构建架构
-export DOCKER_BUILDKIT=1
 
 echo "write daemon.json setting success ! "
+#应用最新的BUILDKIT构建架构
+export DOCKER_BUILDKIT=1
+# 桥接网络
+sysctl net.ipv4.conf.all.forwarding=1
+# WARNING: bridge-nf-call-iptables is disabled
+sysctl net.bridge.bridge-nf-call-iptables=1
+sysctl net.bridge.bridge-nf-call-ip6tables=1
 
 systemctl daemon-reload && systemctl restart docker
 
