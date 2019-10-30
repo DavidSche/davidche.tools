@@ -1,0 +1,34 @@
+version: '3.6'
+
+services:
+  registry:
+    image: registry:2
+    ports:
+      - "5000:5000"
+    networks:
+      - lb_network
+    volumes:
+      - data:/var/lib/registry
+  registry-ui:
+    image: konradkleine/docker-registry-frontend:v2
+    networks:
+      - lb_network
+    ports:
+      - "5008:80"
+    environment:
+      - ENV_DOCKER_REGISTRY_HOST=registry.mydomain.com
+      - ENV_DOCKER_REGISTRY_PORT=443
+      - ENV_DOCKER_REGISTRY_USE_SSL=1
+      - ENV_MODE_BROWSE_ONLY=false
+    extra_hosts:
+      # replace this IP with your load balancer public IP
+      - "registry.mydomain.com:1.1.1.1"
+
+volumes:
+  data:
+    driver: glusterfs
+    name: "myvolume/registry"
+
+networks:
+  lb_network:
+    external: true

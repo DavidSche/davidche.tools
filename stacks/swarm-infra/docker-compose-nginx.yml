@@ -1,0 +1,61 @@
+version: '3.6'
+
+services:
+  server:
+    image: nginx
+    hostname: www.mydomain.com
+    networks:
+      - lb_network
+    ports:
+      - "80:80"
+    environment:
+      - TIMEZONE=America/Argentina/Buenos_Aires
+    volumes:
+      - html:/usr/share/nginx/html:ro
+    deploy:
+      mode: replicated
+      replicas: 2
+      restart_policy:
+       condition: on-failure
+       max_attempts: 3
+       window: 120s
+    configs:
+      - source: nginx.conf
+        target: /etc/nginx/nginx.conf
+        uid: '0'
+        gid: '0'
+        mode: 0644
+      - source: portainer.conf
+        target: /etc/nginx/conf.d/portainer.conf
+        uid: '0'
+        gid: '0'
+        mode: 0644
+      - source: registry.conf
+        target: /etc/nginx/conf.d/registry.conf
+        uid: '0'
+        gid: '0'
+        mode: 0644
+      - source: registry-ui.conf
+        target: /etc/nginx/conf.d/registry-ui.conf
+        uid: '0'
+        gid: '0'
+        mode: 0644
+
+configs:
+  nginx.conf:
+    external: true
+  portainer.conf:
+    external: true
+  registry.conf:
+    external: true
+  registry-ui.conf:
+    external: true
+
+volumes:
+  html:
+    driver: glusterfs
+    name: "myvolume/html"
+
+networks:
+  lb_network:
+    external: true
