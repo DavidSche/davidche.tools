@@ -6,8 +6,11 @@ max_connections = 2000
 max_user_connections=1500
 wait_timeout=200
 
-#log_error[=fileName]
 
+character-set-server=utf8
+collation-server=utf8_general_ci
+
+#log_error[=fileName]
 general_log
 slow_query_log
 log_bin
@@ -17,3 +20,5 @@ log_slave_updates=1
 #set-variable=max_connections=2000
 #set-variable=max_user_connections=1500
 #set-variable=wait_timeout=200
+#  跨库操作
+federated

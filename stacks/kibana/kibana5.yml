@@ -1,0 +1,39 @@
+version: '3'
+services:
+  elasticsearch:
+    image: 'elasticsearch:5.4.2'
+    ports:
+      - '9200:9200'
+    environment:
+      - cluster.name=docker-cluster
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "discovery.zen.ping.unicast.hosts=elasticsearch"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - esdata2:/usr/share/elasticsearch/data
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.labels.elk == true]  # 部署标签约束
+  kibana:
+    image: 'kibana:5.4.2'
+    ports:
+      - '5601:5601'
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.labels.elk == true]  # 部署标签约束
+    depends_on:
+      - elasticsearch
+
+volumes:
+  elasticsearch_data:
+    driver: local
+  kibana_data:
+    driver: local

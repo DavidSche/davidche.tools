@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
 
 # 使用 *hostnamectl* 命令设置主机名称信息
+#查看Linux 版本信息：
+echo " RedHat Linux 版本信息 !"
+
+cat  /etc/redhat-release
+#查看Linux内核版本信息
+echo "Linux虚拟机内核版本信息 !"
+cat /proc/version
+# DNS
+#vi或者vim /etc/resolv.conf    #一般情况下是设置nameserver 114.114.114.114
 
 echo "setting hostname !"
 hostnamectl --static set-hostname cqy-devlop-db 
@@ -48,10 +57,14 @@ firewall-cmd --add-port=4789/tcp --permanent
 
 firewall-cmd --add-port=443/tcp --permanent
 firewall-cmd --add-port=80/tcp --permanent
+firewall-cmd --add-port=10050/tcp --permanent
+
+
 firewall-cmd --add-port=9000/tcp --permanent
 firewall-cmd --add-port=9001/tcp --permanent
 firewall-cmd --add-port=3306/tcp --permanent
 firewall-cmd --add-port=3307/tcp --permanent
+
 firewall-cmd --add-port=8400/tcp --permanent
 firewall-cmd --add-port=8500/tcp --permanent
 firewall-cmd --add-port=8600/tcp --permanent
@@ -62,6 +75,7 @@ firewall-cmd --add-port=7373/tcp --permanent
 firewall-cmd --add-port=7687/tcp --permanent
 # docker run --name neo4j -p 7474:7474 -p 7373:7373 -p 7687:7687 bitnami/neo4j:3
 
+firewall-cmd --add-port=10050/tcp --permanent
 # 批量开放端口
 # firewall-cmd --permanent --zone=public --add-port=100-500/tcp
 # firewall-cmd --permanent --zone=public --add-port=100-500/udp

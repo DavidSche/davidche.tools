@@ -191,3 +191,34 @@ COPY --chown=elasticsearch:elasticsearch my-root-cas.pem /usr/share/elasticsearc
 
 [中文日志](https://aws.amazon.com/cn/blogs/china/iot-alerting-open-distro-for-elasticsearch/)
 
+ELASTICSEARCH_HOSTS
+
+services:
+  kibana:
+    image: docker.elastic.co/kibana/kibana:5.1.2
+    volumes:
+      - ./kibana.yml:/usr/share/kibana/config/kibana.yml
+	  
+	  
+services:
+  kibana:
+    image: docker.elastic.co/kibana/kibana:5.1.2
+    environment:
+      SERVER_NAME: kibana.example.org
+      ELASTICSEARCH_URL: http://elasticsearch.example.org	  
+
+
+
+docker run -d --name kibana -e somenetwork -p 5601:5601 kibana:tag
+
+docker run --name kibana5 -e ELASTICSEARCH_URL=http://192.168.5.151:9200 -p 5601:5601 -d  kibana5.4.1
+
+openssh
+root
+passwd
+CQY@mass%root2019
+
+portainer
+admin
+CQY@mass2019
+ 

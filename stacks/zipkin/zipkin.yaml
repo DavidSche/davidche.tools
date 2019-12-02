@@ -1,0 +1,29 @@
+version: '3'
+
+services:
+  # The zipkin process services the UI, and also exposes a POST endpoint that
+  # instrumentation can send trace data to. Scribe is enabled by default.
+  zipkin:
+    image: openzipkin/zipkin:2.19.2
+    container_name: zipkin
+    # Environment settings are defined here https://github.com/openzipkin/zipkin/tree/1.19.0/zipkin-server#environment-variables
+    environment:
+      - STORAGE_TYPE=elasticsearch
+      - ES_HOSTS=http://192.168.6.172:9200
+      - ES_HTTP_LOGGING=BASIC
+      # Uncomment to disable scribe
+      # - SCRIBE_ENABLED=false
+      # Uncomment to enable self-tracing
+      # - SELF_TRACING_ENABLED=true
+      # Uncomment to enable debug logging
+      # - JAVA_OPTS=-Dlogging.level.zipkin=DEBUG
+    ports:
+      # Port used for the Zipkin UI and HTTP Api
+      - 9411:9411
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.labels.zipkin == true]  # 部署标签约束
+
+

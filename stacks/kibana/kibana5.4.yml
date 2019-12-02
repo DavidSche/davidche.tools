@@ -1,0 +1,70 @@
+version: '3.6'
+services:
+  elasticsearch:
+    image: elasticsearch:5.4.2
+    environment:
+      - cluster.name=docker-cluster
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - esdata1:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.labels.elk == true]  # 部署标签约束
+    networks:
+      - esnet
+
+  elasticsearch2:
+    image: elasticsearch:5.4.2
+    environment:
+      - cluster.name=docker-cluster
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "discovery.zen.ping.unicast.hosts=elasticsearch"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - esdata2:/usr/share/elasticsearch/data
+    networks:
+      - esnet
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.labels.elk == true]  # 部署标签约束
+
+  kibana:
+    image: kibana:5.4.2
+    # volumes:
+    #  - ./kibana.yml:/usr/share/kibana/config/kibana.yml	
+    environment:
+    #  SERVER_NAME: kibana.example.org
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+    ports:
+      - '5601:5601'
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.labels.elk == true]  # 部署标签约束
+    networks:
+      - esnet
+
+volumes:
+  esdata1:
+    driver: local
+  esdata2:
+    driver: local
+
+networks:
+  esnet:
