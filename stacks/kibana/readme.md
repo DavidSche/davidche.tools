@@ -222,3 +222,13 @@ portainer
 admin
 CQY@mass2019
  
+ mkfs -t xfs /dev/sda
+ 
+ mkfs -t ext4 /dev/sda
+ 
+ mount /dev/sda /datahome
+ 
+ umount /dev/sda 
+ 
+ 
+ 

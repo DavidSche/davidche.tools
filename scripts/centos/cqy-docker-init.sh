@@ -64,6 +64,8 @@ sudo firewall-cmd --reload
 sudo systemctl restart  firewalld
 
 firewall-cmd --zone=public --list-ports
+
+netstat -ntlp
  
 #sudo reboot
 echo "set firewall ok !"

@@ -207,5 +207,26 @@ server {
 
 ```
 
+-------
 
 
+完美解决Nginx配置反向代理时出现的13: Permission denied) while connecting to upstream
+
+
+1.条件不允许的情况下（不能随意重启计算机）执行下列代码：
+
+setsebool -P httpd_can_network_connect 1 
+1
+2.其他情况下获取root权限
+
+vim /etc/selinux/config
+1
+找到
+
+SELINUX=enforcing
+1
+改为
+
+SELINUX=disabled
+————————————————
+ 

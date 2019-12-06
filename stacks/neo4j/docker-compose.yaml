@@ -6,6 +6,9 @@ services:
       - '7474:7474'
       - '7473:7473'
       - '7687:7687'
+    environment:
+      - NEO4J_PASSWORD=bitnami
+      - NEO4J_HTTP_PORT_NUMBER=7474
     volumes:
       - 'neo4j_data:/bitnami'
 volumes:
