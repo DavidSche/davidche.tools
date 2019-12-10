@@ -3,6 +3,11 @@ export DEBIAN_FRONTEND=noninteractive
 
 sudo apt-get update -y
 
+
+# apt-get update
+# apt install net-tools # ifconfig
+# apt install iputils-ping # ping
+
 echo "Installing Docker..."
 sudo apt-get update
 sudo apt-get remove docker docker-engine docker.io

@@ -4,7 +4,7 @@ version: '3.0'
 
 services:
   registry:
-    image: registry:2.6.2
+    image: registry:2.7.1
     volumes:
       - registry-data:/var/lib/registry
     ports:

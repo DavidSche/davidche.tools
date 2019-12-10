@@ -237,6 +237,23 @@ sudo ./bin/neo4j-import --into graph.db --nodes:label path_to_csv.csv
 在LOAD CSV前面加上USING PERIODIC COMMIT 1000，1000表示每1000行的数据进行一次Transaction提交，提升性能。
 建立index可以使得查询性能得到巨大提升。如果不建立index，则需要对每个node的每一个属性进行遍历，所以比较慢。 并且index建立之后，新加入的数据都会自动编入到index中。 注意index是建立在label上的，不是在node上，所以一个node有多个label，需要对每一个label都建立index。
 
+-------
+
+/var/lib/neo4j/import
+
+home:         /var/lib/neo4j
+config:       /var/lib/neo4j/conf
+logs:         /logs
+plugins:      /var/lib/neo4j/plugins
+import:       /var/lib/neo4j/import
+data:         /var/lib/neo4j/data
+certificates: /var/lib/neo4j/certificates
+run:          /var/lib/neo4j/run
+  
+  
+  
+  
+  
 
 
 
