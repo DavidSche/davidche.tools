@@ -65,3 +65,11 @@ registry api
 
 GET /v2/_catalog
 GET /v2/<name>/tags/list
+
+
+
+clean-registry.sh
+
+```
+docker exec -it -u root 3cba6ac0aab1 bin/registry garbage-collect --delete-untagged /etc/docker/registry/config.yml
+```
