@@ -1,0 +1,70 @@
+connection:
+  scheme: http
+  host: localhost
+  port: 7474
+
+//节点
+nodes:
+// 项目 
+  projects:
+    label: Project
+    count: 50
+    properties:
+      proid: proId          //编号
+      name: Name            //项目名称
+      truename: trueName    //真实项目名称
+	  tradeType: tradeType  //交易类型
+      ownership: ownerShip  //产权隶属
+      isimportant: isImportant //重点项目 
+      publishstatus: publishStatus //重点项目 
+      allowunion: allowUnion //联合受让
+      status： Status
+      createuserid: createUserId //创建人ID
+      createdeptid: createDeptId //创建人ID
+
+//    增资预披露
+       comtype: comType  //公司类型
+	   //行业  （一级、二级）
+	   
+//     
+
+// 标的物
+  Assets:
+    label: Asset
+    count: 10
+    properties:
+      name: company
+      description: catchPhrase
+
+
+//  用户   用户--自然人  ---机构用户    ---部门   ---代理 
+persones
+    label: Company
+    count: 10
+    properties:
+      name: Name   //名称
+      usertype:userType  //类型
+
+
+//公司信息	  
+  companies:
+    label: Company
+    count: 10
+    properties:
+      name: company
+      description: catchPhrase
+
+
+//关系
+relationships:
+  person_works_for:
+    start: persons
+    end: companies
+    type: WORKS_AT
+    mode: n..1
+
+  friendships:
+    start: persons
+    end: persons
+    type: KNOWS
+    mode: n..n

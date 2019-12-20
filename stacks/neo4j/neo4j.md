@@ -234,6 +234,7 @@ sudo ./bin/neo4j-import --into graph.db --nodes:label path_to_csv.csv
 最后，如果只是想插入少量的数据，且不怎么在乎实时性，那么请直接看Cypher语言。
 
 ### 其它的Tips
+
 在LOAD CSV前面加上USING PERIODIC COMMIT 1000，1000表示每1000行的数据进行一次Transaction提交，提升性能。
 建立index可以使得查询性能得到巨大提升。如果不建立index，则需要对每个node的每一个属性进行遍历，所以比较慢。 并且index建立之后，新加入的数据都会自动编入到index中。 注意index是建立在label上的，不是在node上，所以一个node有多个label，需要对每一个label都建立index。
 
@@ -251,9 +252,34 @@ certificates: /var/lib/neo4j/certificates
 run:          /var/lib/neo4j/run
   
   
+neo4j清空所有数据
+match (n) detach delete n 
   
   
-  
+--------
+
+neo4j-casual-cluster-quickstart
+A demonstration of causal clustering using Docker, as described in GraphAware's https://graphaware.com/spring/2018/01/03/2018-01-03-casual-cluster-quickstart.html.
+
+https://github.com/graphaware/neo4j-casual-cluster-quickstart/blob/master/README.md
+
+--------
+###企业版 3.5分支
+
+```
+docker run \
+       --publish=7474:7474 --publish=7687:7687 \
+       --volume=$HOME/neo4j/data:/data \
+       graphfoundation/ongdb:3.5
+```
+
+Go to:  http://localhost:7474
+
+
+https://github.com/graphfoundation/ongdb
+
+--------
+YANG-DB/yang-db
 
 
 

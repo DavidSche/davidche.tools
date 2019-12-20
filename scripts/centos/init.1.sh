@@ -118,11 +118,28 @@ sudo yum install yum-plugin-ovl -y
 sudo yum install yum-utils -y
 sudo yum -y install psmisc
 # install java
+# rpm -qa | grep java
 #echo "install java 1.8.0 openjdk !"
 #sudo yum install java-1.8.0-openjdk -y
+#sudo yum install java-1.8.0-openjdk-devel
+#sudo yum install java-11-openjdk-devel -y
 # install java
 #echo "install maven !"
 #sudo yum install maven -y
+#------
+# wget https://www-us.apache.org/dist/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz -P /tmp
+# sudo tar xf /tmp/apache-maven-3.6.3-bin.tar.gz -C /opt
+# sudo ln -s /opt/apache-maven-3.6.3 /opt/maven
+# sudo nano /etc/profile.d/maven.sh
+#
+
+# export JAVA_HOME=/usr/lib/jvm/jre-openjdk
+# export M2_HOME=/opt/maven
+# export MAVEN_HOME=/opt/maven
+# export PATH=${M2_HOME}/bin:${PATH}
+# sudo chmod +x /etc/profile.d/maven.sh
+# source /etc/profile.d/maven.sh
+# mvn install -DskipTests=false
 #----------------
 # Get yum repo
 # cat << EOF > /etc/yum.repos.d/td-agent-bit.repo

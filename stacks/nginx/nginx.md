@@ -219,7 +219,7 @@ setsebool -P httpd_can_network_connect 1
 1
 2.其他情况下获取root权限
 
-vim /etc/selinux/config
+vi /etc/selinux/config
 1
 找到
 
