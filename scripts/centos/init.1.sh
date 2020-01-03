@@ -233,6 +233,8 @@ echo "write  docker config to /etc/docker/daemon.json "
 #echo -e " \"registry-mirrors\": [\"https://um1k3l1w.mirror.aliyuncs.com\"]   " >> /etc/docker/daemon.json
 #echo -e "}" >> /etc/docker/daemon.json
 
+# 存储路径 
+#    "graph": "/home/data/docker",
 
 # >> 追加文件写入 > 覆盖文件写入
 

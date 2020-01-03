@@ -253,9 +253,25 @@ run:          /var/lib/neo4j/run
   
   
 neo4j清空所有数据
+
+MATCH (e {name:"鱼暖暖"})
+
+match (n:交易方) detach delete n 
+
 match (n) detach delete n 
   
+  MATCH (n:资产包项目) WHERE n.pro_id = '6ed707fc7ed74398aee17354626c95e5' RETURN n
+  MATCH (n:交易项目) WHERE n.pro_id = {pro_id} RETURN n
+  8181274851b741b9b09ac68510f7ae82
   
+  
+    MATCH (n:实物资产) WHERE n.asset_id = '8c72f5cdbfa0475b9ac1c6c5175aeed5' RETURN n
+	
+    MATCH (n:实物资产) WHERE n.asset_id = '23a95bed74d94f098845bf6eb8feff17' RETURN n
+	
+	 MATCH (n:交易项目) WHERE n.asset_id = '23a95bed74d94f098845bf6eb8feff17' RETURN n
+	
+	asset_id:23a95bed74d94f098845bf6eb8feff17
 --------
 
 neo4j-casual-cluster-quickstart
@@ -280,6 +296,60 @@ https://github.com/graphfoundation/ongdb
 
 --------
 YANG-DB/yang-db
+
+基本操作语句
+
+
+1. "查"操作 , 查找 id 属性 为 501的节点:
+
+```
+MATCH (r)
+WHERE id(r) = 501
+RETURN r
+```
+
+2. "改"操作, 更改 id 属性 为 501的节点的 test 属性 的属性值为 "testtest"
+
+```
+MATCH (r)
+WHERE id(r) = 501
+SET r.test = "testtest"
+```
+
+3. "删"操作， 删除 id 属性 为 501的节点
+这个样例只删除该节点，要想删和这个节点与其他节点的关系，请看下个例子。
+
+```
+MATCH (r)
+WHERE id(r) = 501
+DELETE r
+RETURN r
+```
+
+4. 删除某个节点和这个节点与其他节点的关系
+先创建两个节点。
+
+```
+MATCH (r)
+WHERE id(r) = 501
+DETACH DELETE r
+RETURN r
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
