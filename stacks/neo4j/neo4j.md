@@ -258,6 +258,14 @@ MATCH (e {name:"鱼暖暖"})
 
 match (n:交易方) detach delete n 
 
+
+match (n:行业) detach delete n 
+
+match (n:用户) detach delete n 
+
+match (n:地区) detach delete n 
+
+
 match (n) detach delete n 
   
   MATCH (n:资产包项目) WHERE n.pro_id = '6ed707fc7ed74398aee17354626c95e5' RETURN n
