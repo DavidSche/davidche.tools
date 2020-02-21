@@ -1,0 +1,43 @@
+version: '3.6'
+
+configs:
+  # my_first_config:
+  #   file: ./config_data
+  #
+  #connect {
+  #  enabled = true
+  #}
+  #  -config-dir 
+  consul_config:
+    external:
+      name: consul_config
+      
+services:
+  consul:
+    image: consul:1.7.0
+    hostname: "{{.Node.Hostname}}"
+    networks:
+      - consul
+      - prod
+    ports:
+      - 8400:8400
+      - 8500:8500
+      - 8600:8600
+    volumes:
+      - consul-data:/consul/data
+    configs:
+      - source: consul_config
+        target: /consul/config/consul_custom.hcl
+    deploy:
+      mode: global
+      placement:
+        constraints: [node.labels.consul == true]
+    command: [ "agent", "-server", "-config-dir=/consul/config", "-bootstrap-expect=3", "-retry-max=3", "-retry-interval=10s", "-datacenter=prod", "-join=consul", "-retry-join=consul", "-bind={{ GetInterfaceIP \"eth0\" }}", "-client=0.0.0.0", "-ui"]
+networks:
+  consul:
+  prod:
+    external: true
+  prod2:
+    external: true
+volumes:
+  consul-data:
