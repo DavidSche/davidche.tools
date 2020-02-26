@@ -3,14 +3,14 @@
 usage() {
     echo "Backup your Docker Volumes"
     echo ""
-    echo "Usage: docker run [volumes] bluet/vback <action> file"
+    echo "Usage: docker run [volumes] davidche/vback <action> file"
     # must have -it to see progress bar
-    echo "Usage: docker run -it -v [source-volume-name]:/volume -v [archive-dir]:/backup --rm bluet/vback backup [archive-name]"
-    echo "Usage: docker run -it -v [target-volume-name]:/volume -v [archive-dir]:/backup --rm bluet/vback restore [archive-name]"
+    echo "Usage: docker run -it -v [source-volume-name]:/volume -v [archive-dir]:/backup --rm davidche/vback backup [archive-name]"
+    echo "Usage: docker run -it -v [target-volume-name]:/volume -v [archive-dir]:/backup --rm davidche/vback restore [archive-name]"
     echo ""
     echo "Example:"
-    echo "docker run -it -v docker_dbdata:/volume -v \$PWD/backup:/backup --rm bluet/vback backup dbdata"
-    echo "docker run -it -v drsite_dbdata:/volume -v /data/backup:/backup --rm bluet/vback restore dbdata"
+    echo "docker run -it -v docker_dbdata:/volume -v \$PWD/backup:/backup --rm davidche/vback backup dbdata"
+    echo "docker run -it -v drsite_dbdata:/volume -v /data/backup:/backup --rm davidche/vback restore dbdata"
     exit
 }
 
