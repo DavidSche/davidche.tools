@@ -1,0 +1,32 @@
+version: "3"
+
+networks:
+  gitea:
+    external: false
+
+services:
+  gitserver:
+    image: gitea/gitea:latest
+    restart: always
+    networks:
+      - gitea
+    volumes:
+      - gitea_data:/data
+    ports:
+      - "3000:3000"
+      - "22:22"
+    depends_on:
+      - giteadb
+
+  gitdb:
+    image: mysql:5.7
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=gitea
+      - MYSQL_USER=gitea
+      - MYSQL_PASSWORD=gitea
+      - MYSQL_DATABASE=gitea
+    networks:
+      - gitea
+    volumes:
+      - mysql_data:/var/lib/mysql
