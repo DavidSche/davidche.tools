@@ -1,0 +1,47 @@
+version: '3'
+
+networks:
+  gitea:
+    external: false
+
+services:
+  db:
+    image: mariadb:10.5
+    command: --transaction-isolation=READ-COMMITTED --log-bin=mysqld-bin --binlog-format=ROW
+    restart: always
+    networks:
+      - gitea
+    volumes:
+      - db:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=setrootpassword
+      - MYSQL_USER=gitea
+      - MYSQL_DATABASE=gitea
+      - MYSQL_PASSWORD=setapassword
+
+  gitea:
+    image: gitea/gitea:1.11
+    restart: always
+    networks:
+      - gitea
+    ports:
+      - "80:3000"
+      - "443:22"
+    volumes:
+      - data:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+      - DB_TYPE=mysql
+      - DB_HOST=db:3306
+      - DB_NAME=gitea
+      - DB_USER=gitea
+      - DB_PASSWD=setapassword
+    depends_on:
+      - db
+
+volumes:
+  db:
+  data:

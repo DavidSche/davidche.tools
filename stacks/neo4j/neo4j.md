@@ -258,12 +258,23 @@ MATCH (e {name:"鱼暖暖"})
 
 match (n:交易方) detach delete n 
 
+MATCH (n:`交易项目`) detach delete n 
+
 
 match (n:行业) detach delete n 
 
 match (n:用户) detach delete n 
 
 match (n:地区) detach delete n 
+
+match (n:标的) detach delete n
+
+match (n:标的物) detach delete n
+
+asset_id:50f0df24dada404889195647448500d0
+
+match (n:标的) WHERE n.asset_id = '50f0df24dada404889195647448500d0' RETURN n
+
 
 
 match (n) detach delete n 
