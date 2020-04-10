@@ -59,6 +59,11 @@ GET  _cat/indices/
 http://192.168.6.172:9200/_cat/indices/
 
 
+curl -XDELETE http://<node-ip|hostname>:9200/<index-name>
+curl -XDELETE http://192.168.6.172:9200/zipkin:span-2020-03-31
+
+
+
 
 ### 创建索引
 

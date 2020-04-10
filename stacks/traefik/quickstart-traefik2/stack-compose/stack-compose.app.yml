@@ -1,0 +1,51 @@
+# @Description: An example of Docker Swarm that
+# goes up a Go application.
+
+version: "3.7"
+
+# Defining swarm volumes with the DRIVER(local).
+volumes:
+  vol_shared: # Path --> ./volumes/shared
+    external: true
+    name: volume_swarm_shared
+  vol_certificates: # Path --> ./volumes/certificates
+    external: true
+    name: volume_swarm_certificates
+
+# Defining swarm networks with the DRIVER(overlay).
+networks:
+  network_public:
+    external: true
+    name: network_swarm_public
+  network_private:
+    external: true
+    name: network_swarm_private
+
+# Defining container services for Docker Swarm.
+services:
+  # Tiny Go webserver that prints os information
+  # and HTTP request to output.
+  whoami:
+    image: containous/whoami # The official Containous docker image.
+    deploy:
+      labels:
+        # Explicitly tell Traefik to expose this container.
+        - "traefik.enable=true"
+        # The domain the service will respond to.
+        - "traefik.http.routers.whoami.rule=Host(`whoami.swarm.localhost`)"
+        # Allow request only from the predefined entry point named "websecure"
+        - "traefik.http.routers.whoami.entrypoints=websecure"
+        # Define certificate generation based on routers Host & HostSNI rules.
+        - "traefik.http.routers.whoami.tls.certresolver=letsencryptresolver"
+        # Tell Traefik to use the port 80 to connect to `whoami`
+        - "traefik.http.services.whoami.loadbalancer.server.port=80"
+      resources:
+        limits:
+          memory: 256M
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+      mode: replicated
+      replicas: 2
+    networks:
+      - network_public

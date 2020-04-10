@@ -1,10 +1,11 @@
-version: "3"
+version: "3.7"
 
 networks:
   gitea:
     external: false
 
 services:
+      
   gitserver:
     image: gitea/gitea:latest
     restart: always
@@ -14,9 +15,13 @@ services:
       - gitea_data:/data
     ports:
       - "3000:3000"
-      - "22:22"
+      - "222:22"
     depends_on:
       - giteadb
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.go.rule=Path(`/`)"
+      - "traefik.http.services.go.loadbalancer.server.port=3000"
 
   gitdb:
     image: mysql:5.7
@@ -26,7 +31,12 @@ services:
       - MYSQL_USER=gitea
       - MYSQL_PASSWORD=gitea
       - MYSQL_DATABASE=gitea
+    ports:
+      - "3306:3306"
     networks:
       - gitea
     volumes:
       - mysql_data:/var/lib/mysql
+volumes:
+  gitea_data:
+  mysql_data:

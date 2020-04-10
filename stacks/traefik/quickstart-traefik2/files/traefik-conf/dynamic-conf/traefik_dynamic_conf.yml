@@ -1,0 +1,46 @@
+### Dynamic Configuration
+
+# Declaring Routers, Middlewares and Services.
+http:
+
+  # Define the routers.
+  routers:
+    # Routing to websecure(HTTPS).
+    http-catchall:
+      rule: "HostRegexp(`{host:.+}`)"
+      service: dummy@file
+      entrypoints:
+        - web
+      middlewares:
+        - redirect-https@file
+      priority: 1
+    # Routing to Dashboard Treafik.
+    api:
+      rule: "Host(`traefik.docker.localhost`)"
+      service: api@internal
+      middlewares:
+        - auth
+      priority: 2
+
+  # Define the middleware
+  middlewares:
+    # Middleware redirect to https.
+    redirect-https:
+      redirectScheme:
+        scheme: https
+    # Middleware authentication, user and password.
+    auth:
+      basicAuth:
+        usersFile: "/etc/traefik/authorized-users/usersfile"
+
+  # Define the service
+  services:
+    dummy: # Fake service for routing -> http.routers.http-catchall
+      loadBalancer:
+        servers:
+          - url: ""
+    # If it is in Swarm mode.
+    # dummy-svc:
+    #   loadBalancer:
+    #     healthCheck:
+    #       port: 9999
