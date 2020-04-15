@@ -2,6 +2,11 @@
 
 # 使用 *hostnamectl* 命令设置主机名称信息
 #查看Linux 版本信息：
+
+# 设置阿里云yum源仓库
+#curl -o /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo
+#wget -O /etc/yum.repos.d/epel.repo http://mirrors.aliyun.com/repo/epel-7.repo
+
 echo " RedHat Linux 版本信息 !"
 
 cat  /etc/redhat-release

@@ -1,0 +1,64 @@
+version: "3.7"
+
+services:
+  reverse-proxy:
+    image: traefik:v2.2.0
+    command:
+      - "--providers.docker.endpoint=unix:///var/run/docker.sock"
+      - "--providers.docker.swarmMode=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=traefik-public"
+      - "--entrypoints.web.address=:80"
+      - "--api.insecure=true"
+    ports:
+      - 80:80
+      - 8080:8080
+    volumes:
+      # So that Traefik can listen to the Docker events
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - traefik-public
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+
+  my-app1:
+    image: containous/whoami:v1.4.0
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.lb_my-app1.rule=PathPrefix(`/app1`)"
+        - "traefik.http.routers.lb_my-app1.entrypoints=web"
+        - "traefik.http.services.lb_my-app1.loadbalancer.server.port=80"
+    networks:
+      - traefik-public
+    ports:
+      - 81:80
+      
+  my-app2:
+    image: containous/whoami:v1.4.0
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.lb_my-app2.rule=Host(`app2.docker`)"
+        - "traefik.http.routers.lb_my-app2.entrypoints=web"
+        - "traefik.http.services.lb_my-app2.loadbalancer.server.port=80"
+    networks:
+      - traefik-public
+  helloworld:
+    image: tutum/hello-world:latest
+    networks:
+     - traefik-public
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.demo_helloworld.rule=PathPrefix(`/demo`)"
+    #    - "traefik.http.routers.helloworld.rule=Host(`helloworld.local`)"
+        - "traefik.http.routers.demo_helloworld.entrypoints=web"
+        - "traefik.http.services.demo_helloworld.loadbalancer.server.port=80"
+        
+networks:
+  traefik-public:
+    external: true
+    

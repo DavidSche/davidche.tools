@@ -1,0 +1,60 @@
+version: "3.7"
+
+services:
+  traefik:
+    image: traefik:v2.2.0
+    command:
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      # - --providers.docker
+      - --providers.docker.swarmMode=true
+      - --providers.docker.exposedbydefault=false
+      # - --providers.docker.network=traefik-public
+      - --api
+      - --certificatesresolvers.leresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory
+      - --certificatesresolvers.leresolver.acme.email=your@email.com
+      - --certificatesresolvers.leresolver.acme.storage=/acme.json
+      - --certificatesresolvers.leresolver.acme.tlschallenge=true
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./acme.json:/acme.json
+    labels:
+      # Dashboard
+      - "traefik.http.routers.traefik.rule=Host(`traefik.docker.localhost`)"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.tls.certresolver=leresolver"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.middlewares=authtraefik"
+      - "traefik.http.middlewares.authtraefik.basicauth.users=user:$$apr1$$q8eZFHjF$$Fvmkk//V6Btlaf2i/ju5n/" # user/password
+      
+      # global redirect to https
+      - "traefik.http.routers.http-catchall.rule=hostregexp(`{host:.+}`)"
+      - "traefik.http.routers.http-catchall.entrypoints=web"
+      - "traefik.http.routers.http-catchall.middlewares=redirect-to-https"
+
+      # middleware redirect
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+
+      # app auth middleware
+      - "traefik.http.middlewares.auth.basicauth.users=user:$$apr1$$q8eZFHjF$$Fvmkk//V6Btlaf2i/ju5n/" # user/password
+
+  my-app1:
+    image: containous/whoami:v1.4.0
+    labels:
+      - "traefik.http.routers.my-app1.rule=Host(`app1.docker.localhost`)"
+      - "traefik.http.routers.my-app1.middlewares=auth"
+      - "traefik.http.routers.my-app1.entrypoints=websecure"
+      - "traefik.http.routers.my-app1.tls=true"
+      - "traefik.http.routers.my-app1.tls.certresolver=leresolver"
+
+  my-app2:
+    image: containous/whoami:v1.4.0
+    labels:
+      - "traefik.http.routers.my-app2.rule=Host(`app2.docker.localhost`)"
+      - "traefik.http.routers.my-app2.middlewares=auth"
+      - "traefik.http.routers.my-app2.entrypoints=websecure"
+      - "traefik.http.routers.my-app2.tls=true"
+      - "traefik.http.routers.my-app2.tls.certresolver=leresolver"
