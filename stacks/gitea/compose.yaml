@@ -2,7 +2,7 @@ version: "3"
 
 networks:
   gitea:
-    external: false
+    # external: false
 
 services:
   server:
@@ -15,6 +15,7 @@ services:
        - DB_NAME=gitea
        - DB_USER=gitea
        - DB_PASSWD=gitea
+       - GITEA_CUSTOM=/data/gitea_custom
     restart: always
     networks:
       - gitea
@@ -25,6 +26,12 @@ services:
       - "222:22"
     depends_on:
       - db
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        # constraints: [node.labels.pm-node == true]  # 部署标签约束
+        constraints: [node.labels.gitea == true]  # 部署标签约束
 
   db:
     image: mysql:5.7
@@ -39,3 +46,12 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        # constraints: [node.labels.pm-node == true]  # 部署标签约束
+        constraints: [node.labels.gitea == true]  # 部署标签约束
+volumes:
+  gitea_data:
+  mysql_data:

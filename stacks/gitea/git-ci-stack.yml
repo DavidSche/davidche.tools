@@ -1,5 +1,12 @@
 version: "3.6"
 
+networks:
+  gitea:
+  # default:
+  #   external:
+  #     #name: ${DEFAULT_NETWORK}
+  #     name: gitea-network
+
 services:
   gitea:
     image: gitea/gitea:latest
@@ -7,12 +14,15 @@ services:
       - USER_UID=1000
       - USER_GID=1000
       - ROOT_URL=http://gitea:3000
+      - GITEA_CUSTOM=/data/gitea_custom
 #    restart: always
     volumes:
       - gitea_data:/data
     ports:
       - "3000:3000"
       - "22:22"
+    networks:
+      - gitea
     # healthcheck:
     #   test: ["CMD-SHELL", "curl -f http://gitea:3000 || exit 1"]
     #   interval: 1m30s
@@ -35,7 +45,9 @@ services:
       - DRONE_GITEA=true
       - DRONE_GITEA_URL=http://gitea:3000
       - DRONE_SECRET=secret
-      - DRONE_NETWORK=gitea_default
+      - DRONE_NETWORK=gitea
+    networks:
+      - gitea
 
   drone-agent:
     image: drone/agent:latest
@@ -48,6 +60,8 @@ services:
     environment:
       - DRONE_SERVER=drone-server:9000
       - DRONE_SECRET=secret
+    networks:
+      - gitea
 
 volumes:
   drone_data:
