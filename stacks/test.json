@@ -1,0 +1,11 @@
+{
+    "insecure-registries": ["192.168.5.101:5000","192.168.9.10:5000"],
+    "registry-mirrors": ["https://um1k3l1w.mirror.aliyuncs.com"],
+    "graph": "/home/data/docker",
+    "storage-driver": "overlay2",
+    "storage-opts": [
+    "overlay2.override_kernel_check=true"
+    ],
+    "experimental": true,
+    "metrics-addr": "0.0.0.0:9323"
+}

@@ -1,0 +1,54 @@
+workspace:
+  base: /build
+
+pipeline:
+  build:
+    image: adoptopenjdk/maven-openjdk11
+    pull: true
+    commands:
+      - mvn clean
+      - mvn install
+      - mvn package
+      - cp /build/target/boot-sample-0.0.1-SNAPSHOT.war /build
+    mount:
+      - /build/target
+    when:
+      branch: [ master, develop ]
+      event: push
+      
+  rebuild-cache:
+    image: drillster/drone-volume-cache
+    rebuild: true
+    mount:
+      - /build/target
+    commands:
+      - ls /build
+      - ls /build/target
+    ttl: 7
+    when:
+      branch: [ master, develop ]
+      event: push
+    
+  deploy:
+    image: plugins/docker
+    dockerfile: Dockerfile
+    mount:
+      - /build/target
+    settings:
+      repo: hikaruright/spring-test
+      tags:
+      - latest
+      - 1.0.0
+      - 0.0.1
+    when:
+      branch: [ master, develop ]
+      event: push
+
+services:
+  database:
+    image: mariadb:latest
+    environment:
+      - MYSQL_ROOT_PASSWORD=ROOTPW
+      - MYSQL_USER=test
+      - MYSQL_PASSWORD=TESTPW
+      - MYSQL_DATABASE=testdb
