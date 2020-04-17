@@ -1,0 +1,38 @@
+
+https://github.com/digoal/blog/blob/master/201808/20180819_01.md
+
+cat /usr/lib/systemd/system/mssql-server.service
+
+
+[Unit]
+Description=Microsoft SQL Server Database Engine
+After=network.target auditd.service
+Documentation=https://docs.microsoft.com/en-us/sql/linux
+  
+[Service]
+ExecStart=/opt/mssql/bin/sqlservr
+User=mssql
+WorkingDirectory=/var/opt/mssql
+
+# Kill root process
+KillMode=process
+
+# Wait up to 30 seconds for service to start/stop
+TimeoutSec=30min
+
+# Remove process, file, thread limits
+#
+LimitNPROC=infinity
+LimitNOFILE=infinity
+TasksMax=infinity
+UMask=007
+
+# Restart on non-successful exits.
+Restart=on-failure
+
+# Don't restart if we've restarted more than 3 times in 2 minutes.
+StartLimitInterval=120
+StartLimitBurst=3
+
+[Install]
+WantedBy=multi-user.target

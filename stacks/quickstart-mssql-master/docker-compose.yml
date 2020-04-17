@@ -1,0 +1,46 @@
+
+version: '3.7'
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  vol_certificates:
+    driver: local
+    driver_opts:
+      type: none
+      # It is necessary that this directory already exists!
+      device: $PWD/volumes/certificates
+      o: bind
+  vol_mssql_single:
+    driver: local
+    driver_opts:
+      type: none
+      # It is necessary that this directory already exists!
+      device: $PWD/volumes/mssql-single/data
+      o: bind
+
+services:
+  db_mssql_single:
+    image: image/mssql
+    container_name: ctn-mssql-single
+    hostname: mssql-single
+    domainname: local.domain.com
+    environment:
+      DB_MSSQL_APPLY_DATABASE: 'Y'
+      DB_MSSQL_TZ: 'America/Sao_Paulo'
+    build:
+      context: ./src/database
+      dockerfile: Dockerfile
+    restart: always
+    volumes:
+      - vol_certificates:/home/app/mssql/certificates
+      - vol_mssql_single:/var/opt/mssql/data
+    ports:
+      - "1433:1433"
+    networks:
+      backend:
+        aliases:
+         - mssql-single
+         - mssql-single.local.domain.com

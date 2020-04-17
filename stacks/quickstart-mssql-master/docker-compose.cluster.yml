@@ -1,0 +1,114 @@
+
+version: '3.7'
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  vol_certificates:
+    driver: local
+    driver_opts:
+      type: none
+      # It is necessary that this directory already exists!
+      device: $PWD/volumes/certificates
+      o: bind
+  vol_mssql01:
+    driver: local
+    driver_opts:
+      type: none
+      # It is necessary that this directory already exists!
+      device: $PWD/volumes/mssql01/data
+      o: bind
+  vol_mssql02:
+    driver: local
+    driver_opts:
+      type: none
+      # It is necessary that this directory already exists!
+      device: $PWD/volumes/mssql02/data
+      o: bind
+  vol_mssql03:
+    driver: local
+    driver_opts:
+      type: none
+      # It is necessary that this directory already exists!
+      device: $PWD/volumes/mssql03/data
+      o: bind
+
+services:
+  db_mssql_node01:
+    image: image/mssql
+    container_name: ctn-mssql-node01
+    hostname: mssql-node01
+    domainname: local.domain.com
+    environment:
+      DB_MSSQL_APPLY_CLUSTER: 'Y'
+      DB_MSSQL_TZ: 'America/Los_Angeles'
+    build:
+      context: ./src/database
+      dockerfile: Dockerfile
+    restart: always
+    volumes:
+      - vol_certificates:/home/app/mssql/certificates
+      - vol_mssql01:/var/opt/mssql/data
+    ports:
+      - "14331:1433"
+      - "15021:5022"
+    networks:
+      backend:
+        aliases:
+         - mssql-node01
+         - mssql-node01.local.domain.com
+
+  db_mssql_node02:
+    image: image/mssql
+    container_name: ctn-mssql-node02
+    hostname: mssql-node02
+    domainname: local.domain.com
+    environment:
+      DB_MSSQL_APPLY_CLUSTER: 'Y'
+      DB_MSSQL_TZ: 'America/Los_Angeles'
+    depends_on:
+      - db_mssql_node01
+    build:
+      context: ./src/database
+      dockerfile: Dockerfile
+    restart: always
+    volumes:
+      - vol_certificates:/home/app/mssql/certificates
+      - vol_mssql02:/var/opt/mssql/data
+    ports:
+      - "14332:1433"
+      - "15022:5022"
+    networks:
+      backend:
+        aliases:
+         - mssql-node02
+         - mssql-node02.local.domain.com
+
+  db_mssql_node03:
+    image: image/mssql
+    container_name: ctn-mssql-node03
+    hostname: mssql-node03
+    domainname: local.domain.com
+    environment:
+      DB_MSSQL_APPLY_CLUSTER: 'Y'
+      DB_MSSQL_APPLY_DATABASE: 'Y'
+      DB_MSSQL_TZ: 'America/Los_Angeles'
+    depends_on:
+      - db_mssql_node01
+    build:
+      context: ./src/database
+      dockerfile: Dockerfile
+    restart: always
+    volumes:
+      - vol_certificates:/home/app/mssql/certificates
+      - vol_mssql03:/var/opt/mssql/data
+    ports:
+      - "14333:1433"
+      - "15023:5022"
+    networks:
+      backend:
+        aliases:
+         - mssql-node03
+         - mssql-node03.local.domain.com
