@@ -1,0 +1,158 @@
+ 
+ 
+https://usa10.dl.visual-paradigm.com/visual-paradigm/vps16.1/20200205/VP_Server_16_1_20200205_Win64.zip
+
+https://usa10.dl.visual-paradigm.com/visual-paradigm/vps16.1/20200231/VP_Server_16_1_20200231_Win64.zip
+https://usa10.dl.visual-paradigm.com/visual-paradigm/vps16.1/20200231/VP_Server_16_1_20200231_Linux64.tar.gz
+https://usa10.dl.visual-paradigm.com/visual-paradigm/vps16.0/20191108/VP_Server_16_0_20191108_Win64.zip
+https://usa10.dl.visual-paradigm.com/visual-paradigm/vps16.1/20200301/VP_Server_16_1_20200301_Win64.zip
+https://hk1.dl.visual-paradigm.com/visual-paradigm/vps16.1/20200301/VP_Server_16_1_20200301_Win64.zip
+
+https://usa10.dl.visual-paradigm.com/visual-paradigm/vp16.1/20200231/Visual_Paradigm_16_1_20200231_Win64_InstallFree.zip
+https://usa10.dl.visual-paradigm.com/visual-paradigm/vp16.1/20200301/Visual_Paradigm_16_1_20200301_Win64_InstallFree.zip
+
+https://usa10.dl.visual-paradigm.com/archives/vp16.0/20191237/Visual_Paradigm_16_0_20191237_Win64_InstallFree.zip
+
+
+docker service update $SERVICE --network-add $NETWORK1 --network-rm $NETWORK2
+
+hxxps://www.visual-paradigm.com/downloads/vps/VP_Server_Win64.zip
+hxxps://www.visual-paradigm.com/downloads/vps/VP_Server_Linux64.tar.gz
+hxxps://www.visual-paradigm.com/downloads/vps/VP_Server_OSX_WithJRE.tgz
+
+
+https://www.visual-paradigm.com/downloads/vp/Visual_Paradigm_Win64_InstallFree.zip
+
+https://usa11.dl.visual-paradigm.com/visual-paradigm/vp16.1/20200401/Visual_Paradigm_16_1_20200401_Win64_InstallFree.zip
+https://usa11.dl.visual-paradigm.com/visual-paradigm/vp16.1/20200401/Visual_Paradigm_16_1_20200401_Win64_InstallFree.zip
+
+
+consul_demo
+
+docker run -it -v es_kibana_data:/volume -v /home/:/backup --rm david/vback backup kibanadata
+
+docker run  -v mysql_mysql_data:/volume -v /home/backup:/backup --rm bluet/vback backup  ${data_date}
+
+ 
+
+链接:https://pan.baidu.com/s/1n0QbS011JZtHu0P_ORb3Lw提取码:mhdp
+
+mvn archetype:generate -DarchetypeGroupId=com.david.api.starter -DarchetypeArtifactId=david-api-archetype -DarchetypeVersion=1.0-SNAPSHOT -DgroupId=com.david -DartifactId=appfabric -DinteractiveMode=false
+
+https://github.com/PhilippHeuer/camunda-template.git
+
+--network neo4j-network
+docker run -d -p 7474:7474 -p 7473:7473 -p 7687:7687 --name neo4j-node1  bitnami/neo4j:latest
+
+docker run -d -p 7474:7474 -p 7687:7687 --name neo4j-node1  --env NEO4J_ACCEPT_LICENSE_AGREEMENT=yes neo4j:enterprise
+docker run -d -p 7174:7474 -p 7473:7473 -p 7687:7687 --name neo4j-node1  --env NEO4J_ACCEPT_LICENSE_AGREEMENT=yes neo4j:enterprise
+
+docker exec -it neo4j-node1 /bin/bash 
+
+docker run \
+  --publish=7474:7474 --publish=7687:7687 \
+  --volume=$HOME/neo4j/data:/data \
+  --volume=$HOME/neo4j/logs:/logs \
+  --user="$(id -u):$(id -g)" \
+  neo4j:4.0
+  
+docker run \
+  --publish=7474:7474 --publish=7687:7687 \
+  --volume=$HOME/neo4j/data:/data \
+  --volume=$HOME/neo4j/logs:/logs \
+  neo4j:4.0
+  
+  
+--env NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
+
+docker run \
+  --detach \
+  --publish=7474:7474 --publish=7687:7687 \
+  --volume=$HOME/neo4j/data:/data \
+  --volume=$HOME/neo4j/logs:/logs \
+  --env NEO4J_dbms_memory_pagecache_size=4G \
+  neo4j:4.0
+
+docker run \
+  --detach \
+  --publish=7474:7474 --publish=7687:7687 \
+  --volume=$HOME/neo4j/data:/data \
+  --volume=$HOME/neo4j/logs:/logs \
+  --volume=$HOME/neo4j/conf:/conf \
+  neo4j:4.0
+
+docker run --name=read_replica1 --detach --network=cluster \
+  --publish=10474:7474 --publish=10473:7473 --publish=10687:7687 \
+  --env NEO4J_dbms_mode=READ_REPLICA \
+  --env NEO4J_causal__clustering_initial__discovery__members=core1:5000,core2:5000,core3:5000 \
+  --env NEO4J_ACCEPT_LICENSE_AGREEMENT=yes \
+  --env NEO4J_dbms_connector_bolt_advertised__address=localhost:10687 \
+  --env NEO4J_dbms_connector_http_advertised__address=localhost:10474 \
+  neo4j:4.0-enterprise
+  
+bin/cypher-shell -a bolt://localhost:7681 -d system -u neo4j -p neo4j1  
+
+
+bin/cypher-shell -a bolt://localhost:7687 -d system -u neo4j -p admin  
+  
+MATCH (n)  DETACH DELETE n 
+
+MATCH (n:`标的企业`) DETACH DELETE n 
+
+ 
+ Traefik v2 下设置反向代理及https redirect
+Posted on December 16, 2019
+为了解决docker前端的反向代理，在尝试了传统的haproxy后打算试一试新产品。Traefik的吸引力在于
+
+v1和v2版本的配置语法不一样，阅读文档需注意
+配置可以通过启动参数或配置文件传入，但前者并没有完全实现后者的功能
+文档过于简陋
+可以自行更新 Let’s encrypt证书，避免3个月手工操作（即使用acme.sh 还是需要配置cron job）
+自动发现同一个docker instance上的服务并通过label来定义route/service
+多种多样的middleware 可以简单实现ratelimit或者replace path
+缺点在于
+
+下面是一个简单例子。docker-compose.yml 中有2个container，其中trafik找到了nginx的服务并且自动issue/renew了证书。
+
+nginx:
+    command: nginx -c /etc/netbox-nginx/nginx.conf
+    image: nginx:1.17-alpine
+    depends_on:
+    - netbox
+      #ports:
+    expose:
+      - 8080
+    volumes:
+    - netbox-static-files:/opt/netbox/netbox/static:ro
+    - netbox-nginx-config:/etc/netbox-nginx/:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.netbox_http.rule=Host(`netbox.fastobject.net`)"
+      - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.https-redirect.redirectscheme.permanent=true"
+      - "traefik.http.routers.netbox_http.middlewares=https-redirect"
+      - "traefik.http.routers.netbox_https.rule=Host(`netbox.fastobject.net`)"
+      - "traefik.http.routers.netbox_https.tls=true"
+      - "traefik.http.routers.netbox_https.tls.certresolver=le"
+      - "traefik.http.services.netbox-service.loadbalancer.server.port=8080"
+  traefik:
+    image: traefik:v2.1
+    container_name: "traefik"
+    command:
+      --log.level=INFO
+      --providers.docker=true
+      --providers.docker.exposedbydefault=false
+      --entryPoints.web.address=:80
+      --entryPoints.websecure.address=:443
+      --certificatesResolvers.le.acme.email=henryxxxxx@gmail.com
+      --certificatesResolvers.le.acme.storage=acme.json
+      --certificatesResolvers.le.acme.httpChallenge.entryPoint=web
+    ports:
+      - 443:443
+      - 80:80
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+这里还实现了http 80 -> http 443 的自动302跳转。这个配置通过middleware实现，坑点在于需要配置2个route，分别针对http和https，否则跳转是404 not found。另一个容易被忽略的地方是需要被反向代理的container使用expose而不是ports来暴露端口。expose只会把端口暴露给其他container 而ports会把这个端口绑定在host上。在这个例子里只需要把端口expose给trafik即可。
+
+
+

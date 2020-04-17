@@ -1,0 +1,265 @@
+;
+
+
+CREATE (beijing:省 {name:'北京', code:'110000', level: 0})
+CREATE (shandong:省 {name:'山东', code:'370000', level: 0})
+CREATE (jinan:市 {name:'济南', code:'370100', level: 1})
+
+CREATE (jinan)-[r:隶属{shopdate:"12/12/2014",price:55000}]->(shandong)
+
+
+MATCH (jinan:市),(shandong:省) 
+CREATE (jinan)-[r:隶属{}]->(shandong) 
+RETURN r
+
+MATCH (jinan:`市`),(shandong:`省`{name:'山东'} )
+CREATE (jinan)-[r:隶属{shopdate:"12/12/2014",price:55000}]->(shandong) 
+RETURN r
+
+
+MATCH (shandong: `省`) DELETE shandong
+MATCH (jinan: `市`) DELETE jinan
+
+MATCH (e: `省`) DETACH DELETE e
+
+MATCH (e: `市`) DETACH DELETE e
+
+
+MATCH (jinan:`市`)-[r:隶属]->(shandong:`省`) 
+DELETE jinan,shandong,r
+
+MATCH (n:`市`) RETURN n LIMIT 25
+
+
+
+
+MATCH (r)
+WHERE id(r) = 501
+DETACH DELETE r
+RETURN r
+
+
+logging.level.org.springframework.data=INFO
+logging.level.org.springframework.jdbc.core.JdbcTemplate=DEBUG
+
+code
+
+CREATE (beijing:province {name:'北京', code:'110000'})
+
+CREATE (beijing:省 {name:'北京', code:'110000'})
+
+
+CREATE (TheMatrix:Movie {title:'The Matrix', released:1999, tagline:'Welcome to the Real World'})
+
+CREATE (Keanu:Person {name:'Keanu Reeves', born:1964})
+
+
+
+
+
+
+CREATE (TheMatrixReloaded:Movie {title:'The Matrix Reloaded', released:2003, tagline:'Free your mind'})
+CREATE
+  (Keanu)-[:ACTED_IN {roles:['Neo']}]->(TheMatrixReloaded),
+  (Carrie)-[:ACTED_IN {roles:['Trinity']}]->(TheMatrixReloaded),
+  (Laurence)-[:ACTED_IN {roles:['Morpheus']}]->(TheMatrixReloaded),
+  (Hugo)-[:ACTED_IN {roles:['Agent Smith']}]->(TheMatrixReloaded),
+  (LillyW)-[:DIRECTED]->(TheMatrixReloaded),
+  (LanaW)-[:DIRECTED]->(TheMatrixReloaded),
+  (JoelS)-[:PRODUCED]->(TheMatrixReloaded)
+
+CREATE (TheMatrixRevolutions:Movie {title:'The Matrix Revolutions', released:2003, tagline:'Everything that has a beginning has an end'})
+
+trade_type  is_pack  project_id   含义
+3/4         null                增资 /扩股
+3/4         0         null      单资产/资产转让
+3/4         0         非null    子包
+3/4         1         null      资产包
+
+
+trade_type  ==3/4
+
+
+trade_type  is_pack  project_id    含义
+1/2        null       null         增资 /扩股
+3/4         0         null         单资产/资产转让
+3/4         0         非null       子包
+3/4         1         null         资产包
+
+
+添加标签语句： 为name为鱼暖暖的节点都添加标签Coder1，如图2
+
+MATCH (e {name:"鱼暖暖"}) set e:Coder1 return e
+或者 根据id查询出某个节点，然后创建标签。如图3
+
+MATCH (e {name:"鱼暖暖"}) where id(e)=360 set e:Coder2 return e
+
+
+
+curl -XDELETE 'http://192.168.6.172:9200/_cat/indices/zipkin:span-2019-12-07' 
+
+No handler found for uri
+
+
+curl http://192.168.6.172:9200/_cat/indices
+
+ curl -XDELETE http://192.168.6.172:9200/zipkin:span-2019-12-07
+
+ 
+
+SELECT * FROM tc_project p  JOIN tc_pro_forecast pf WHERE p.id = pf.project_id AND p.trade_type = 1 
+			
+<id>:4390 allow_collect:0allow_union:0 asset_id:7df3a6125e834dad9d64b17475889b94base_price:0.0create_dept_id:dept-0000-0000-0000-0000-0000-01create_user_id:user-0000-0000-0000-0000-0000-01name:测试资产包org_id:org0-0000-0000-0000-0000-0000-01pro_id:e189afbbc8e3499ba01933b8b8102367status:
+
+添加标签语句： 为name为鱼暖暖的节点都添加标签Coder1，如图2
+
+MATCH (e {name:"鱼暖暖"}) set e:Coder1 return e
+或者 根据id查询出某个节点，然后创建标签。如图3
+
+MATCH (e {name:"鱼暖暖"}) where e.pro_id= '' =360 set e:Coder2 return e
+
+MATCH (e:`交易项目`) where e.pro_id= `e189afbbc8e3499ba01933b8b8102367` set e:`正式挂牌` return e
+
+MATCH (n:`交易项目`) where  n.pro_id="e189afbbc8e3499ba01933b8b8102367" set n:`正式挂牌`  return n	
+
+MATCH (n:`交易项目`) RETURN n LIMIT 25
+
+MATCH (n:`交易项目`) where  n.pro_id="e189afbbc8e3499ba01933b8b8102367"   return n	
+
+docker stack services <stack-name> --format '{{.Name}}' | \
+    xpanes -s -c "docker service logs -f {}"
+	
+docker stack services es --format '{{.Name}}' | \
+    xpanes -s -c "docker service logs -f {}"
+
+
+$http_x_real_ip
+
+$http_authorization
+
+MATCH (n:`交易项目`) RETURN ncount(n)	
+
+MATCH (n:`省`) RETURN n LIMIT 25
+
+MATCH  (m:`交易项目`)-[r:`所属地区`]->(n:`省`{name: "山东省"})  RETURN m
+
+MATCH p=({name: "A"})-[*..10]->({name: "C"}) RETURN p
+
+m:`交易项目`
+
+MATCH p=(m:`交易项目`)-[s:`包含`]-(a:`标的`)-[r:`所属地区`]->(n:`省`{name: "山东省"})  RETURN p
+
+MATCH p=(m:`交易项目`)-[:`包含`]-(a:`标的`)-[r:`所属地区`]->(n:`省`{name: "山东省"})  RETURN count(p) 
+
+
+MATCH p=(m:`交易项目`)-[:`包含`*0..5]-()-[r:`所属地区`]->(n:`省`{name: "山东省"})  RETURN p
+
+MATCH p=()-[r:`所属地区`]->() RETURN p LIMIT 25
+
+
+
+MATCH (k:Keyword)<-[r:CONTAINS_KEYWORD]-(t:Tweet)
+WHERE k.value IN ['c4160609-ebf9-4197-9dc3-86839e3bd278'] AND t.created_date > 1566123035893
+return t,k
+
+
+
+MATCH (k:Keyword) 
+WHERE  k.value IN ['c4160609-ebf9-4197-9dc3-86839e3bd278']
+WITH k
+MATCH (k:Keyword)-[r:CONTAINS_KEYWORD]-(t:Tweet)
+WHERE t.created_date > 1566123035893
+return t,k
+
+TcSelectDetail
+
+
+www.p30download.com
+TcArchive
+TcNonMonetary
+
+
+
+MATCH (n:行业) WHERE n.code = "dict_industry_level1_A" return n 
+
+MATCH (n:自然人) WHERE n.user_id = ‘7ef90c28965746e8b44bf2c0bfc503ce’ return n 
+MATCH (n:自然人) WHERE n.name = '关玉霞' return n 
+
+code:dict_industry_level1_R
+
+MATCH (n:一级行业) WHERE n.id = 1232 return n 
+
+
+timedatectl set-timezone Asia/Hong_Kong
+
+1、timedatectl查看时间各种状态：
+Local time: 四 2014-12-25 10:52:10 CST
+Universal time: 四 2014-12-25 02:52:10 UTC
+RTC time: 四 2014-12-25 02:52:10
+Timezone: Asia/Shanghai (CST, +0800)
+NTP enabled: yes
+NTP synchronized: yes
+RTC in local TZ: no
+
+2、timedatectl list-timezones: 列出所有时区
+3、timedatectl set-local-rtc 1 将硬件时钟调整为与本地时钟一致, 0 为设置为 UTC 时间
+4、timedatectl set-timezone Asia/Shanghai 设置系统时区为上海
+
+
+CQY_2019@redis$cluster
+
+trade_type  is_pack  project_id   含义
+1/2        null                增资 /扩股
+3/4         0         null      单资产/资产转让
+3/4         0         非null    子包
+3/4         1         null      资产包
+
+
+
+
+trade_type  is_pack  project_id   含义
+1/2        null                增资 /扩股          通过 ac_company 直接与标的企业关联 获取
+3/4         0         null      单资产/资产转让     
+3/4         0         非null    子包
+3/4         1         null      资产包
+
+
+
+标的 表中所有的 type ==1/2的数据 可以 通过 ac_company 直接与标的企业关联 来获取；所有的 type ==3 的数据通过 ac_property 关联来获取
+
+const_asset_type
+
+
+
+c.ﬁnancial_major,
+c.financial_major,
+
+tc_project trade_type   
+
+1 增资扩股 TRADE_TYPE_FINANCING 1 A00003 
+2 股权转让 TRADE_TYPE_STOCK 2 A00001 
+3 资产转让 TRADE_TYPE_PROPERTY 3 A00002 
+4 资产租赁 TRADE_TYPE_LEASE 4 
+
+tc_pro_forecast   增资预披露
+
+tc_pro_lease 资产出租项目
+
+docker run -d --cap-add sys_resource \
+--name  redis-node1 \
+-p 8443:8443 \
+-p 9443:9443 \
+-p 12000:12000 \
+redislabs/redis
+
+
+git config --global user.email EMAIL
+git config --global user.name "NAME"
+
+git add test.txt
+Next, we'll make our first commit to the repository with the command:
+
+git commit -m "my first commit"
+Finally, we'll push the commit to the Gitea repository with the command:
+
+git push

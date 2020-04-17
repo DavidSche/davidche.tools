@@ -12,3 +12,22 @@ Consul 集群至少要三个节点才能正常启动
 docker service scale 扩展一个或多个服务
 
 docker service scale webtier_nginx=5
+
+
+```
+
+curl \
+    --request PUT \
+    http://192.168.9.21:8500/v1/agent/service/deregister/website-manager-9283e4a4e43965aa6206a019953b0dc8
+
+
+curl \
+    --request PUT \
+    http://192.168.6.131:8500/v1/agent/service/deregister/website-manager-f9ade823753fbe0e2c71f6cb42120287
+
+curl \
+    --request PUT \
+    http://192.168.9.10:8500/v1/agent/service/deregister/server-provider-9000
+	
+```
+
