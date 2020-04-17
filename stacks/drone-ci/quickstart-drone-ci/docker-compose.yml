@@ -22,6 +22,7 @@ networks:
   network_local:
     external: false
     name: network_local
+    attachable: true
 
 services:
   # Defining a database service for Gitea Server.

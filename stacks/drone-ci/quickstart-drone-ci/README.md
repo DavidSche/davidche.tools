@@ -119,9 +119,6 @@ https://www.pgadmin.org/docs/pgadmin4/latest/container_deployment.html#traefik
   Accessed: *December de 2019* <br/>
   Available: *[https://docs.traefik.io/getting-started/configuration-overview/](https://docs.traefik.io/getting-started/configuration-overview/)*
 
-
 ### License
 
-[<img width="190" src="https://raw.githubusercontent.com/alisonbuss/my-licenses/master/files/logo-open-source-550x200px.png">](https://opensource.org/licenses)
-[<img width="166" src="https://raw.githubusercontent.com/alisonbuss/my-licenses/master/files/icon-license-mit-500px.png">](https://github.com/alisonbuss/quickstart-drone-ci/blob/master/LICENSE)
-
+[license](https://github.com/alisonbuss/quickstart-drone-ci/blob/master/LICENSE)
