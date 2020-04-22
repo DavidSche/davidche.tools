@@ -21,7 +21,7 @@ services:
 
   portainer:
     image: portainer/portainer
-    command: --tlsskipverify 
+    command: --tlsskipverify  --no-analytics
     ports:
       - "9000:9000"
       - "8000:8000"
