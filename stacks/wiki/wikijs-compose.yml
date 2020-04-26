@@ -1,0 +1,42 @@
+version: '3.7'
+
+services:
+  wikijs:
+    image: requarks/wiki:2
+    restart: unless-stopped
+    depends_on:
+      - postgresql
+    environment:
+      - DB_TYPE=postgres
+      - DB_HOST=postgresql
+      - DB_PORT=5432
+      - DB_USER=wikijs
+      - DB_PASS=secret-password
+      - DB_NAME=wikijs
+    networks:
+      - wikijs
+    volumes:
+      - wikijs-vol:/wiki/data/content
+    ports:
+      - '81:80'
+  postgresql:
+    image: postgres:12
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=wikijs
+      - POSTGRES_PASSWORD=secret-password
+      - POSTGRES_DB=wikijs
+    networks:
+      - wikijs
+    volumes:
+      - postgresql-vol:/var/lib/postgresql/data
+    ports:
+      - '5433:5432'
+      
+networks:
+  wikijs:
+    external: false
+
+volumes:
+  wikijs-vol:
+  postgresql-vol:

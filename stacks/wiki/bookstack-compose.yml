@@ -1,0 +1,51 @@
+version: '3.7'
+
+services:
+  stack:
+    image: linuxserver/bookstack
+    container_name: stack
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - DB_HOST=stack_db
+      - DB_USER=bookstack
+      - DB_PASS=dbpass
+      - DB_DATABASE=bookstackapp
+    volumes:
+      - wiki-vol:/config
+    ports:
+      - 8020:80
+    restart: unless-stopped
+    depends_on:
+      - stack_db
+    networks:
+      - wiki-net
+##
+
+  stack_db:
+    image: linuxserver/mariadb
+    container_name: bookstack_db
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - MYSQL_ROOT_PASSWORD=dbpass
+      #- TZ=Europe/London
+      - TZ=Asia/Shanghai
+      - MYSQL_DATABASE=bookstackapp
+      - MYSQL_USER=bookstack
+      - MYSQL_PASSWORD=dbpass
+    volumes:
+      - db-vol:/config
+    restart: unless-stopped
+    networks:
+      - wiki-net
+
+##
+
+networks:
+  wiki-net:
+    external: false
+
+volumes:
+  wiki-vol:
+  db-vol:
