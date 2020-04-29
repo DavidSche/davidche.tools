@@ -31,7 +31,7 @@ services:
     container_name: gitlab_server
     restart: always
     environment:
-      TZ: America/Santiago
+      TZ: Asia/Shanghai
       GITLAB_OMNIBUS_CONFIG: |
         external_url 'http://10.10.68.203'
         # Database

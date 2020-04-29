@@ -1,0 +1,34 @@
+version: '3'
+services:
+  elasticsearch:
+    image: 'elasticsearch:5.4.2'
+    ports:
+      - '9200:9200'
+    environment:
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.labels.log == true]  # 部署标签约束
+
+  kibana:
+    image: 'kibana:5.4.2'
+    ports:
+      - '5601:5601'
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.labels.log == true]  # 部署标签约束
+    depends_on:
+      - elasticsearch
+volumes:
+  es-data:

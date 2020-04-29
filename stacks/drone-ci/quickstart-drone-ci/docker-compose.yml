@@ -44,13 +44,18 @@ services:
     restart: always
     ports:
       - "5432:5432"
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.labels.gitea-db-node == true]  # 部署标签约束
     networks:
       - network_local
 
 
   # Defining a version control service using Gitea(Git with a cup of tea).
   gitea_server: 
-    image: gitea/gitea:1.10.2 # Official image of the Docker Hub.
+    image: gitea/gitea:1.11.4 # Official image of the Docker Hub.
     container_name: gitea_server
     environment:
       - ROOT_URL=http://192.168.0.16:3000
@@ -63,6 +68,11 @@ services:
       - gitea_db
     volumes:
       - "vol_gitea_server:/data"
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.labels.gitea-server-node == true]  # 部署标签约束
     restart: unless-stopped
     ports:
       - "22:22"
@@ -92,8 +102,12 @@ services:
       - DRONE_DATABASE_DRIVER=sqlite3
       # Configures the database connection string.
       - DRONE_DATABASE_DATASOURCE=/var/lib/drone/drone.sqlite
+      # config Primary Admin role for,An administrator can use all features and has access to all system data
+      # the davidche has the privileged /owner repositories role in gitea/git to enable trusted repositories
+      - DRONE_USER_CREATE=username:davidche,admin:true
 
-      # GITEA params:
+      # GITEA params: 
+      # After gitea contain running , you must update the Gitea oauth Client ID and Client Secret
       # Require string value provides your Gitea server address.
       - DRONE_GITEA_SERVER=http://192.168.0.16:3000
       # Required string value provides your Gitea oauth Client ID.
@@ -119,6 +133,11 @@ services:
       - gitea_server
     volumes:
       - "vol_drone_server:/var/lib/drone"
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.labels.drone-server-node == true]  # 部署标签约束
     restart: always
     ports:
       - "9090:80"

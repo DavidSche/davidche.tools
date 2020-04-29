@@ -392,8 +392,6 @@ firewall-cmd --permanent --add-rich-rule 'rule family=ipv4 source address=192.16
 firewall-cmd --permanent --remove-rich-rule 'rule family=ipv4 source address=192.168.0.3 port port=56800 protocol=tcp accept'
 
 
-
- 
 5、查看监听的端口
 
 netstat -lnpt
@@ -428,4 +426,19 @@ netstat -ntu | grep 3306
 
 也可以使用 egrep 过滤多个条件 # netstat -ntu | egrep ‘tcp|udp’
 
+------
 
+### ----常见的权限表示形式有
+
+``` bash
+-rw------- (600) 只有拥有者有读写权限。
+-rw-r--r-- (644) 只有拥有者有读写权限；而属组用户和其他用户只有读权限。
+-rwx------ (700) 只有拥有者有读、写、执行权限。
+-rwxr-xr-x (755) 拥有者有读、写、执行权限；而属组用户和其他用户只有读、执行权限。
+-rwx--x--x (711) 拥有者有读、写、执行权限；而属组用户和其他用户只有执行权限。
+-rw-rw-rw- (666) 所有用户都有文件读、写权限。
+-rwxrwxrwx (777) 所有用户都有读、写、执行权限。
+
+```
+
+[source](https://www.cnblogs.com/monjeo/p/12191673.html)
