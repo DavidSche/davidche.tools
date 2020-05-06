@@ -108,3 +108,8 @@ venv.bak/
 *.prefs
 *.classpath
 
+# vscode
+/.vscode
+
+# idea
+/.idea

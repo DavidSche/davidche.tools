@@ -23,7 +23,7 @@ curl \
 
 curl \
     --request PUT \
-    http://192.168.6.131:8500/v1/agent/service/deregister/website-manager-f9ade823753fbe0e2c71f6cb42120287
+    http://192.168.9.41:8500/v1/agent/service/deregister/user-manager-80ff3753a42f5cd974d4e701e2d36796
 
 curl \
     --request PUT \

@@ -80,3 +80,32 @@ footer.tmpl，在 <body> 标签结束处的模板，可以在这里填写一些�
 更改 Gitea 外观
 Gitea 目前由两种内置主题，分别为默认 gitea 主题和深色主题 arc-green，您可以通过修改 app.ini ui 部分的 DEFAULT_THEME 的值来变更至一个可用的 Gitea 外观。
 
+--------
+
+## 初始化，安装
+
+Go to Manage Jenkins -> Configure System and scroll down to Gitea Servers
+Add a new server by name and URL, your URL field should be an accessible location of your Gitea instance via HTTP(s)
+Optionally enable the "manage hooks" checkbox, this will allow Jenkins to configure your webhooks using an account of your choosing.
+It is recommended to use a personal access token, you can do this by selecting "Add" next to the credentials dropdown and changing it's "Kind" to Gitea Personal Access Token and "Scope" to System.
+Hint: you can ignore a "HTTP 403/Forbidden" error here in case your gitea instance is private.
+
+## 配置 gitea user
+login to your gitea instance with an administrator account.
+create a new user, e.g. "jenkins". Set password to something secure - you will not need it for login.
+add the jenkins user to the organization you want to build projects for in jenkins (either by adding him to an existing team or adding a new "ci"-team). Make sure that team is associated to the repositories you want to build.
+log out of gitea.
+log back in as the new "jenkins" user.
+in user profile settings, go to "application" and add a new access token. Make sure to note the token shown.
+
+## Add gitea organization item
+
+In main menu, click "New Item". Note that gitea plugin depends on the multibranch pipeline plugin, so make sure to have that installed.
+Select "Gitea organization" as the item type
+In the "Gitea organzations" section, add a new credential of type "Gitea personal access token".
+Add the access token created before for the jenkins user in gitea. Ignore the error about the token not having the correct length.
+In the "Owner" field, add the name of the organization in gitea you want to build projects for (not the full name).
+Fill the rest of the form as required. Click "Save". The following scan should list the repositories that the jenkins user can see in the organization selected.
+
+
+

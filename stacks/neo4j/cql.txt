@@ -263,3 +263,7 @@ git commit -m "my first commit"
 Finally, we'll push the commit to the Gitea repository with the command:
 
 git push
+
+
+
+DISABLE_JENKINS_INITIALIZATION

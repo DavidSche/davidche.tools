@@ -24,6 +24,9 @@ hxxps://www.visual-paradigm.com/downloads/vps/VP_Server_OSX_WithJRE.tgz
 https://www.visual-paradigm.com/downloads/vp/Visual_Paradigm_Win64_InstallFree.zip
 
 https://usa11.dl.visual-paradigm.com/visual-paradigm/vp16.1/20200401/Visual_Paradigm_16_1_20200401_Win64_InstallFree.zip
+https://usa10.dl.visual-paradigm.com/visual-paradigm/vp16.1/20200401/Visual_Paradigm_16_1_20200401_Win64_InstallFree.zip
+https://hk1.dl.visual-paradigm.com/visual-paradigm/vp16.1/20200401/Visual_Paradigm_16_1_20200401_Win64_InstallFree.zip
+
 https://usa11.dl.visual-paradigm.com/visual-paradigm/vp16.1/20200401/Visual_Paradigm_16_1_20200401_Win64_InstallFree.zip
 
 
