@@ -1,0 +1,147 @@
+
+version: '3'
+services:
+  node-0:
+    image: bitnami/redis-cluster:5.0
+    hostname: redis_node-0
+    # depends_on:
+    #   - redis_node-0
+    volumes:
+      - redis-cluster_data-0:/bitnami/redis/data
+    environment:
+      # - 'REDIS_PASSWORD=bitnami'
+      - 'ALLOW_EMPTY_PASSWORD=true'
+      - 'REDIS_NODES=redis_node-0 redis_node-1 redis_node-2 redis_node-3 redis_node-4 redis_node-5'
+    ports:
+      - '6379:6379'
+    networks:
+      - redis-net
+
+  node-1:
+    image: bitnami/redis-cluster:5.0
+    hostname: redis_node-1
+    depends_on:
+      - redis_node-0
+    volumes:
+      - redis-cluster_data-1:/bitnami/redis/data
+    environment:
+      # - 'REDIS_PASSWORD=bitnami'
+      - 'ALLOW_EMPTY_PASSWORD=true'
+      - 'REDIS_NODES=redis_node-0 redis_node-1 redis_node-2 redis_node-3 redis_node-4 redis_node-5'
+    ports:
+      - '6380:6379'
+    networks:
+      - redis-net
+
+  node-2:
+    image: bitnami/redis-cluster:5.0
+    hostname: redis_node-2
+    depends_on:
+      - redis_node-0
+      - redis_node-1
+    volumes:
+      - redis-cluster_data-2:/bitnami/redis/data
+    environment:
+      # - 'REDIS_PASSWORD=bitnami'
+      - 'ALLOW_EMPTY_PASSWORD=true'
+      - 'REDIS_NODES=redis_node-0 redis_node-1 redis_node-2 redis_node-3 redis_node-4 redis_node-5'
+    ports:
+      - '6381:6379'
+    networks:
+      - redis-net
+
+  node-3:
+    image: bitnami/redis-cluster:5.0
+    hostname: redis_node-3
+    depends_on:
+      - redis_node-0
+      - redis_node-1
+      - redis_node-2
+    volumes:
+      - redis-cluster_data-3:/bitnami/redis/data
+    environment:
+      # - 'REDIS_PASSWORD=bitnami'
+      - 'ALLOW_EMPTY_PASSWORD=true'
+      - 'REDIS_NODES=redis_node-0 redis_node-1 redis_node-2 redis_node-3 redis_node-4 redis_node-5'
+    ports:
+      - '6382:6379'
+    networks:
+      - redis-net
+
+  node-4:
+    image: bitnami/redis-cluster:5.0
+    hostname: redis_node-4
+    depends_on:
+      - redis_node-0
+      - redis_node-1
+      - redis_node-2
+      - redis_node-3
+    volumes:
+      - redis-cluster_data-4:/bitnami/redis/data
+    environment:
+      # - 'REDIS_PASSWORD=bitnami'
+      - 'ALLOW_EMPTY_PASSWORD=true'
+      - 'REDIS_NODES=redis_node-0 redis_node-1 redis_node-2 redis_node-3 redis_node-4 redis_node-5'
+    ports:
+      - '6383:6379'
+    networks:
+      - redis-net
+
+  node-5:
+    image: bitnami/redis-cluster:5.0
+    hostname: redis_node-5
+    depends_on:
+      - redis_node-0
+      - redis_node-1
+      - redis_node-2
+      - redis_node-3
+      - redis_node-4
+    volumes:
+      - redis-cluster_data-5:/bitnami/redis/data
+    environment:
+      # - 'REDIS_PASSWORD=bitnami'
+      - 'ALLOW_EMPTY_PASSWORD=true'
+      - 'REDIS_NODES=redis_node-0 redis_node-1 redis_node-2 redis_node-3 redis_node-4 redis_node-5'
+    ports:
+      - '6384:6379'
+    networks:
+      - redis-net
+
+  cluster-init:
+    image: bitnami/redis-cluster:5.0
+    depends_on:
+      - redis_node-0
+      - redis_node-1
+      - redis_node-2
+      - redis_node-3
+      - redis_node-4
+      - redis_node-5
+    environment:
+      # - 'REDISCLI_AUTH=bitnami'
+      - 'ALLOW_EMPTY_PASSWORD=true'
+      - 'REDIS_CLUSTER_REPLICAS=1'
+      - 'REDIS_NODES=redis_node-0 redis_node-1 redis_node-2 redis_node-3 redis_node-4 redis_node-5'
+      - 'REDIS_CLUSTER_CREATOR=yes'
+    networks:
+      - redis-net
+
+# network  info
+networks:
+  redis-net:
+#  prod:
+#    external: true
+
+
+volumes:
+  redis-cluster_data-0:
+    driver: local
+  redis-cluster_data-1:
+    driver: local
+  redis-cluster_data-2:
+    driver: local
+  redis-cluster_data-3:
+    driver: local
+  redis-cluster_data-4:
+    driver: local
+  redis-cluster_data-5:
+    driver: local
