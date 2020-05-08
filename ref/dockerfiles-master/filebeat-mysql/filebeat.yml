@@ -1,0 +1,21 @@
+filebeat.config:
+  prospectors:
+    path: ${path.config}/prospectors.d/*.yml
+    reload.enabled: false
+  modules:
+    path: ${path.config}/modules.d/*.yml
+    reload.enabled: false
+
+processors:
+- add_cloud_metadata:
+
+output.elasticsearch:
+  enabled: true
+  hosts: ["${ES_HOST}:${ES_PORT}"]
+  protocol: "${ES_PROT}"
+  username: "${ES_USER}"
+  password: "${ES_PASS}"
+  index: "${ES_INDEX}"
+
+setup.template.name: "filebeat"
+setup.template.pattern: "filebeat-*"
