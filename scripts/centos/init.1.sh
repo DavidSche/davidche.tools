@@ -342,3 +342,14 @@ yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.r
 # pip install -U pip
 
 history -c
+
+## install
+##  rpm -ivh httpd-2.4.6-67.el7.centos.x86_64.rpm 
+## update
+##  rpm -Uvh 包全名
+## 卸载
+## rpm -e 包名
+## rpm -q 包名   查询包是否安装
+## rpm -qi 包名  查询软件包的详细信息
+## rpm -ql 包名  查询包中文件安装位置
+##  rpm -qR 包名 查询软件包的依赖性 

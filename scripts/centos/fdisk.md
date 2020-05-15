@@ -1,4 +1,6 @@
 # 挂载硬盘常见操作
+$ sudo fdisk -l
+查看硬盘信息
 
 ## 创建 XFS格式分区
 
@@ -16,6 +18,7 @@ $ sudo fdisk /dev/sda2
 
 接下来，格式化分区为XFS，使用mkfs.xfs命令。如果已有其他文件系统创建在此分区，必须加上"-f"参数来覆盖它。
 
+$ sudo mkfs.xfs -f /dev/sda1
 $ sudo mkfs.xfs -f /dev/sda2
 
 

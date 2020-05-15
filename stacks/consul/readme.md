@@ -31,3 +31,6 @@ curl \
 	
 ```
 
+curl \
+    --request PUT \
+    http://192.168.9.41:8500/v1/agent/service/deregister/config-manager-13185bf085a410c253b88f6a6607248c

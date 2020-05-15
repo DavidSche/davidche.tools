@@ -37,6 +37,15 @@ Restore data from archive file */data/backup/dbsata.tar.gz* to volume *drsite_db
   - **Note**: This operation will delete all contents of the volume
   - `docker run -it -v drsite_dbdata:/volume -v /data/backup:/backup --rm bluet/vback restore dbdata`
 
+```
+ docker run -it -v devops_vol_gitea_db:/volume -v /home/backup:/backup --rm bluet/vback backup devops_vol_gitea_db
+ docker run -it -v devops_vol_gitea_db:/volume -v /home/backup:/backup --rm bluet/vback restore devops_vol_gitea_db
+
+ docker run -it -v devops_vol_gitea_server:/volume -v /home/backup:/backup --rm bluet/vback backup devops_vol_gitea_server
+ docker run -it -v devops_vol_gitea_server:/volume -v /home/backup:/backup --rm bluet/vback restore devops_vol_gitea_server
+```
+
+
 
 ### Backup / Restore volume to/from standard input/output (STDIO)
 
