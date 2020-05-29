@@ -33,4 +33,4 @@ curl \
 
 curl \
     --request PUT \
-    http://192.168.9.41:8500/v1/agent/service/deregister/config-manager-13185bf085a410c253b88f6a6607248c
+    http://192.168.9.40:8500/v1/agent/service/deregister/hj-trade-manager-hjjlocal-80090f1a8aab66c2dc9a5178c04f9e52

@@ -57,6 +57,7 @@ elaticsearch存储文档，对文档进行索引、搜索、排序、过滤
 GET  _cat/indices/
 
 curl  http://192.168.6.16:9200/_cat/indices/
+curl  http://192.168.6.26:9200/_cat/indices/
 
 
 curl -XDELETE http://<node-ip|hostname>:9200/<index-name>
