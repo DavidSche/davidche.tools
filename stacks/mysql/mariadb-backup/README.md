@@ -3,7 +3,7 @@
 ```bash
 docker run --name 161-backup -e DB_HOST=192.168.9.21 -e DB_PORT=3306 -e DB_PASS=CQY@mass2019 -v /home/mysql_backups/9-161:/backup ixdotai/mariadb-backup:latest
 
-docker run --name 161-backup -e DB_HOST=192.168.6.161 -e DB_PORT=3306 -e DB_PASS=CQY@mass2019 -v /home/mysql_backups/161:/backup 192.168.9.10:5000/mysql-backup:latest
+docker run --name 161-mysqlbackup -e DB_HOST=192.168.6.161 -e DB_PORT=3306 -e DB_PASS=CQY@mass2019 -v /home/mysql_backups/161:/backup 192.168.9.10:5000/mysql-backup:latest
 ```
 
 [![Pipeline Status](https://gitlab.com/ix.ai/mariadb-backup/badges/master/pipeline.svg)](https://gitlab.com/ix.ai/mariadb-backup/)

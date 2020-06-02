@@ -302,7 +302,29 @@ docker container exec -it <container-id> /bin/sh]
 docker container stop <container-id>
 ```
 
+How to See Memory and CPU Usage for All Your Docker Containers (on CentOS 6)
+rubberduck profile image Christopher McClellan  Jul 22 '17 ・2 min read
 
+#docker
+Originally posted on my blog.
+
+I run a bunch of Docker containers on a single CentOS 6 server with a limited amount of memory. (I only recently bumped it from 0.5 to 1 whole whopping gig!) Before I bring another container online, I like to check to see how much room I've got. Being the newest versions of Docker aren't available for CentOS 6, I'm running an ancient version, 1.7 or so. On the new versions of Docker, running docker stats will return statistics about all of your running container, but on old versions, you must pass docker stats a container id. Here's a quick one-liner that displays stats for all of your running containers for old versions.
+
+```
+$ docker ps -q | xargs  docker stats --no-stream
+
+CONTAINER           CPU %               MEM USAGE/LIMIT     MEM %               NET I/O
+31636c70b372        0.07%               130.8 MB/1.041 GB   12.57%              269.7 kB/262.8 kB
+8d184dfbeeaf        0.00%               112.8 MB/1.041 GB   10.84%              45.24 MB/32.66 MB
+a63b24fe6099        0.45%               50.09 MB/1.041 GB   4.81%               1.279 GB/1.947 GB
+fd1339522e04        0.01%               108.2 MB/1.041 GB   10.40%              8.262 MB/23.36 MB
+```
+
+docker ps -q returns the list of running container ids, which we then pipe through xargs and into docker stats. Adding --no-stream gives us just the first result instead of continually updating the stats, but this works just fine without it.
+
+It’s a neat little trick. If anyone knows how to make this return container names instead of ids, please comment below.
+
+Again, this is unnecessary for the newest versions. Just run docker stats and you'll get nearly identical output.
 
 
 
