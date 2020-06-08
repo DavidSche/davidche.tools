@@ -1,6 +1,6 @@
 FROM debian:buster
-LABEL maintainer="docker@ix.ai" \
-      ai.ix.repository="ix.ai/mariadb-backup"
+LABEL maintainer="davidche@outlook.com" \
+      ai.ix.repository="davidche.ai/mysql-backup"
 
 ENV DEBIAN_FRONTEND=noninteractive TERM=linux
 ENV TIMEZONE=Asia/Shanghai TZ=Asia/Shanghai
@@ -9,7 +9,7 @@ COPY src/ /app
 
 RUN chmod 755 /app/*.sh && \
     groupadd -g 666 mybackup && \
-    useradd -u 666 -g 666 -d /backup -c "MariaDB Backup User" mybackup && \
+    useradd -u 666 -g 666 -d /backup -c "MySQLDB Backup User" mybackup && \
     apt-get update && \
     apt-get -y dist-upgrade && \
     apt-get install -y mydumper && \

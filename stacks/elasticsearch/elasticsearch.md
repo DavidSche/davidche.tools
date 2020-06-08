@@ -68,7 +68,7 @@ curl -XDELETE http://192.168.6.172:9200/zipkin:span-2020-03-31
 curl -XDELETE http://192.168.9.26:9200/zipkin:span-2020-04-25
 
 curl -XDELETE http://192.168.9.26:9200/zipkin:span-2020-04-1*
-
+/usr/cqy/log
 
 
 curl -XDELETE http://192.168.9.16:9200/zipkin:span-2020-04-26*

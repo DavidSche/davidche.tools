@@ -13,7 +13,8 @@ cat  /etc/redhat-release
 
 
 echo "setting hostname !"
-hostnamectl --static set-hostname hj-test-node4
+hostnamectl --static set-hostname hj-server-node6
+
 
 # for 
 echo "setting vm.max_map_count=262144 !"
@@ -37,6 +38,7 @@ echo "set date !"
 sudo yum install ntp -y
 #同步时间使用ntpdate命令如下:
 sudo ntpdate cn.pool.ntp.org
+sudo hwclock --systohc
 
 echo "install system utils & tools!"
 sudo yum install net-tools -y
@@ -109,6 +111,7 @@ sysctl net.bridge.bridge-nf-call-ip6tables=1
 systemctl daemon-reload && systemctl restart docker
 
 echo "restart docker ok! "
+sudo reboot
 
 # docker-compose
 echo "install docker-compose ! "

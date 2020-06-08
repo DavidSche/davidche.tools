@@ -1,27 +1,39 @@
-version: '3.6'
+version: '3.3'
+
+configs:
+  consul_config:
+    external:
+      name: consul_config
+
 services:
+
   consul:
-    image: consul:1.7.0
+    image: consul:1.7.3
     hostname: "{{.Node.Hostname}}"
+    command: agent -server -client=0.0.0.0 -bootstrap -ui
+    volumes:
+      - consul-data:/consul/data
+    configs:
+      - source: consul_config
+        target: /consul/config/consul_custom.hcl
+    environment:
+      - CONSUL_BIND_INTERFACE=eth0
+      - 'CONSUL_LOCAL_CONFIG={"leave_on_terminate": true}'
     networks:
       - consul
       - prod
     ports:
-      - 8400:8400
-      - 8500:8500
-      - 8600:8600
-    volumes:
-      - consul-data:/consul/data
+      - '8500:8500'
     deploy:
-      mode: global
+      # consul-leader need to be constrainted to a fixed node, otherwise the consul cluster will elect failed while redeploy the stack.
       placement:
-        constraints: [node.labels.consul == true]
-    command: [ "agent", "-server", "-bootstrap-expect=3", "-retry-max=3", "-retry-interval=10s", "-datacenter=prod", "-join=consul", "-retry-join=consul", "-bind={{ GetInterfaceIP \"eth0\" }}", "-client=0.0.0.0", "-ui"]
+        constraints:
+          - node.labels.consul == true
+
+volumes:
+  consul-data:
+
 networks:
   consul:
   prod:
     external: true
-  prod2:
-    external: true
-volumes:
-  consul-data:

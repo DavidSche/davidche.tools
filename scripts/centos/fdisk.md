@@ -35,7 +35,7 @@ $ df -Th /home/cqy
 如果你想要启动时自动挂载XFS分区在/storage上，加入下列行到/etc/fstab：0
 
 /dev/sdb1 /home/cqy   xfs defaults 0 0
-/dev/sda2 /home/cqy                              xfs     defaults        0 0
+/dev/sda2 /home/cqy   xfs defaults 0 0
  
 
 mount 命令------记一次数据盘挂载mount: wrong fs type, bad option, bad superblock on /dev/vdb1的排查
