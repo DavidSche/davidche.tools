@@ -1,0 +1,71 @@
+version: '3.6'
+
+configs:
+  # my_first_config:
+  #   file: ./config_data
+  mysql_config:
+    external:
+      name: mysql_config
+
+services:
+  db-master:
+    image: '192.168.9.10:5000/mysql:5.7.1'
+    ports:
+      - '3306:3306'
+    volumes:
+      - /home/mysql_master_data:/bitnami/mysql/data
+    environment:
+      - MYSQL_REPLICATION_MODE=master
+      - MYSQL_REPLICATION_USER=repl_user
+      - MYSQL_REPLICATION_PASSWORD=repl_password
+      - MYSQL_ROOT_PASSWORD=hjroot2020
+      - MYSQL_USER=cqy
+      - MYSQL_PASSWORD=cqy
+      - MYSQL_DATABASE=demo
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.labels.db-master == true]  # 部署标签约束
+    configs:
+      - source: mysql_config
+        target: /opt/bitnami/mysql/conf/my_custom.cnf
+    networks:
+      - mysql
+      - prod
+        # gid: '103'
+        # mode: 0440
+
+  db-slave:
+    image: '192.168.9.10:5000/mysql:5.7.1'
+    ports:
+      - '3308:3306'
+    depends_on:
+      - db-master
+    environment:
+      - MYSQL_REPLICATION_MODE=slave
+      - MYSQL_REPLICATION_USER=repl_user
+      - MYSQL_REPLICATION_PASSWORD=repl_password
+      - MYSQL_MASTER_HOST=db-master
+      - MYSQL_MASTER_PORT_NUMBER=3306
+      - MYSQL_MASTER_ROOT_PASSWORD=hjroot2020
+    volumes:
+      - /home/mysql_slave_data:/bitnami/mysql/data
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.labels.db-slave == true]  # 部署标签约束
+    configs:
+      - source: mysql_config
+        target: /opt/bitnami/mysql/conf/my_custom.cnf
+    networks:
+      - mysql
+      - prod
+      
+networks:
+  mysql:
+  prod:
+    external: true
+
+

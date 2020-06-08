@@ -1,0 +1,76 @@
+version: '3'
+services:
+  elasticsearch:
+    image: '192.168.9.10:5000/elasticsearch:5.4.2'
+    ports:
+      - '9200:9200'
+    environment:
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms1024m -Xmx2048m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - /home/esdata:/usr/share/elasticsearch/data
+    networks:
+      - es
+      - prod
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.labels.es == true]  # 部署标签约束
+
+  kibana:
+    image: '192.168.9.10:5000/kibana:5.4.2'
+    ports:
+      - '5601:5601'
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.labels.es == true]  # 部署标签约束
+    depends_on:
+      - elasticsearch
+    networks:
+      - es
+      - prod
+
+  # The zipkin process services the UI, and also exposes a POST endpoint that
+  # instrumentation can send trace data to. Scribe is enabled by default.
+  zipkin:
+    image: 192.168.9.10:5000/openzipkin/zipkin:2.12
+    container_name: zipkin
+    # Environment settings are defined here https://github.com/openzipkin/zipkin/tree/1.19.0/zipkin-server#environment-variables
+    depends_on:
+      - elasticsearch
+    environment:
+      - STORAGE_TYPE=elasticsearch
+      - ES_HOSTS=http://elasticsearch:9200
+      - ES_HTTP_LOGGING=BASIC
+      # Uncomment to disable scribe
+      # - SCRIBE_ENABLED=false
+      # Uncomment to enable self-tracing
+      # - SELF_TRACING_ENABLED=true
+      # Uncomment to enable debug logging
+      # - JAVA_OPTS=-Dlogging.level.zipkin=DEBUG
+    ports:
+      # Port used for the Zipkin UI and HTTP Api
+      - 9411:9411
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.labels.log == true]  # 部署标签约束
+    networks:
+      - es
+      - prod
+      
+#volumes:
+#  esdata:
+
+networks:
+  es:
+  prod:
+    external: true
