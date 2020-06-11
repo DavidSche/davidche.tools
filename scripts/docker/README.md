@@ -5,6 +5,8 @@
 - Get a docker image
 ``` bash
 docker image pull <docker-image-path>
+#cp -avx /var/lib/docker/ /home/docker -rf
+
 ```
 
 - List docker images

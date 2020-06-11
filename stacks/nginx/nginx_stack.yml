@@ -1,0 +1,39 @@
+version: '3.6'
+
+configs:
+  nginx-config_12:
+    external:
+      name: nginx-config_12
+
+services:
+  nginx:
+    image: nginx:latest
+    container_name: hj-nginx
+    ports:
+      - target: 443
+        published: 443
+        mode: host
+        protocol: tcp
+      - target: 80
+        published: 80
+        mode: host
+        protocol: tcp  
+#    volumes:
+#      - ./nginx/default.conf:/etc/nginx/nginx.conf
+    configs:
+      - source: nginx-config_12
+        target: /etc/nginx/nginx.conf
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        # constraints: [node.labels.pm-node == true]  # 部署标签约束
+        constraints: [node.labels.nginx == true]  # 部署标签约束
+    networks:
+      - nginx
+      - prod  
+
+networks:
+  nginx:
+  prod:
+    external: true
