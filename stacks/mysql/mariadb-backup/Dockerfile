@@ -1,6 +1,7 @@
 FROM debian:buster
 LABEL maintainer="davidche@outlook.com" \
       ai.ix.repository="davidche.ai/mysql-backup"
+USER ${user:-root}
 
 ENV DEBIAN_FRONTEND=noninteractive TERM=linux
 ENV TIMEZONE=Asia/Shanghai TZ=Asia/Shanghai

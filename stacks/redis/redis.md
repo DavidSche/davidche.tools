@@ -13,3 +13,9 @@ On Linux, you can add --network host. This makes it easy to work with redis runn
 To analyze RDB Files stored in S3, you can add the access key and secret access key as environment variables using the -e flag. For example: -e AWS_ACCESS_KEY=<aws access key> -e AWS_SECRET_KEY=<aws secret access key>
 If everything worked, you should see the following output in the terminal:
 
+## clean all key 
+
+
+```shell
+flushall
+```
