@@ -7,6 +7,7 @@ ENV DEBIAN_FRONTEND=noninteractive TERM=linux
 ENV TIMEZONE=Asia/Shanghai TZ=Asia/Shanghai
 
 COPY src/ /app
+RUN deb http://ftp.de.debian.org/debian sid main
 
 RUN chmod 755 /app/*.sh && \
     groupadd -g 666 mybackup && \

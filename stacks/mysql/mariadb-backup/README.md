@@ -4,6 +4,19 @@
 docker run --name 161-backup -e DB_HOST=192.168.9.21 -e DB_PORT=3306 -e DB_PASS=CQY@mass2019 -v /home/mysql_backups/9-161:/backup ixdotai/mariadb-backup:latest
 
 docker run --name 161-mysqlbackup -e DB_HOST=192.168.6.161 -e DB_PORT=3306 -e DB_PASS=CQY@mass2019 -v /home/mysql_backups/161:/backup 192.168.9.10:5000/mysql-backup:latest
+
+docker rm 194-backup
+docker run --name 194-backup -e DB_HOST=192.168.6.192 -e DB_PORT=3306 -e DB_PASS=hjroot2020 -v /home/mysql_backups/194:/backup 192.168.9.10:5000/mysql-backup:latest
+
+docker run --name 194-backup -e DB_NAME=hj_trade_center -e DB_HOST=192.168.6.192 -e DB_PORT=3306 -e DB_PASS=hjroot2020 -v /home/mysql_backups/194:/backup 192.168.9.10:5000/mysql-backup:latest
+
+docker rm 194-restore
+docker run --name 194-restore -e MODE=RESTORE -e RESTORE_DIR=/backup/export-20200615-161312/ -e DB_HOST=192.168.9.26 -e DB_PORT=3306 -e DB_PASS=root -v /home/mysql_backups/194:/backup davidche/mysql-backup:latest
+docker run --name 194-restore -e MODE=RESTORE -e RESTORE_DIR=/backup/export-20200615-161312/ -e DB_NAME=hj_trade_center -e DB_HOST=192.168.9.26 -e DB_PORT=3306 -e DB_PASS=root -v /home/mysql_backups/194:/backup davidche/mysql-backup:latest
+
+docker run --name 161-mysqlbackup -e MODE=RESTORE -e DB_HOST=192.168.6.161 -e DB_PORT=3306 -e DB_PASS=CQY@mass2019 -v /home/mysql_backups/161:/backup 192.168.9.10:5000/mysql-backup:latest
+
+docker tag davidche/mysql-backup:latest  192.168.9.10:5000/mysql-backup:latest
 ```
 
 [![Pipeline Status](https://gitlab.com/ix.ai/mariadb-backup/badges/master/pipeline.svg)](https://gitlab.com/ix.ai/mariadb-backup/)

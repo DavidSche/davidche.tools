@@ -169,6 +169,6 @@ then
             fi
         fi
         echo "===> Restoring database from ${RESTORE_DIR}..."
-        exec su -pc "myloader --directory=${RESTORE_DIR} ${CLI_OPTIONS}" ${USER}
+        exec su -pc "myloader -d=${RESTORE_DIR} ${CLI_OPTIONS}" ${USER}
     fi
 fi
