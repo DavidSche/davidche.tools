@@ -1,0 +1,29 @@
+version: '3.6'
+
+services:
+  mysql:
+    image: '192.168.9.10:5000/mysql:5.7.1'
+    ports:
+      - '3306:3306'
+    volumes:
+      - 'mysql_data:/bitnami/mysql/data'
+    environment:
+      # ALLOW_EMPTY_PASSWORD is recommended only for development.
+#      - MYSQL_ROOT_PASSWORD=yes
+      - MYSQL_ROOT_PASSWORD=root
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        # constraints: [node.labels.pm-node == true]  # 部署标签约束
+        constraints: [node.labels.db == true]  # 部署标签约束
+    networks:
+      - prod
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  prod:
+    external: true

@@ -1,5 +1,14 @@
 # mariadb-backup
 
+```
+docker rm 41-backup
+docker run --name 41-backup -e DB_HOST=192.168.9.41 -e DB_PORT=3306 -e DB_PASS=root -v /home/mysql_backups/:/backup 192.168.9.10:5000/mysql-backup:latest
+
+docker rm 41-restore
+docker run --name 41-restore -e MODE=RESTORE -e RESTORE_DIR=/backup/export-20200618-133009/ -e DB_HOST=192.168.9.43 -e DB_PORT=3306 -e DB_PASS=root -v /home/mysql_backups:/backup 192.168.9.10:5000/mysql-backup:latest
+
+```
+
 ```bash
 docker run --name 161-backup -e DB_HOST=192.168.9.21 -e DB_PORT=3306 -e DB_PASS=CQY@mass2019 -v /home/mysql_backups/9-161:/backup ixdotai/mariadb-backup:latest
 

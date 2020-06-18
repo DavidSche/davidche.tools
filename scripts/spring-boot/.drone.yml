@@ -1,7 +1,6 @@
 kind: pipeline
 name: hello-pipeline
 type: docker
-#Author:David.che
 
 steps:
   - name: restore-cache
@@ -13,35 +12,71 @@ steps:
       restore: true
       mount:
         - ./.m2
+    trigger:
+      #     branch:
+      #        - master
+      event:
+        - push
 
-# cache   192.168.9.10:5000/maven:3-jdk-8
+  # cache   192.168.9.10:5000/maven:3-jdk-8
   - name: say-hello
     image: busybox
     commands:
       - echo hello-world
-    when:
-      branch:
-        - master
+    #    when:
+    #      branch:
+    #        - master
+    #      event:
+    #        - tag
+    trigger:
       event:
         - push
-# build
+        - tag
+  # build
   - name: build
     image: 192.168.9.10:5000/maven:3-jdk-8
     commands:
-#      - mvn install -DskipTests=true -Dmaven.repo.local=/.m2/repository -Dmaven.javadoc.skip=true -B -V
-      - mvn install -DskipTests=true -Dmaven.repo.local=./.m2/repository -Dmaven.javadoc.skip=true -B -V
-#    volumes:
-#       - name: cache2
-#         path: /.m2
-#    
+      #       - mvn install -DskipTests=true -Dmaven.repo.local=/.m2/repository -Dmaven.javadoc.skip=true -B -V
+      - mvn install checkstyle:checkstyle -DskipTests=true -Dmaven.repo.local=./.m2/repository -Dmaven.javadoc.skip=true -B -V
+    #    volumes:
+    #       - name: cache2
+    #         path: /.m2
+    #       - name: cache
+    #         path: ./.m2
+    #
+    trigger:
+      #     branch:
+      #        - master
+      event:
+        - push
+  # build
+  - name: package
+    image: 192.168.9.10:5000/maven:3-jdk-8
+    commands:
+      #      - mvn install -DskipTests=true -Dmaven.repo.local=/.m2/repository -Dmaven.javadoc.skip=true -B -V
+      - mvn package -DskipTests=true -Dmaven.repo.local=./.m2/repository -Dmaven.javadoc.skip=true -B -V
+
     when:
       branch:
         - master
       event:
-        - push
+        - tag
 
-#        package
-#
+  - name: build-docker-image
+    image: 192.168.9.10:5000/maven:3-jdk-8
+    commands:
+      #      - mvn install -DskipTests=true -Dmaven.repo.local=/.m2/repository -Dmaven.javadoc.skip=true -B -V
+      - mvn package jib:build -DskipTests=true -Dmaven.repo.local=./.m2/repository -Dmaven.javadoc.skip=true -B -V
+      #- mvn package dockerfile:build dockerfile:push -DskipTests=true -Dmaven.repo.local=./.m2/repository -Dmaven.javadoc.skip=true -B -V
+
+    trigger:
+      branch:
+        - master
+      event:
+        - push
+  #- pull_request
+
+  #        rebuild-cache
   - name: rebuild-cache
     image: drillster/drone-volume-cache
     settings:
@@ -49,8 +84,13 @@ steps:
       mount:
         - ./.m2
     volumes:
-    - name: cache
-      path: /cache
+      - name: cache
+        path: /cache
+    trigger:
+      branch:
+        - master
+      event:
+        - push
 #
 volumes:
   - name: cache

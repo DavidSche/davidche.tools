@@ -101,7 +101,10 @@ services:
       - DRONE_GITEA_CLIENT_ID=890286d7-f4dd-4afa-b28a-f65590cf164f
       # Required string value provides your Gitea oauth Client Secret.
       - DRONE_GITEA_CLIENT_SECRET=En8vBlOUtce6CHwH7uOx5GDMtc-Poa3Z_YIrCebsPqE=
+      # repository "private"
       - DRONE_USER_CREATE=username:gitadmin,admin:true
+      #if the repository "private", belong to a "limited" or "private" org, If so you may need to set DRONE_GIT_ALWAYS_AUTH on drone to true
+      - DRONE_GIT_ALWAYS_AUTH=true
       # Enables trace logging. 
       - DRONE_LOGS_TRACE=true
       # Enables debug logging:
