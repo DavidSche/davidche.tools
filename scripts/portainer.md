@@ -1,3 +1,6 @@
+# portainer
+
+
 We do not currently have a guide on how to build Portainer for different OS. However you can download and run one of our prebuilt binaries following the instructions here:
 https://portainer.readthedocs.io/en/stable/deployment.html#deploy-portainer-without-docker
 
@@ -10,8 +13,6 @@ Navigate to the directory of the go files to build the binary from: cd portainer
 Build the portainer binary for arm: GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -a --installsuffix cgo --ldflags '-s'
 You will then have a Portainer binary built in this same directory that you can use. To run your binary, follow the instructions in the portainer.readthedocs.io link at the start of this comment.
 
-
-
 Contribute
 Use the following instructions and guidelines to contribute to the Portainer project.
 
@@ -21,11 +22,13 @@ Ensure you have Docker, Node.js >= 6, yarn and Golang (>= 1.11) installed on you
 
 Build
 Checkout the project, set up the project inside your $GOPATH and go inside the root directory:
-
+```bash
 $ git clone https://github.com/portainer/portainer.git
 $ mkdir -p ${GOPATH}/src/github.com/portainer
 $ ln -s ${PWD}/portainer ${GOPATH}/src/github.com/portainer/portainer
 $ cd portainer
+```
+
 Install dependencies with yarn:
 
 $ yarn

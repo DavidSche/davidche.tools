@@ -4,7 +4,7 @@ server:
 #TODO: figure out why I need this here and in bootstrap.yml
 spring:
   application:
-    name: testLatticeApp
+    name: ${APP_NAME:spring-boot-logger:01}
 
 ribbon:
   ServerListRefreshInterval: 1000
