@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE suppressions PUBLIC
+        "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+        "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+
+<suppressions>
+    <suppress checks="HideUtilityClassConstructor"
+              files="DemoApplication.java"/>
+    <!-- <suppress checks="."
+             files="FileController.java"/>
+    <suppress checks="."
+             files="FileStorageExceptionTest.java"/>
+   <suppress checks="."
+             files="UploadFileResponseTest.java"/>
+   <suppress checks="."
+             files="GaneshaFileStorageServiceImplTest.java"/>  -->
+</suppressions>

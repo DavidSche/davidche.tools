@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<!DOCTYPE import-control PUBLIC
+        "-//Checkstyle//DTD ImportControl Configuration 1.4//EN"
+        "https://checkstyle.org/dtds/import_control_1_4.dtd">
+
+<import-control pkg="com.rakuten.cms.poc">
+
+    <!-- java.io.FileInputStream and java.io.FileOutputStream are disallowed in favor of
+           Files.newInputStream and Files.newOutputStream.
+           See https://github.com/checkstyle/checkstyle/issues/5638 -->
+    <disallow class="java.io.FileInputStream"/>
+    <disallow class="java.io.FileOutputStream"/>
+
+
+    <allow pkg="java.io"/>
+    <allow pkg="java.net"/>
+    <allow pkg="java.util"/>
+
+    <!-- Bootifull stuff -->
+    <allow pkg="org.springframework.boot"/>
+    <allow pkg="org.springframework.stereotype"/>
+    <allow pkg="org.springframework.util"/>
+
+    <allow pkg="com.rakuten.rmsx.bpe.api.config"/>
+
+    <allow pkg="org.springframework.beans.factory.annotation"/>
+
+    <!-- Utils which make developer life easy -->
+    <allow pkg="lombok"/>
+
+    <subpackage name="configuration">
+        <allow pkg="org.springframework.context.annotation"/>
+        <allow pkg="com.rakuten.rapid"/>
+    </subpackage>
+
+    <subpackage name="controller">
+        <allow pkg="org.springframework.web.bind.annotation"/>
+        <allow pkg="com.rakuten.rapid"/>
+    </subpackage>
+
+    <subpackage name="config">
+        <allow pkg="org.springframework.context.annotation"/>
+        <allow pkg="com.amazonaws"/>
+    </subpackage>
+
+    <subpackage name="services">
+        <allow pkg="org.springframework.web.multipart"/>
+        <allow pkg="com.amazonaws"/>
+        <allow pkg="com.rakuten.rmsx.bpe.api.exception"/>
+        <allow pkg="com.rakuten.rmsx.bpe.api.services"/>
+    </subpackage>
+</import-control>

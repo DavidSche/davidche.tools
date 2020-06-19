@@ -1,0 +1,101 @@
+kind: pipeline
+name: hello-pipeline
+type: docker
+
+steps:
+  - name: restore-cache
+    image: drillster/drone-volume-cache
+    volumes:
+      - name: cache
+        path: /cache
+    settings:
+      restore: true
+      mount:
+        - ./.m2
+    trigger:
+#     branch:
+#        - master
+      event:
+        - push
+
+# cache   192.168.9.10:5000/maven:3-jdk-8
+  - name: say-hello
+    image: busybox
+    commands:
+      - echo hello-world
+#    when:
+#      branch:
+#        - master
+#      event:
+#        - tag
+    trigger:
+      event:
+      - push
+      - tag
+# build
+  - name: build
+    image: 192.168.9.10:5000/maven:3-jdk-8
+    commands:
+#       - mvn install -DskipTests=true -Dmaven.repo.local=/.m2/repository -Dmaven.javadoc.skip=true -B -V
+      - mvn install checkstyle:checkstyle -DskipTests=true -Dmaven.repo.local=./.m2/repository -Dmaven.javadoc.skip=true -B -V
+#    volumes:
+#       - name: cache2
+#         path: /.m2
+#       - name: cache
+#         path: ./.m2
+#    
+    trigger:
+#     branch:
+#        - master
+      event:
+        - push
+# build
+  - name: package
+    image: 192.168.9.10:5000/maven:3-jdk-8
+    commands:
+#      - mvn install -DskipTests=true -Dmaven.repo.local=/.m2/repository -Dmaven.javadoc.skip=true -B -V
+      - mvn package -DskipTests=true -Dmaven.repo.local=./.m2/repository -Dmaven.javadoc.skip=true -B -V
+  
+    when:
+      branch:
+        - master
+      event:
+        - tag
+
+  - name: build-docker-image
+    image: 192.168.9.10:5000/maven:3-jdk-8
+    commands:
+      #      - mvn install -DskipTests=true -Dmaven.repo.local=/.m2/repository -Dmaven.javadoc.skip=true -B -V
+      - mvn package jib:build -DskipTests=true -Dmaven.repo.local=./.m2/repository -Dmaven.javadoc.skip=true -B -V
+      #- mvn package dockerfile:build dockerfile:push -DskipTests=true -Dmaven.repo.local=./.m2/repository -Dmaven.javadoc.skip=true -B -V
+    
+    trigger:
+      branch:
+        - master
+      event:
+        - push
+#- pull_request
+
+#        rebuild-cache
+  - name: rebuild-cache
+    image: drillster/drone-volume-cache
+    settings:
+      rebuild: true
+      mount:
+        - ./.m2
+    volumes:
+    - name: cache
+      path: /cache
+    trigger:
+      branch:
+        - master
+      event:
+        - push
+#
+volumes:
+  - name: cache
+    host:
+      path: /tmp/cache
+  - name: cache2
+    host:
+      path: /tmp/cache2      
