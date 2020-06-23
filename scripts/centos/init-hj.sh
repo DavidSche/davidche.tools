@@ -13,7 +13,7 @@ cat  /etc/redhat-release
 
 
 echo "setting hostname !"
-hostnamectl --static set-hostname hj-server-node6
+hostnamectl --static set-hostname hj-test-node7
 
 
 # for 

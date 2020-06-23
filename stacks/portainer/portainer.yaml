@@ -23,8 +23,9 @@ services:
     image: portainer/portainer
     command: -H tcp://tasks.agent:9001 --no-analytics --tlsskipverify --ssl --sslcert /certs/portainer.crt --sslkey /certs/portainer.key
     ports:
-      - "443:9000"
+      - "1000:9000"
       - "8000:8000"
+      - "9001:9001"
     volumes:
       - portainer_data:/data
       - /certs:/certs
