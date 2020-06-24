@@ -17,8 +17,12 @@ log_bin
 server_id=1 #server_id=1是默认值，要保证和从数据库server_id不一致
 log_slave_updates=1
 
+validate_password_policy=LOW
+#  跨库操作
+federated
+
 #set-variable=max_connections=2000
 #set-variable=max_user_connections=1500
 #set-variable=wait_timeout=200
-#  跨库操作
-federated
+
+#federated

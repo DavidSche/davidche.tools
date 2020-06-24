@@ -1,0 +1,15 @@
+david:
+    init:
+        welcome-message: 'Hello Java Service: ${J_NAME:192.168.5.165:6739,192.168.5.165:6380,192.168.5.165:6384}'
+        welcome-url: 'Hello Java Service: ${URL_NAME:http://192.168.9.16:9200}'
+management:
+    endpoints:
+        web:
+            exposure:
+                include: '*'
+spring:
+    application:
+        name: ${APP_NAME:spring-boot-logger:01}
+    cloud:
+        inetutils:
+            preferred-networks: 10.0

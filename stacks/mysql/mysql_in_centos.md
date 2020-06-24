@@ -122,7 +122,7 @@ service mysqld start
 ```shell script
 mysql -h localhost -u root -p 
 /* 修改密码 */
-mysql> SET PASSWORD = PASSWORD('hjgnjdl!ha6cG');
+mysql> SET PASSWORD = PASSWORD('yVdtgwHC8/m2');
 /* 查看密码规则 */
 mysql> SHOW VARIABLES LIKE 'validate_password%';
 /* 设置密码规则--临时--永久修改/etc/my.cnf */
@@ -131,6 +131,27 @@ mysql> SET GLOBAL validate_password_policy = 0;
 mysql> SET PASSWORD = PASSWORD('hjroot2019');
 /* 开放远程访问 */
 mysql> GRANT ALL ON *.* TO root@'%' IDENTIFIED BY 'hjroot2019'with grant option;
+/* 重新加载权限 */
+mysql> FLUSH PRIVILEGES;
+
+
+
+
+```
+CQY@mass2019
+
+```shell script
+mysql -h localhost -u root -p 
+/* 修改密码 */
+mysql> SET PASSWORD = PASSWORD('yVdtgwHC8/m2');
+/* 查看密码规则 */
+mysql> SHOW VARIABLES LIKE 'validate_password%';
+/* 设置密码规则--临时--永久修改/etc/my.cnf */
+mysql> SET GLOBAL validate_password_policy = 0;
+/* 设置密码 */
+mysql> SET PASSWORD = PASSWORD('CQY@mass2019');
+/* 开放远程访问 */
+mysql> GRANT ALL ON *.* TO root@'%' IDENTIFIED BY 'CQY@mass2019'with grant option;
 /* 重新加载权限 */
 mysql> FLUSH PRIVILEGES;
 
@@ -173,7 +194,7 @@ https://www.howtoforge.com/tutorial/how-to-install-mysql-57-on-linux-centos-and-
  # mysql -V
  
  mysql  Ver 14.14 Distrib 5.7.17, for Linux (x86_64) using  EditLine wrapper\
- ```
+ ```     
 
  4、设置密码
 
