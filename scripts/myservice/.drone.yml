@@ -43,24 +43,39 @@ steps:
 #         path: /.m2
 #       - name: cache
 #         path: ./.m2
-#    
+#
+    artifacts:
+      paths:
+        - target/*.jar    
     trigger:
 #     branch:
 #        - master
       event:
         - push
+
 # build
   - name: package
     image: 192.168.9.10:5000/maven:3-jdk-8
     commands:
 #      - mvn install -DskipTests=true -Dmaven.repo.local=/.m2/repository -Dmaven.javadoc.skip=true -B -V
       - mvn package -DskipTests=true -Dmaven.repo.local=./.m2/repository -Dmaven.javadoc.skip=true -B -V
-  
     when:
       branch:
         - master
       event:
         - tag
+
+# steps:
+  - name: docker  
+    image: plugins/docker
+    settings:
+      username: 
+      password: 
+      insecure: true
+      auto_tag: true
+#      auto_tag_suffix: linux-amd64
+      repo: 192.168.9.10:5000/myservice
+      registry: 192.168.9.10:5000
 
   - name: build-docker-image
     image: 192.168.9.10:5000/maven:3-jdk-8

@@ -121,7 +121,7 @@ sudo yum install wget -y
 sudo yum install curl -y
 sudo yum install yum-plugin-ovl -y
 sudo yum install yum-utils -y
-sudo yum -y install psmisc
+sudo yum -y install psmisc -y
 # install java
 # rpm -qa | grep java
 #echo "install java 1.8.0 openjdk !"
