@@ -4,3 +4,8 @@ cd bitnami-docker-mysql/VERSION/OPERATING-SYSTEM
 docker build -t bitnami/mysql:latest .
 
 
+cqy-redis-minio-3
+
+CQY@mass%root2019
+
+

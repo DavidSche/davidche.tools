@@ -1,7 +1,7 @@
 # FROM bitnami/minideb
 FROM bitnami/mysql:5.7
 
-LABEL maintainer "Davidche <davidche@outlook.com>"
+LABEL maintainer ="Davidche <davidche@outlook.com>"
 
 ENV BITNAMI_PKG_CHMOD="-R g+rwX" \
     HOME="/" \

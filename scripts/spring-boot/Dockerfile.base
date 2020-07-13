@@ -1,0 +1,23 @@
+# Developer: Davidche <davidche@outlook.com>
+#
+#FROM alpine:3.9.3
+#RUN apk add --no-cache curl jq
+#CMD ["/bin/sh"]
+
+FROM adoptopenjdk/openjdk11:alpine-slim as backend
+
+LABEL maintainer ="Davidche <davidche@outlook.com>"
+
+# Tomcat default port
+#              "-Dspring.profiles.active=local", \
+EXPOSE ${PORT:-8080}
+
+ENV TZ=Asia/Shanghai LC_ALL='zh_CN.UTF-8'
+
+RUN apk add --no-cache curl jq tzdata && \
+    cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && echo "Asia/Shanghai" > /etc/timezone && \
+    apk del tzdata
+
+HEALTHCHECK --start-period=15s --interval=1m --timeout=10s --retries=5 \
+            CMD curl --silent --fail --request GET http://localhost:${PORT:-8080}/app/actuator/health \
+                | jq --exit-status '.status == "UP"' || exit 1
