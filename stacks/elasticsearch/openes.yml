@@ -2,7 +2,7 @@ version: '3'
 services:
   kibana:   
     hostname: opendistroforelasticsearch-kibana-test
-    image: amazon/opendistro-for-elasticsearch-kibana:1.1.0
+    image: amazon/opendistro-for-elasticsearch-kibana:1.9.0
     ports:
       - 5603:5601
     networks: [opendistroforelasticsearch]
@@ -19,7 +19,7 @@ services:
 
   elasticsearch:
     hostname: opendistroforelasticsearch
-    image: amazon/opendistro-for-elasticsearch:1.1.0
+    image: amazon/opendistro-for-elasticsearch:1.9.0
     networks: [opendistroforelasticsearch]
     environment:
       - discovery.type=single-node

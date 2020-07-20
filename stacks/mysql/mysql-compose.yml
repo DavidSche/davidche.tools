@@ -1,5 +1,9 @@
 version: '3.6'
 
+configs:
+  mysql_config:
+    external: true
+
 services:
   mysql:
     image: '192.168.9.10:5000/mysql:5.7.1'
@@ -17,6 +21,9 @@ services:
       placement:
         # constraints: [node.labels.pm-node == true]  # 部署标签约束
         constraints: [node.labels.db == true]  # 部署标签约束
+    configs:
+      - source: mysql_config
+        target: /opt/bitnami/mysql/conf/my_custom.cnf
     networks:
       - prod
 
