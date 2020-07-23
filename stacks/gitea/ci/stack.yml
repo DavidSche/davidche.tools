@@ -60,6 +60,8 @@ services:
       - DB_HOST=gitea_db:5432
       - DB_USER=postgres
       - DB_PASSWD=postgres
+      - DISABLE_REGISTRATION=true
+      - REQUIRE_SIGNIN_VIEW=true
     depends_on:
       - gitea_db
     volumes:
