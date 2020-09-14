@@ -79,7 +79,6 @@ sudo yum install wget -y
 sudo yum install curl -y
 sudo yum install yum-plugin-ovl -y
 sudo yum install yum-utils -y
-sudo yum -y install psmisc
 
 
 # install docker

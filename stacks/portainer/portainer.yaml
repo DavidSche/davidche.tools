@@ -20,7 +20,7 @@ services:
         constraints: [node.platform.os == linux]
 
   portainer:
-    image: portainer/portainer
+    image: portainer/portainer-ce
     command: -H tcp://tasks.agent:9001 --no-analytics --tlsskipverify --ssl --sslcert /certs/portainer.crt --sslkey /certs/portainer.key
     ports:
       - "1000:9000"

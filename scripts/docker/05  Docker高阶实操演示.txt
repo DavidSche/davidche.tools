@@ -39,5 +39,7 @@ http://localhost:8080
 eg:
 --cap-add=ALL --cap-drop=MKNOD
 
+更新服务使用的网络
 
+docker service update $SERVICE --network-add $NETWORK1 --network-rm $NETWORK2), but that's not really pleasant to do 😉
 
