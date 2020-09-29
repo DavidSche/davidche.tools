@@ -34,3 +34,19 @@ curl \
 curl \
     --request PUT \
     http://192.168.9.40:8500/v1/agent/service/deregister/hj-trade-manager-hjjlocal-80090f1a8aab66c2dc9a5178c04f9e52
+	
+
+启动服务命令 
+
+	./consul agent -dev   -client 0.0.0.0 -ui
+
+nohup ./consul agent -dev   -client 0.0.0.0 -ui  &
+
+需要加上红色这段才能指定ip访问
+
+/home/minio server http://192.168.9.70/home/cqy/data
+
+/root/mc policy set public 9.70/noauthorizefiles
+
+noauthorizefiles
+

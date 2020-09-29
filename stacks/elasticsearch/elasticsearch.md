@@ -57,7 +57,7 @@ elaticsearch存储文档，对文档进行索引、搜索、排序、过滤
 GET  _cat/indices/
 
 curl  http://192.168.6.16:9200/_cat/indices/
-curl  http://192.168.6.26:9200/_cat/indices/
+curl  http://192.168.9.26:9200/_cat/indices/
 curl  http://192.168.9.40:9200/_cat/indices/
 
 
@@ -69,7 +69,7 @@ curl -XDELETE http://192.168.6.172:9200/zipkin:span-2020-03-31
 curl -XDELETE http://192.168.9.26:9200/zipkin:span-2020-04-25
 curl -XDELETE http://192.168.9.40:9200/usermessage            
 
-curl -XDELETE http://192.168.9.26:9200/zipkin:span-2020-04-1*
+curl -XDELETE http://192.168.9.26:9200/zipkin:span-2020-08-1*
 /usr/cqy/log
 
 
