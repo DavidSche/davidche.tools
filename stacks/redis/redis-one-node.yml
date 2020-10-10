@@ -17,11 +17,26 @@ services:
       replicas: 1
       placement:
         # constraints: [node.labels.pm-node == true]  # 部署标签约束
-        constraints: [node.labels.redis-node == true]  # 部署标签约束
+        constraints: [node.labels.redis == true]  # 部署标签约束
     networks:
       - redis
       - prod
-      
+
+  redis-commander:
+    hostname: redis-commander
+    image: rediscommander/redis-commander:latest
+    restart: always
+    environment:
+    - REDIS_HOSTS=local:redis-master:6379
+    ports:
+    - "8081:8081"
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        # constraints: [node.labels.pm-node == true]  # 部署标签约束
+        constraints: [node.labels.redis == true]  # 部署标签约束
+        
 volumes:
   r_data:
 

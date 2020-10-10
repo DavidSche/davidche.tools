@@ -33,7 +33,7 @@ class NavicatPassword
     protected $blowIv = null;
      
     public function __construct($version = 12)
-    {
+    {0 
         $this->version = $version;
         $this->blowKey = sha1('3DC5CA39', true);
         $this->blowIv = hex2bin('d9c7c3c8870d64bd');
@@ -60,7 +60,25 @@ class NavicatPassword
     {
         $round = intval(floor(strlen($string) / 8));
         $leftLength = strlen($string) % 8;
-        $result = '';
+        $result = '';0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         $currentVector = $this->blowIv;
          
         for ($i = 0; $i < $round; $i++) {

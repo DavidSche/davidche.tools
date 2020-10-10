@@ -10,11 +10,12 @@ docker run -d -p 9000:9000 --name minio1 --restart=on-failure\
 RELEASE.2019-08-21T19-40-07Z
 docker pull minio/minio:RELEASE.2019-08-21T19-40-07Z
 
-docker run -d -p 9000:9000 --name minio1 --restart=on-failure\
+docker run -d -p 9000:9000 --name minio --restart=on-failure\
   -e "MINIO_ACCESS_KEY=12345678" \
   -e "MINIO_SECRET_KEY=12345678" \
   minio/minio server /data
 
+/home/minio server /home/cqy/data
 
 docker run -d -p 9000:9000 --name minio1 --restart=on-failure\
   -v /home/minio_data:/data \
@@ -74,7 +75,6 @@ mc启动时会自动生成配置文件，vi /root/.mc/config.json
                         "accessKey": "12345678",
 
                         "secretKey": "12345678",
-r
                         "api": "S3v4",
 
                         "lookup": "auto"

@@ -16,7 +16,7 @@ echo "setting hostname !"
 hostnamectl --static set-hostname hj-test-node7
 
 
-# for 
+#!/usr/bin/env bash
 echo "setting vm.max_map_count=262144 !"
 sysctl -w vm.max_map_count=262144
 
@@ -111,7 +111,7 @@ sysctl net.bridge.bridge-nf-call-ip6tables=1
 systemctl daemon-reload && systemctl restart docker
 
 echo "restart docker ok! "
-sudo reboot
+
 
 # docker-compose
 echo "install docker-compose ! "
@@ -127,3 +127,4 @@ echo "install docker-compose ok !"
 
 sudo docker-compose version
 
+sudo reboot
