@@ -7,6 +7,13 @@ docker run -d -p 9000:9000 --name minio1 --restart=on-failure\
   minio/minio server /data
 
 
+docker run -d -p 9000:9000 --name minio --restart=on-failure\
+  -e "MINIO_ACCESS_KEY=12345678" \
+  -e "MINIO_SECRET_KEY=12345678" \
+  -v /home/cqy/data:/data \
+  minio/minio server /data
+
+
 RELEASE.2019-08-21T19-40-07Z
 docker pull minio/minio:RELEASE.2019-08-21T19-40-07Z
 

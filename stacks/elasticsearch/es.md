@@ -2,8 +2,9 @@
 ### 查看索引--列表
 GET  _cat/indices/
 
-curl  http://192.168.6.16:9200/_cat/indices/
-curl  http://192.168.6.26:9200/_cat/indices/
+curl  http://192.168.9.16:9200/_cat/indices/
+curl  http://192.168.9.26:9200/_cat/indices/
+curl  http://192.168.6.172:9200/_cat/indices/
 
 curl  http://192.168.9.40:9200/_cat/indices/
 curl -XDELETE http://192.168.9.40:9200/usermessage    

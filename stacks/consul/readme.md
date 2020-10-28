@@ -35,7 +35,14 @@ curl \
     --request PUT \
     http://192.168.9.40:8500/v1/agent/service/deregister/hj-trade-manager-hjjlocal-80090f1a8aab66c2dc9a5178c04f9e52
 	
+curl \
+    --request PUT \
+    http://192.168.9.71:8500/v1/agent/service/deregister/authentication-server-7b0beba55c5c34230c0d4471d7af0830
 
+
+
+	
+	
 启动服务命令 
 
 	./consul agent -dev   -client 0.0.0.0 -ui
