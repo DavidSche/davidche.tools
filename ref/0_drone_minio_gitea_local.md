@@ -14,7 +14,7 @@ services:
     ports:
       - "9000:9000"
     environment:
-      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - MINIO_ACCESS_K                                                                                                          EY=${MINIO_ACCESS_KEY}
       - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
     command: server /data
     networks:
