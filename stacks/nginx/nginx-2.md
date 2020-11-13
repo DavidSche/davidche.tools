@@ -110,6 +110,8 @@ server {
 
 ```
 # access_log  /var/log/nginx/access.log
+
+
 ```
 
 -----------
@@ -180,10 +182,10 @@ server {
     ssl_session_timeout  5m;
 
      # 指定密码为openssl支持的格式
-     ssl_protocols  SSLv2 SSLv3 TLSv1.2;
+    ssl_protocols  SSLv2 SSLv3 TLSv1.2;
 
-     ssl_ciphers  HIGH:!aNULL:!MD5;  # 密码加密方式
-     ssl_prefer_server_ciphers  on;   # 依赖SSLv3和TLSv1协议的服务器密码将优先于客户端密码
+    ssl_ciphers  HIGH:!aNULL:!MD5;  # 密码加密方式
+    ssl_prefer_server_ciphers  on;   # 依赖SSLv3和TLSv1协议的服务器密码将优先于客户端密码
 
      # 定义首页索引目录和名称
      location / {
@@ -239,3 +241,18 @@ location /server/ {
 ```
 nginx -s relaod 
 ``` 
+
+------
+
+解决nginx转发请求异常的解决办法 failed (13: Permission denied) while connecting to upstream
+一 .如何查看报错信息？
+操作系统：Centos7
+nginx 默认报错日志输出位置/var/log/nginx/error.log warn;
+二 .处理思路
+
+1 . 不是什么配置的问题，直接一句命令搞
+Linux命令行输入：# setsebool -P httpd_can_network_connect 1，执行成功后就对了，如果不对参考第二个方法
+2 .默认文件/etc/nginx/nginx.conf：修改nginx.conf，将第一行修改为 user root
+
+
+

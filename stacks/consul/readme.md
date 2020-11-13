@@ -37,10 +37,13 @@ curl \
 	
 curl \
     --request PUT \
-    http://192.168.9.71:8500/v1/agent/service/deregister/authentication-server-7b0beba55c5c34230c0d4471d7af0830
+    http://192.168.10.41:8500/v1/agent/service/deregister/workflow-manager-3ed7d53312e5d2b2e14330d729dafa75
 
 
 
+curl \
+    --request GET \
+    http://192.168.9.71:8500/v1/agent/services
 	
 	
 启动服务命令 

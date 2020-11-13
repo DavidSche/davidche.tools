@@ -130,9 +130,12 @@ mysql> SET GLOBAL validate_password_policy = 0;
 /* 设置密码 */
 mysql> SET PASSWORD = PASSWORD('hjroot2019');
 /* 开放远程访问 */
-mysql> GRANT ALL ON *.* TO root@'%' IDENTIFIED BY 'hjroot2019'with grant option;
+mysql> GRANT ALL ON *.* TO root@'%' IDENTIFIED BY 'Root@sjjy&prod*2020'with grant option;
 /* 重新加载权限 */
 mysql> FLUSH PRIVILEGES;
+
+h_zgykHg06iO
+> SET PASSWORD = PASSWORD('Root@sjjy&prod*2020');
 
 
 
@@ -219,5 +222,19 @@ Query OK, 0 rows affected (0.02 sec)
 
 https://tecadmin.net/change-mysql-password-policy-level/
 
- 
+
+-------
+
+ Root@sjjy&prod*2020
+
+数据库新密码（加密前）：
+产权云开发库 192.168.9.15 root Root@cqy&dev*2020
+产权云测试库 192.168.9.21 root Root@cqy&test*2020
+
+航嘉开发库 192.168.5.164 root Root@hj_bluecq&dev*2020
+航嘉测试库 192.168.9.41 root Root@hangjia&test*2020
+
+蓝色产权开发库 192.168.5.164 root Root@hj_bluecq&dev*2020
+蓝色产权测试库 192.168.9.40 root Root@bluecq&test*2020
+
 

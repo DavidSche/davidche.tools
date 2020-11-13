@@ -1,5 +1,6 @@
 CQY_2019@redis$cluster
 
+
 #  centOS 禁用IPv6
 
 1 进入 vi /etc/sysctl.conf
@@ -72,6 +73,20 @@ netstat -ntlp
 ``` 
       /etc/init.d/iptables status
 ```
+
+##   替换文本内容命令
+
+用192.168.9.70:8600 替换掉 192.168.9.71:8500 的内容
+
+sed -i 's/192.168.9.71:8500/192.168.9.70:8600/' test.txt
+
+##   /var/spool/mail
+长话短说：
+
+1、先用df -h查看下磁盘使用量，根目录下确实使用了80%以上。
+2、再用find . -size +100M查看大于100M的文件
+3、检查出是/var/spool/mail下的root文件过大，然后进到服务器里面一查看，确实是这个问题，就是用cat /dev/null>root，把这个文件清空。
+
 
 
 ##  mysql 远程访问 
