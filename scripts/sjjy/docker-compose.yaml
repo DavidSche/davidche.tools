@@ -1,7 +1,7 @@
 version: '3.6'
 
 services:
-  cqy-gateway:
+  gateway:
     image: '192.168.9.10:5000/sjjy-gateway:1.0.0'
     ports:
       - '8700:8700'
@@ -11,14 +11,13 @@ services:
       - /home/cqy/log:/usr/cqy/log
     networks:
       - prod
-      - bridge:
     deploy:
       mode: replicated
       replicas: 1
       placement:
         constraints: [node.labels.server == true]  # 部署标签约束
 
-  cqy-config-manager:
+  config-manager:
     image: '192.168.9.10:5000/sjjy-config-manager:1.0.0'
 #    ports:
 #      - '8700:8700'
@@ -34,7 +33,7 @@ services:
       placement:
         constraints: [node.labels.server == true]  # 部署标签约束
 
-  cqy-tool:
+  tool:
     image: '192.168.9.10:5000/sjjy-tool:1.0.0'
 #    ports:
 #      - '8700:8700'
@@ -46,11 +45,11 @@ services:
       - prod
     deploy:
       mode: replicated
-      replicas: 1 
+      replicas: 1
       placement:
         constraints: [node.labels.server == true]  # 部署标签约束        
 
-  cqy-message-manager:
+  message-manager:
     image: '192.168.9.10:5000/sjjy-message-manager:1.0.0'
 #    ports:
 #      - '8700:8700'
@@ -66,7 +65,7 @@ services:
       placement:
         constraints: [node.labels.server == true]  # 部署标签约束 
 
-  cqy-job-manager:
+  job-manager:
     image: '192.168.9.10:5000/sjjy-job-manager:1.0.0'
 #    ports:
 #      - '8700:8700'
@@ -82,7 +81,7 @@ services:
       placement:
         constraints: [node.labels.server == true]  # 部署标签约束 
 
-  cqy-authentication-server:
+  authentication-server:
     image: '192.168.9.10:5000/sjjy-authentication-server:1.0.0'
 #    ports:
 #      - '8700:8700'
@@ -98,7 +97,7 @@ services:
       placement:
         constraints: [node.labels.server == true]  # 部署标签约束 
 
-  cqy-user-manager:
+  user-manager:
     image: '192.168.9.10:5000/sjjy-user-manager:1.0.0'
 #    ports:
 #      - '8700:8700'
@@ -114,7 +113,7 @@ services:
       placement:
         constraints: [node.labels.server == true]  # 部署标签约束 
 
-  cqy-workflow-manager:
+  workflow-manager:
     image: '192.168.9.10:5000/sjjy-workflow-manager:1.0.0'
 #    ports:
 #      - '8700:8700'
@@ -198,6 +197,4 @@ services:
 
 networks:
   prod:
-    external: true
-  bridge:
     external: true

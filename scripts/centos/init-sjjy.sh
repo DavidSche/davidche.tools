@@ -57,6 +57,10 @@ firewall-cmd --add-port=8888/tcp --permanent
 firewall-cmd --add-port=3306/tcp --permanent
 firewall-cmd --add-port=3307/tcp --permanent
 
+firewall-cmd --add-port=8900/tcp --permanent
+firewall-cmd --add-port=5672/tcp --permanent
+firewall-cmd --add-port=15672/tcp --permanent
+
 # 批量开放端口
 # firewall-cmd --permanent --zone=public --add-port=100-500/tcp
 # firewall-cmd --permanent --zone=public --add-port=100-500/udp

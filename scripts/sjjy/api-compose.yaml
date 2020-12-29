@@ -1,0 +1,38 @@
+version: '3.6'
+
+services:
+  gateway:
+    image: '192.168.9.10:5000/sjjy-api-gateway:1.0.0'
+    ports:
+      - '8900:8900'
+    environment:
+      - SPRING_PROFILES_ACTIVE=test
+    volumes:
+      - /home/cqy/log:/usr/cqy/log
+    networks:
+      - prod
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.labels.server == true]  # 部署标签约束 
+        
+  website_server:
+    image: '192.168.9.10:5000/sjjy-website-server:1.0.0'
+#    ports:
+#      - '8900:8900'
+    environment:
+      - SPRING_PROFILES_ACTIVE=test
+    volumes:
+      - /home/cqy/log:/usr/cqy/log
+    networks:
+      - prod
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.labels.server == true]  # 部署标签约束        
+        
+networks:
+  prod:
+    external: true

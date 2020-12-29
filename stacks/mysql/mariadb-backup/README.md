@@ -12,6 +12,11 @@ docker run --name 61-restore -e MODE=RESTORE -e RESTORE_DIR=/backup/export-20200
 ```
 
 ```bash
+
+docker run --name mysql-backup -e DB_HOST=192.168.10.36 -e DB_USER=backup -e DB_PORT=3306 -e DB_PASS=Sjjy_backup@2020 -v /home/mysql_backups/10-36:/backup 192.168.9.10:5000/mysql-backup:latest
+
+#
+
 docker run --name 161-backup -e DB_HOST=192.168.6.161 -e DB_PORT=3306 -e DB_PASS=CQY@mass2019 -v /home/mysql_backups/6-161:/backup 192.168.9.10:5000/mysql-backup:latest
 
 docker run --name 161-mysqlbackup -e DB_HOST=192.168.6.161 -e DB_PORT=3306 -e DB_PASS=CQY@mass2019 -v /home/mysql_backups/161:/backup 192.168.9.10:5000/mysql-backup:latest
