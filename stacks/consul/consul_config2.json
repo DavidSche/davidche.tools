@@ -1,0 +1,16 @@
+{
+
+  "datacenter": "uat",
+  "data_dir": "/data/consul",
+  "log_level" : "DEBUG",
+  "log_file" : "/consul/data/log",
+  "server": true,
+  "ui":true,
+  "acl" : {
+    "enabled" : false,
+    "default_policy" : "allow"
+  },
+  "connect" : {
+    "enabled" : true
+  }
+}

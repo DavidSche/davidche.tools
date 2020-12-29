@@ -1,0 +1,26 @@
+version: '3'
+
+services:
+  rabbit:
+    image: rabbitmq:3-management
+    hostname: rabbit
+#    container_name: "rabbitmq_3"
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=root
+      - RABBITMQ_DEFAULT_PASS=root
+    volumes:
+      - mq-data:/var/lib/rabbitmq
+    deploy:
+      mode: replicated
+      replicas: 1
+#      placement:
+        # constraints: [node.labels.pm-node == true]  # 部署标签约束
+#        constraints: [node.labels.db-node == true]  # 部署标签约束
+
+volumes:
+  mq-data:
+  

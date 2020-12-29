@@ -1,0 +1,27 @@
+{
+
+  "datacenter": "uat",
+  "acl_datacenter": "uat",
+  "acl_master_token":"uuidgen",
+  "acl_default_policy": "deny",
+  "data_dir": "/data/consul",
+  "log_level" : "DEBUG",
+  "log_file" : "/consul/data/log",
+#  "node_name": "n3",
+  "server": true,
+#  "domain": "uat.local",
+#  "advertise_addr": "10.9.38.136",
+  "addresses": {
+    "https": "0.0.0.0"
+  },
+  "bootstrap_expect": 1,
+  "client_addr":"0.0.0.0",
+  "ui":true,
+  "acl" : {
+    "enabled" : false,
+    "default_policy" : "allow"
+  },
+  "connect" : {
+    "enabled" : true
+  }
+}
