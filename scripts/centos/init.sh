@@ -33,9 +33,9 @@ echo "set firewall ok !"
 # update os kernel
 echo "update kernel to 4.x !"
 
-sudo echo ulimit -n 65535 >>/etc/profile     
-sudo source /etc/profile    #加载修改后的profile  
-sudo ulimit -n
+echo ulimit -n 65535 >>/etc/profile     
+source /etc/profile    #加载修改后的profile  
+ulimit -n
   
 
 sudo rpm --import https://www.elrepo.org/RPM-GPG-KEY-elrepo.org

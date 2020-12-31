@@ -50,3 +50,6 @@ networks:
 # data volume info
 volumes:
   consul-data:
+
+
+#"log-file": "/data/consul/consul.log"

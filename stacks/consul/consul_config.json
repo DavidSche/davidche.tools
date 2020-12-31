@@ -1,3 +1,21 @@
-connect {
-  enabled = true
+{
+  "bootstrap" : true,
+  "server" : true,
+  "ui_config" : {
+    "enabled" : true
+  },
+  "bind_addr" : "0.0.0.0",
+  "log_level" : "DEBUG",
+  "log_file" : "/consul/data/log",
+  "datacenter" : "prod",
+  "addresses" : {
+    "http" : "0.0.0.0"
+  },
+  "acl" : {
+    "enabled" : false,
+    "default_policy" : "allow"
+  },
+  "connect" : {
+    "enabled" : true
+  }
 }
