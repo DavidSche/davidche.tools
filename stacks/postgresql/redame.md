@@ -38,3 +38,14 @@ CREATE INDEX idxproducts
 测试查询
 
 SELECT * FROM products WHERE products ==> 'sports box';
+
+
+-------
+
+docker run --name postgres-db -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432  -d postgres:13
+
+
+docker service update --replicas=2 
+
+
+

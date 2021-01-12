@@ -112,6 +112,13 @@ cat << EOF > /etc/docker/daemon.json
     "registry-mirrors": [
         "https://um1k3l1w.mirror.aliyuncs.com"
     ],
+    "log-driver": "json-file",
+    "log-opts": {
+      "max-size": "100m",
+      "max-file": "3",
+      "labels": "production_status",
+      "env": "os,customer"
+    },
     "storage-driver": "overlay2",
     "storage-opts": [
         "overlay2.override_kernel_check=true"
