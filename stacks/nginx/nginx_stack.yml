@@ -32,6 +32,11 @@ services:
     networks:
       - nginx
       - prod  
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
 
 networks:
   nginx:

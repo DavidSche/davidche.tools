@@ -1,0 +1,158 @@
+version: "3.3"
+
+services:
+  elasticsearch-eel:
+    image: elasticsearch:6.8.11
+    environment:
+      node.name: elasticsearch-eel
+      cluster.name: elasticsearch-cluster
+      discovery.zen.ping.unicast.hosts: elasticsearch-eel,elasticsearch-elk,elasticsearch-emu,elasticsearch-ewe,elasticsearch-ewt
+      bootstrap.memory_lock: "true"
+      discovery.zen.minimum_master_nodes: 2
+      ES_JAVA_OPTS: "-Xmx512m -Xms512m"
+    volumes:
+      - elasticsearch_data_eel:/usr/share/elasticsearch/data
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    networks:
+      - elasticsearch-internal-network
+    labels:
+      - stack=elasticsearch6
+      - traefik.http.routers.elasticsearch.rule=PathPrefix(`/`)
+      - traefik.http.services.elasticsearch.loadbalancer.server.port=9200
+      - traefik.http.services.elasticsearch.loadbalancer.healthcheck.path=/_cluster/health?local=true
+      - traefik.http.services.elasticsearch.loadbalancer.healthcheck.interval=15s
+      - traefik.http.services.elasticsearch.loadbalancer.healthcheck.timeout=10s
+  elasticsearch-elk:
+    image: elasticsearch:6.8.11
+    environment:
+      node.name: elasticsearch-elk
+      cluster.name: elasticsearch-cluster
+      discovery.zen.ping.unicast.hosts: elasticsearch-eel,elasticsearch-elk,elasticsearch-emu,elasticsearch-ewe,elasticsearch-ewt
+      bootstrap.memory_lock: "true"
+      discovery.zen.minimum_master_nodes: 2
+      ES_JAVA_OPTS: "-Xmx512m -Xms512m"
+    volumes:
+      - elasticsearch_data_elk:/usr/share/elasticsearch/data
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    networks:
+      - elasticsearch-internal-network
+    labels:
+      - stack=elasticsearch6
+      - traefik.http.routers.elasticsearch.rule=PathPrefix(`/`)
+      - traefik.http.services.elasticsearch.loadbalancer.server.port=9200
+      - traefik.http.services.elasticsearch.loadbalancer.healthcheck.path=/_cluster/health?local=true
+      - traefik.http.services.elasticsearch.loadbalancer.healthcheck.interval=15s
+      - traefik.http.services.elasticsearch.loadbalancer.healthcheck.timeout=10s
+  elasticsearch-emu:
+    image: elasticsearch:6.8.11
+    environment:
+      node.name: elasticsearch-emu
+      cluster.name: elasticsearch-cluster
+      discovery.zen.ping.unicast.hosts: elasticsearch-eel,elasticsearch-elk,elasticsearch-emu,elasticsearch-ewe,elasticsearch-ewt
+      bootstrap.memory_lock: "true"
+      discovery.zen.minimum_master_nodes: 2
+      ES_JAVA_OPTS: "-Xmx512m -Xms512m"
+    volumes:
+      - elasticsearch_data_emu:/usr/share/elasticsearch/data
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    networks:
+      - elasticsearch-internal-network
+    labels:
+      - stack=elasticsearch6
+      - traefik.http.routers.elasticsearch.rule=PathPrefix(`/`)
+      - traefik.http.services.elasticsearch.loadbalancer.server.port=9200
+      - traefik.http.services.elasticsearch.loadbalancer.healthcheck.path=/_cluster/health?local=true
+      - traefik.http.services.elasticsearch.loadbalancer.healthcheck.interval=15s
+      - traefik.http.services.elasticsearch.loadbalancer.healthcheck.timeout=10s
+  elasticsearch-ewe:
+    image: elasticsearch:6.8.11
+    environment:
+      node.name: elasticsearch-ewe
+      cluster.name: elasticsearch-cluster
+      discovery.zen.ping.unicast.hosts: elasticsearch-eel,elasticsearch-elk,elasticsearch-emu,elasticsearch-ewe,elasticsearch-ewt
+      bootstrap.memory_lock: "true"
+      node.master: "false"
+      discovery.zen.minimum_master_nodes: 2
+      ES_JAVA_OPTS: "-Xmx512m -Xms512m"
+    volumes:
+      - elasticsearch_data_ewe:/usr/share/elasticsearch/data
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    networks:
+      - elasticsearch-internal-network
+    labels:
+      - stack=elasticsearch6
+      - traefik.http.routers.elasticsearch.rule=PathPrefix(`/`)
+      - traefik.http.services.elasticsearch.loadbalancer.server.port=9200
+      - traefik.http.services.elasticsearch.loadbalancer.healthcheck.path=/_cluster/health?local=true
+      - traefik.http.services.elasticsearch.loadbalancer.healthcheck.interval=15s
+      - traefik.http.services.elasticsearch.loadbalancer.healthcheck.timeout=10s
+  elasticsearch-ewt:
+    image: elasticsearch:6.8.11
+    environment:
+      node.name: elasticsearch-ewt
+      cluster.name: elasticsearch-cluster
+      discovery.zen.ping.unicast.hosts: elasticsearch-eel,elasticsearch-elk,elasticsearch-emu,elasticsearch-ewe,elasticsearch-ewt
+      bootstrap.memory_lock: "true"
+      node.master: "false"
+      discovery.zen.minimum_master_nodes: 2
+      ES_JAVA_OPTS: "-Xmx512m -Xms512m"
+    volumes:
+      - elasticsearch_data_ewt:/usr/share/elasticsearch/data
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    networks:
+      - elasticsearch-internal-network
+    labels:
+      - stack=elasticsearch6
+      - traefik.http.routers.elasticsearch.rule=PathPrefix(`/`)
+      - traefik.http.services.elasticsearch.loadbalancer.server.port=9200
+      - traefik.http.services.elasticsearch.loadbalancer.healthcheck.path=/_cluster/health?local=true
+      - traefik.http.services.elasticsearch.loadbalancer.healthcheck.interval=15s
+      - traefik.http.services.elasticsearch.loadbalancer.healthcheck.timeout=10s
+  traefik:
+    image: traefik:2.3
+    command:
+      - --entrypoints.web.address=:9200
+      - --providers.docker=true
+      - --providers.docker.constraints=Label(`stack`,`elasticsearch6`)
+      - --api.insecure
+      - --accesslog=true
+    depends_on:
+      - elasticsearch-eel
+      - elasticsearch-elk
+      - elasticsearch-emu
+      - elasticsearch-ewe
+      - elasticsearch-ewt
+    ports:
+      - 9200:9200
+      - 8080:8080
+      - 8000:8000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - elasticsearch-internal-network
+      - traefik-external-network
+volumes:
+  elasticsearch_data_eel:
+  elasticsearch_data_elk:
+  elasticsearch_data_emu:
+  elasticsearch_data_ewe:
+  elasticsearch_data_ewt:
+networks:
+  elasticsearch-internal-network:
+    internal: true
+  traefik-external-network:

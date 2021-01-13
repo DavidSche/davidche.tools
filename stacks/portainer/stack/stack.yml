@@ -1,0 +1,45 @@
+version: '3.4'
+services:
+  agent:
+    image: portainer/agent
+    env_file: portainer-stack.env
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/volumes:/var/lib/docker/volumes
+    networks:
+      - portainer_agent
+    deploy:
+      mode: global
+      placement:
+        constraints:
+          - "node.platform.os == linux"
+  manager:
+    image: portainer/portainer
+    command: -H tcp://tasks.agent:9001 --tlsskipverify
+    env_file: portainer-stack.env
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    ports:
+      - target: 9000          # for user interface
+        published: 9000
+        protocol: tcp
+        mode: host
+        # - target: 8000      # for EDGE agent
+        #   published: 8000
+        #   protocol: tcp
+        #   mode: host
+    networks:
+      - portainer_agent
+    deploy:
+      placement:
+        constraints:
+          - "node.platform.os == linux"
+          - "node.role == manager"
+          - "node.hostname == swarm-hydra"
+volumes:
+  portainer_data:
+networks:
+  portainer_agent:
+    driver: overlay
+    attachable: true

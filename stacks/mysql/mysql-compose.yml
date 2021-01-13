@@ -26,6 +26,11 @@ services:
         target: /opt/bitnami/mysql/conf/my_custom.cnf
     networks:
       - prod
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
 
 volumes:
   mysql_data:

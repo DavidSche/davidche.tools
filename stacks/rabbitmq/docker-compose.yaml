@@ -20,7 +20,11 @@ services:
 #      placement:
         # constraints: [node.labels.pm-node == true]  # 部署标签约束
 #        constraints: [node.labels.db-node == true]  # 部署标签约束
-
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
 #  volumes:
 #    - "./enabled_plugins:/etc/rabbitmq/enabled_plugins"
 # [rabbitmq_management, rabbitmq_management_visualiser].

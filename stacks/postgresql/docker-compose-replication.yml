@@ -20,6 +20,11 @@ services:
       placement:
         # constraints: [node.labels.pm-node == true]  # 部署标签约束
         constraints: [node.labels.db-node == true]  # 部署标签约束
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "10"
 
   postgresql-slave:
     image: 'bitnami/postgresql:11.2.0'
@@ -41,6 +46,11 @@ services:
       placement:
         # constraints: [node.labels.pm-node == true]  # 部署标签约束
         constraints: [node.labels.db-node == true]  # 部署标签约束
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
 
 volumes:
   postgresql_master_data:
