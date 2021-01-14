@@ -96,6 +96,3 @@ $ sudo ls /var/lib/docker/containers/6e8c754ca7ec5b834b6c3c8a325a77315b729cfc7c4
 
 ```
 
-Tags
-
-Buster, Debian, Docker
