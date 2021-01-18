@@ -61,24 +61,6 @@ class NavicatPassword
         $round = intval(floor(strlen($string) / 8));
         $leftLength = strlen($string) % 8;
         $result = '';0
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         $currentVector = $this->blowIv;
          
         for ($i = 0; $i < $round; $i++) {
