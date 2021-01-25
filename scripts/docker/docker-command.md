@@ -47,6 +47,7 @@ docker run -v some_volume:/volume -v /tmp:/backup --rm loomchild/volume-backup r
 
 ``` bash
 docker run -v portainer_data:/volume -v /home/backup:/backup --rm loomchild/volume-backup backup  -c gz - > portainer_data_archive
+docker run -v elk_esdata:/volume -v /data1/backup:/backup --rm loomchild/volume-backup backup  -c gz - > elk_esdata_archive
 
 docker run -v portainer_data:/volume -v /home/backup:/backup --rm loomchild/volume-backup restore portainer_data_archive
 ```
