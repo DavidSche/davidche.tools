@@ -8,9 +8,13 @@ services:
       - bootstrap.memory_lock=true
       - "ES_JAVA_OPTS=-Xms1024m -Xmx2048m"
     ulimits:
+      nproc: 65535
       memlock:
         soft: -1
         hard: -1
+      nofile:
+        soft: 20000
+        hard: 40000
     volumes:
       - /home/esdata:/usr/share/elasticsearch/data
     networks:

@@ -87,7 +87,16 @@ sed -i 's/192.168.9.71:8500/192.168.9.70:8600/' test.txt
 2、再用find . -size +100M查看大于100M的文件
 3、检查出是/var/spool/mail下的root文件过大，然后进到服务器里面一查看，确实是这个问题，就是用cat /dev/null>root，把这个文件清空。
 
+将当前目录下所有文件的大小给列出来。那要将这些列出来的文件按照从大到小的方式排序
+```shell
+du -sh * | sort -nr
 
+du -s * | sort -nr 
+
+```
+du -s * | sort -nr | head 选出排在前面的10个，
+
+du -s * | sort -nr | tail 选出排在后面的10个。
 
 ##  mysql 远程访问 
 

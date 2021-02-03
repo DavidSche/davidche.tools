@@ -1,0 +1,79 @@
+version: "3.3"
+
+networks:
+  monitoring:
+    driver: overlay
+    attachable: true
+
+configs:
+  prometheus_config:
+    external: true
+
+services:
+  # Template cAdvisor
+  cadvisor:
+    image: google/cadvisor:latest
+    networks:
+      - monitoring
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /:/rootfs
+      - /var/run:/var/run
+      - /sys:/sys
+      - /var/lib/docker/:/var/lib/docker
+    devices:
+      - /dev/kmsg:/dev/kmsg
+    ports:
+      - "3002:8080"
+    deploy:
+      mode: global
+      resources:
+        limits:
+          cpus: '0.10'
+          memory: 128M
+        reservations:
+          cpus: '0.10'
+          memory: 64M
+
+  # Template prometheus manager
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "3001:9090"
+    networks:
+      - monitoring
+    #command: -config.file=/etc/prometheus/prometheus.yml -storage.local.path=/prometheus -web.console.libraries=/etc/prometheus/console_libraries -web.console.templates=/etc/prometheus/consoles
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+#    configs:
+#      - source: prometheus_config
+#        target: /etc/prometheus/prometheus.yml
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 1024M
+        reservations:
+          cpus: '0.50'
+          memory: 128M
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    networks:
+      - monitoring
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 64M
+        reservations:
+          cpus: '0.50'
+          memory: 32M

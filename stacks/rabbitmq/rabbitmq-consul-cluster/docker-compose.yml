@@ -1,0 +1,57 @@
+version: "3.6"
+
+networks:
+  consul:
+  prod:
+
+volumes:
+  consul-data:
+  rabbitmq-01-data:
+  rabbitmq-02-data:
+  rabbitmq-03-data:
+
+services:
+  consul:
+    image: consul:1.6.0
+    networks:
+      - consul
+      - prod
+    ports:
+      - "8400:8400"
+      - "8500:8500"
+      - "8600:53"
+    volumes:
+      - consul-data:/consul/data
+    command: [ "agent", "-server", "-bootstrap-expect=1", "-retry-max=3", "-retry-interval=10s", "-datacenter=prod", "-join=consul", "-retry-join=consul", "-bind={{ GetInterfaceIP \"eth0\" }}", "-client=0.0.0.0", "-ui"]
+
+  rabbitmq-01:
+    image: busecolak/rabbitmq-consul
+    hostname: rabbitmq-01
+    environment:
+      - RABBITMQ_ERLANG_COOKIE="MY-SECRET-KEY-123"
+    networks:
+      - prod
+    ports:
+      - "15672:15672"
+    volumes:
+      - rabbitmq-01-data:/var/lib/rabbitmq
+
+  rabbitmq-02:
+    image: busecolak/rabbitmq-consul
+    hostname: rabbitmq-02
+    environment:
+      - RABBITMQ_ERLANG_COOKIE="MY-SECRET-KEY-123"
+    networks:
+      - prod
+    volumes:
+      - rabbitmq-02-data:/var/lib/rabbitmq
+
+  rabbitmq-03:
+    image: busecolak/rabbitmq-consul
+    hostname: rabbitmq-03
+    environment:
+      - RABBITMQ_ERLANG_COOKIE="MY-SECRET-KEY-123"
+    networks:
+      - prod
+    volumes:
+      - rabbitmq-03-data:/var/lib/rabbitmq

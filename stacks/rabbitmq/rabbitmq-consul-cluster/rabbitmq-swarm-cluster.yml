@@ -1,0 +1,31 @@
+version: '3.6'
+
+networks:
+  prod:
+    external: true
+
+volumes:
+  rabbitmq-data:
+
+services:
+  rabbitmq:
+    image: busecolak/rabbitmq-consul
+    hostname: "rabbit-{{.Node.Hostname}}"
+    environment:
+      - RABBITMQ_ERLANG_COOKIE="MY-SECRET-KEY-123"
+    networks:
+      - prod
+    ports:
+      - 5672:5672
+      - 15672:15672
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    deploy:
+      mode: global
+      placement:
+        constraints: [node.labels.rabbitmq == true]
+      resources:
+        limits:
+          memory: 8G
+        reservations:
+          memory: 4G

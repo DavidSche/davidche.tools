@@ -1,0 +1,56 @@
+version: '3'
+#
+# default user admin/password
+#
+services:
+  postgresql:
+    image: docker.bintray.io/postgres:9.6.11
+    hostname: postgresql
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_DB=artifactory
+      # The following must match the DB_USER and DB_PASSWORD values passed to Artifactory
+      - POSTGRES_USER=artifactory
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - data-postgresql:/var/lib/postgresql/data
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      placement:
+        constraints: [node.role == manager]
+
+  artifactory:
+    image: docker.bintray.io/jfrog/artifactory-oss:6.23.7
+    hostname: "artifactory"
+    ports:
+      - 8081:8081
+    depends_on:
+      - postgresql
+    volumes:
+      - data-artifactory:/var/opt/jfrog/artifactory
+    environment:
+      - DB_TYPE=postgresql
+      # The following must match the POSTGRES_USER and POSTGRES_PASSWORD values passed to PostgreSQL
+      - DB_USER=artifactory
+      - DB_PASSWORD=password
+      # Add extra Java options by uncommenting the following line
+      #- EXTRA_JAVA_OPTIONS=-Xms512m -Xmx4g
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      placement:
+        constraints: [node.role == manager]
+
+volumes:
+  data-postgresql:
+  data-artifactory:

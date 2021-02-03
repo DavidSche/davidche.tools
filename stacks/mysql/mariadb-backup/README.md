@@ -34,6 +34,21 @@ docker run --name 161-mysqlbackup -e MODE=RESTORE -e DB_HOST=192.168.6.161 -e DB
 
 docker tag davidche/mysql-backup:latest  192.168.9.10:5000/mysql-backup:latest
 ```
+ysql   10223 Feb  3 11:11 event.frm
+-rw-r--r-- 1 mysql mysql       0 Feb  3 11:11 event.MYD
+-rw-r--r-- 1 mysql mysql    2048 Feb  3 11:11 event.MYI
+-rw-r----- 1 mysql mysql    8665 Jun 23  2020 func.frm
+-rw-r----- 1 mysql mysql       0 Jun 23  2020 func.MYD
+ysql   10223 Feb  3 11:11 event.frm
+-rw-r--r-- 1 mysql mysql       0 Feb  3 11:11 event.MYD
+-rw-r--r-- 1 mysql mysql    2048 Feb  3 11:11 event.MYI
+-rw-r----- 1 mysql mysql    8665 Jun 23  2020 func.frm
+-rw-r----- 1 mysql mysql       0 Jun 23  2020 func.MYD
+ysql   10223 Feb  3 11:11 event.frm
+-rw-r--r-- 1 mysql mysql       0 Feb  3 11:11 event.MYD
+-rw-r--r-- 1 mysql mysql    2048 Feb  3 11:11 event.MYI
+-rw-r----- 1 mysql mysql    8665 Jun 23  2020 func.frm
+-rw-r----- 1 mysql mysql       0 Jun 23  2020 func.MYD
 
 [![Pipeline Status](https://gitlab.com/ix.ai/mariadb-backup/badges/master/pipeline.svg)](https://gitlab.com/ix.ai/mariadb-backup/)
 [![Docker Stars](https://img.shields.io/docker/stars/ixdotai/mariadb-backup.svg)](https://hub.docker.com/r/ixdotai/mariadb-backup/)
