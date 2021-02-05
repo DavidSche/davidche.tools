@@ -1,5 +1,5 @@
 # FROM bitnami/minideb
-FROM consul:1.5.2
+FROM consul:1.9.3
 
 LABEL maintainer "Davidche <davidche@outlook.com>"
 

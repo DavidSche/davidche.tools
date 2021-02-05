@@ -8,7 +8,7 @@ configs:
 services:
 
   consul:
-    image: consul:1.7.3
+    image: consul:1.9.3
     hostname: "{{.Node.Hostname}}"
     command: agent -server -client=0.0.0.0 -bootstrap -ui
     volumes:

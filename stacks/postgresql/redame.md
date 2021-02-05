@@ -47,5 +47,6 @@ docker run --name postgres-db -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=pos
 
 docker service update --replicas=2 
 
+[https://itc-life.ru/pxc_cluster_5_7_haproxy_consul_ha/](https://itc-life.ru/pxc_cluster_5_7_haproxy_consul_ha/)
 
 
