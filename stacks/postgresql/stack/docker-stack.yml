@@ -61,3 +61,7 @@ volumes:
   pg-replica-vol:
 #https://github.com/CrunchyData/crunchy-containers/blob/master/examples/docker/swarm-service/docker-compose.yml
 #
+#docker run --name 194-restore -e MODE=RESTORE -e RESTORE_DIR=/home/mysql_backups/6-161/export-20210203-033002/ -e DB_HOST=192.168.6.162 -e DB_PORT=3306 -e DB_PASS=root -v /home/mysql_backups/194:/backup davidche/mysql-backup:latest
+#docker run --name 161-restore --rm -e MODE=RESTORE -e DB_HOST=192.168.6.162 -e DB_PORT=3306 -e DB_PASS=CQY@mass2019 -e RESTORE_DIR=/backup/test/ -e DB_NAME=trade_center -v /home/mysql_backups/6-161:/backup 192.168.9.10:5000/mysql-backup:latest
+#docker run --name 161-restore --rm -e MODE=RESTORE -e DB_HOST=192.168.6.162 -e DB_PORT=3306 -e DB_PASS=CQY@mass2019 -e RESTORE_DIR=/backup/test/ -v /home/mysql_backups/6-161:/backup 192.168.9.10:5000/mysql-backup:latest
+
