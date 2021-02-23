@@ -230,6 +230,7 @@ echo "config docker"
 sudo systemctl enable docker
 sudo systemctl start docker
 sudo systemctl stop docker
+#journalctl -xe
 
 echo "write  docker config to /etc/docker/daemon.json "
 

@@ -1,0 +1,31 @@
+version: '3'
+
+services:
+  elasticsearch:
+    image: elasticsearch:7.9.3
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms2g -Xmx2g
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+  kibana:
+    image: kibana:7.9.3
+    depends_on:
+      - elasticsearch
+    ports:
+      - "5601:5601"
+  logstash:
+    image: logstash:7.9.3
+    ports:
+      - "12201:12201/udp"
+    depends_on:
+      - elasticsearch
+    deploy:
+      mode: global
+    volumes:
+      - logstash-pipeline:/usr/share/logstash/pipeline/
+volumes:
+  esdata:
+    driver: local
+  logstash-pipeline:
+    driver: local
