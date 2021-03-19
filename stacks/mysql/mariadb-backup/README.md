@@ -28,12 +28,52 @@ docker run --name 194-backup -e DB_NAME=hj_trade_center -e DB_HOST=192.168.6.192
 
 docker rm 194-restore
 docker run --name 194-restore -e MODE=RESTORE -e RESTORE_DIR=/backup/export-20200615-161312/ -e DB_HOST=192.168.9.26 -e DB_PORT=3306 -e DB_PASS=root -v /home/mysql_backups/194:/backup davidche/mysql-backup:latest
+
 docker run --name 194-restore -e MODE=RESTORE -e RESTORE_DIR=/backup/export-20200615-161312/ -e DB_NAME=hj_trade_center -e DB_HOST=192.168.9.26 -e DB_PORT=3306 -e DB_PASS=root -v /home/mysql_backups/194:/backup davidche/mysql-backup:latest
+
+#!/bin/bash
+cd /home/
+
+data_dir=`/backup/export-20200615-161312/`
+docker run --name 194-restore -e MODE=RESTORE -e RESTORE_DIR= ${data_dir} -e DB_NAME=hj_trade_center -e DB_HOST=192.168.6.161 -e DB_PORT=3306 -e DB_PASS=root -v /home/mysql_backups/6-161:/backup davidche/mysql-backup:latest
 
 docker run --name 161-mysqlbackup -e MODE=RESTORE -e DB_HOST=192.168.6.161 -e DB_PORT=3306 -e DB_PASS=CQY@mass2019 -v /home/mysql_backups/161:/backup 192.168.9.10:5000/mysql-backup:latest
 
 docker tag davidche/mysql-backup:latest  192.168.9.10:5000/mysql-backup:latest
 ```
+
+```shell
+#!/usr/bin/env bash
+docker start 161-backup
+docker logs -f 161-backup
+echo "backup cqy-161 database over!"
+
+```
+
+restore.sh
+
+```shell
+
+#!/usr/bin/env bash
+echo "restore mysql db begin!"
+
+date_home=/home/mysql_backups/6-161
+export_dir=export-20210103-033002
+
+echo "restore mysql db file home:"
+echo ${date_home}
+echo "restore export dir:"
+echo ${export_dir}
+
+rm ${date_home}/${export_dir}/mysql* -f
+rm ${date_home}/${export_dir}/sys* -f
+
+docker run --name 161-restore --rm -e MODE=RESTORE -e DB_HOST=192.168.6.162 -e DB_PORT=3306 -e DB_PASS=CQY@mass2019 \
+           -e RESTORE_DIR=/backup/${export_dir}/ -v ${date_home}:/backup 192.168.9.10:5000/mysql-backup:latest
+
+echo "restore mysql db sucess!"
+```
+
 ysql   10223 Feb  3 11:11 event.frm
 -rw-r--r-- 1 mysql mysql       0 Feb  3 11:11 event.MYD
 -rw-r--r-- 1 mysql mysql    2048 Feb  3 11:11 event.MYI

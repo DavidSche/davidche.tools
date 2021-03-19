@@ -51,7 +51,7 @@ chattr -R -i /etc/cron.hourly/sync
 rm -rf /etc/cron.hourly/sync
 chattr -R -i /etc/cron.daily/sync
 rm -rf /etc/cron.daily/sync
-chattr -R -i /etc/cron.monthly/sync
+chattr -R -i /etc/cron.monthly/sync 
 rm -rf /etc/cron.monthly/sync
 chattr -R -i /etc/cron.weekly/sync
 rm -rf /etc/cron.weekly/sync
