@@ -129,7 +129,7 @@ EOF
 echo " write daemon.json setting success ! "
 #应用最新的BUILDKIT构建架构
 export DOCKER_BUILDKIT=1
-# 桥接网络
+# 桥接网络  SPRING.PROFILES.ACTIVE
 sysctl net.ipv4.conf.all.forwarding=1
 # WARNING: bridge-nf-call-iptables is disabled
 sysctl net.bridge.bridge-nf-call-iptables=1
