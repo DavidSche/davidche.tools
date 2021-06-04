@@ -189,3 +189,30 @@ docker run --rm -ti -v /home/es-data/${date}:/tmp elasticdump/elasticsearch-dump
 }
 
 ```
+
+设置Index template
+
+我们可以通过如下的方法来建立template:
+```
+PUT _template/datastream_template
+{
+"index_patterns": ["logs*"],                 
+"settings": {
+"number_of_shards": 1,
+"number_of_replicas": 1,
+"index.lifecycle.name": "logs_policy",
+"index.routing.allocation.require.data": "hot",
+"index.lifecycle.rollover_alias": "logs"    
+}
+
+```
+
+这里的意思是所有以logs开头的index都需要遵循这个规律。这里定义了rollover的alias为“logs ”。
+这在我们下面来定义。同时也需要注意的是"index.routing.allocation.require.data": "hot"。
+这个定义了我们需要indexing的node的属性是hot。请看一下我们上面的policy里定义的有一个叫做phases里的，
+它定义的是"hot"。在这里我们把所有的logs*索引都置于hot属性的node里。在实际的使用中，
+hot属性的index一般用作indexing。我们其实还可以定义一些其它phase，比如warm，
+这样可以把我们的用作搜索的index置于warm的节点中。这里就不一一描述了。
+
+
+https://github.com/hhko/Learning/blob/58c5cc7216d96e851f984b08134c20728089ad0c/1.Tutorials/OpenSearch/OpenSearch_%EC%BB%A8%ED%85%8C%EC%9D%B4%EB%84%88_%EC%9D%B4%EB%AF%B8%EC%A7%80_%EB%A7%8C%EB%93%A4%EA%B8%B0.md
