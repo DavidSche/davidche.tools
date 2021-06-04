@@ -214,5 +214,9 @@ PUT _template/datastream_template
 hot属性的index一般用作indexing。我们其实还可以定义一些其它phase，比如warm，
 这样可以把我们的用作搜索的index置于warm的节点中。这里就不一一描述了。
 
+参考信息
+
+https://github.com/terascope/teraslice
+
 
 https://github.com/hhko/Learning/blob/58c5cc7216d96e851f984b08134c20728089ad0c/1.Tutorials/OpenSearch/OpenSearch_%EC%BB%A8%ED%85%8C%EC%9D%B4%EB%84%88_%EC%9D%B4%EB%AF%B8%EC%A7%80_%EB%A7%8C%EB%93%A4%EA%B8%B0.md
