@@ -36,3 +36,90 @@ echo "backup elasticsearch index: usermessage operationlog completed !"
 ```
 
 
+```shell
+
+PUT _ilm/policy/logs_policy
+{
+    "policy_id": "logs_policy",
+    "description": "A simple default policy that changes the replica count between hot and cold states.",
+    "last_updated_time": 1622792935706,
+    "schema_version": 1,
+    "error_notification": null,
+    "default_state": "hot",
+    "states": [
+        {
+            "name": "hot",
+            "actions": [
+                {
+                    "replica_count": {
+                        "number_of_replicas": 5
+                    }
+                },
+                {
+                    "rollover": {
+                        "min_size": "10gb",
+                        "min_doc_count": 10000,
+                        "min_index_age": "30d"
+                    }
+                }
+            ],
+            "transitions": [
+                {
+                    "state_name": "cold",
+                    "conditions": {
+                        "min_index_age": "30d"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "cold",
+            "actions": [
+                {
+                    "replica_count": {
+                        "number_of_replicas": 2
+                    }
+                }
+            ],
+            "transitions": [
+                {
+                    "state_name": "warm",
+                    "conditions": {
+                        "min_index_age": "60d"
+                    }
+                }
+            ]
+        },
+      {
+        "name": "warm",
+        "actions": [
+          {
+            "replica_count": {
+              "number_of_replicas": 1
+            }
+          }
+        ],
+        "transitions": [
+          {
+            "state_name": "delete",
+            "conditions": {
+              "min_index_age": "90d"
+            }
+          }
+        ]
+      },
+      {
+        "name": "delete",
+        "actions": [
+          {
+            "delete": {}
+          }
+        ]
+      }
+#        --------------
+    ],
+    "ism_template": null
+}
+
+
+```
