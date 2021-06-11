@@ -26,6 +26,7 @@ echo "setting firewall, add swarm port to firewall !"
 # firewall-cmd --add-port=7946/udp --permanent
 # firewall-cmd --add-port=4789/udp --permanent
 # firewall-cmd --add-port=4789/tcp --permanent
+# firewall-cmd --add-port=9323/tcp --permanent
 # sudo firewall-cmd --reload
 #sudo reboot
 echo "set firewall ok !"
@@ -112,6 +113,8 @@ cat << EOF > /etc/docker/daemon.json
     "registry-mirrors": [
         "https://um1k3l1w.mirror.aliyuncs.com"
     ],
+    "metrics-addr" : "0.0.0.0:9323",
+    "experimental" : true,
     "log-driver": "json-file",
     "log-opts": {
       "max-size": "100m",
