@@ -1,0 +1,17 @@
+version: "3.3"
+services:
+  swarm-cleanup:
+    image: docker
+    command: |
+      sh -c "
+        docker container prune -f &&
+        docker image prune -f -a"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    deploy:
+      mode: global
+      restart_policy:
+        delay: 1h
+      resources:
+        limits: { cpus: '0.1', memory: '32M' }
+        reservations: { cpus: '0.025', memory: '16M' }
