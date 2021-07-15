@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="grid.cfg" class="org.apache.ignite.configuration.IgniteConfiguration">
+
+        <property name="dataStorageConfiguration">
+            <bean class="org.apache.ignite.configuration.DataStorageConfiguration">
+
+                <property name="writeThrottlingEnabled" value="true"/>
+
+                <property name="defaultDataRegionConfiguration">
+                    <bean class="org.apache.ignite.configuration.DataRegionConfiguration">
+                        <!-- Enabling persistence. -->
+                        <property name="persistenceEnabled" value="true"/>
+                        <!-- Increasing the buffer size to 1 GB. -->
+                        <property name="checkpointPageBufferSize" value="#{1024L * 1024 * 1024}"/>
+                    </bean>
+                </property>
+
+            </bean>
+        </property>
+
+        <property name="clientMode" value="true"/>
+        <property name="peerClassLoadingEnabled" value="true"/>
+        <property name="deploymentMode" value="SHARED"/>
+        <property name="metricsLogFrequency" value="0"/>
+    </bean>
+</beans>

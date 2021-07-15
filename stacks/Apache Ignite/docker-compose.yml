@@ -1,0 +1,25 @@
+version: "3.9"
+volumes:
+  gg-volume1:
+  gg-volume2:
+services:
+  gg-crud-example:
+    build: .
+    ports:
+      - "8182:8080"
+    environment:
+      - IGNITE_CONFIG_URL=https://raw.githubusercontent.com/fi1ipx/gridgain-crud-example/master/config/ignite-client.xml
+  srv-node1:
+    image: gridgain/ultimate:8.7.31
+    volumes:
+      - gg-volume1:/opt/gridgain/work
+    environment:
+      - CONFIG_URI=https://raw.githubusercontent.com/fi1ipx/gridgain-crud-example/master/config/ignite-server.xml
+      - IGNITE_QUIET=false
+  srv-node2:
+    image: gridgain/ultimate:8.7.31
+    volumes:
+      - gg-volume2:/opt/gridgain/work
+    environment:
+      - CONFIG_URI=https://raw.githubusercontent.com/fi1ipx/gridgain-crud-example/master/config/ignite-server.xml
+      - IGNITE_QUIET=false
