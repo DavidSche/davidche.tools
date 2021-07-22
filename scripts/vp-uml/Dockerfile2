@@ -1,0 +1,38 @@
+
+FROM centos:7
+USER root
+#
+MAINTAINER David.che <davidche@outlook.com>
+
+ENV JAVA_VER  11
+ENV JAVA_HOME /opt/jdk-$JAVA_VER/
+
+# Install Packages
+#RUN yum update -y; \
+RUN yum install -y wget unzip;
+#RUN yum install -y wget unzip curl vim python-setuptools sudo;
+
+RUN yum install -y wget unzip curl fontconfig libfreetype6 ;
+#
+#RUN wget https://download.java.net/openjdk/jdk${JAVA_VER}/ri/openjdk-${JAVA_VER}+28_linux-x64_bin.tar.gz -O /opt/jdk.tar.gz
+
+RUN yum clean all
+
+COPY ./VP_Server_16_1_20200231_Linux64.tar.gz /opt/
+
+WORKDIR /opt/VPServer
+
+RUN tar -xvf /opt/VP_Server_16_1_20200231_Linux64.tar.gz
+RUN rm /opt/VP_Server_16_1_20200231_Linux64.tar.gz -f
+
+EXPOSE 1999
+
+ENV CATALINA_HOME=/opt/VPServer/webserver
+ENV PATH="/opt/jdk-$JAVA_VER/bin/:${PATH}"
+ENV PATH="/opt/VPServer/jre/bin:${PATH}"
+ENV PATH="/opt/VPServer/webserver/bin:${PATH}"
+
+#RUN chmod +X /usr/src/VPServer/scripts/startup.sh
+#CMD ["/bin/bash"]
+
+CMD ["/opt/VPServer/scripts/startup.sh"]
