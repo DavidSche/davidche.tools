@@ -40,6 +40,6 @@ ENV PATH="/opt/VPServer/webserver/bin:${PATH}"
 
 #RUN chmod +X /usr/src/VPServer/scripts/startup.sh
 #CMD ["/bin/bash"]
-
+CMD ["/opt/VPServer/scripts/bin/startup.sh
 CMD ["/opt/VPServer/scripts/startup.sh"]
 
