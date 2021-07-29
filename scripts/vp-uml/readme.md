@@ -66,6 +66,9 @@ fc-cache --force
 
 curl -X DELETE -u "$user:$pass" https://index.docker.io/v1/repositories/$namespace/$reponame/
 
+yum install fontconfig
+fc-cache --force
+
 ```
 
 

@@ -1,10 +1,14 @@
-FROM cheshuai/jre:11
+FROM alpine:3.14
 
 #RUN apk add --no-cache tar fontconfig freetype-dev libjpeg-turbo-dev libpng-dev
 #
 MAINTAINER David.che <davidche@outlook.com>
 
 USER root
+ENV JAVA_HOME=/usr/lib/jvm/default-jvm/jre
+
+RUN apk add --no-cache openjdk11-jre; \
+    rm -rf /tmp/* /var/cache/apk/*
 
 RUN apk add --no-cache  fontconfig && apk add --update ttf-dejavu && fc-cache --force
 
