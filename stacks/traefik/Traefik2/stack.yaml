@@ -1,0 +1,41 @@
+version: "3.9"
+#Traefik with HTTPS (with redirect and wildcard certificate) and Host rule autoconfiguration (for docker swarm)
+#https://gist.github.com/acouvreur
+services:
+  traefik:
+    image: traefik:latest
+    ports:
+      - 80:80
+      - 443:443
+    command:
+      - --api=true
+      - --entrypoints.http.address=:80
+      - --entrypoints.http.http.redirections.entryPoint.to=https
+      - --entrypoints.http.http.redirections.entryPoint.scheme=https
+      - --entrypoints.https.address=:443
+      - --entrypoints.https.http.tls.certresolver=ovh
+      - --entrypoints.https.http.tls.domains[0].main=domain.me
+      - --entrypoints.https.http.tls.domains[0].sans=*.domain.me
+      - --certificatesresolvers.ovh.acme.dnsChallenge.provider=ovh
+      - --certificatesresolvers.ovh.acme.email=contact@domain.me
+      - --certificatesresolvers.ovh.acme.storage=/etc/traefik/acme/acme.json
+      - --providers.docker=true
+      - --providers.docker.swarmmode=true
+      - --providers.docker.exposedByDefault=false
+      - --providers.docker.defaultRule=Host(`{{ trimPrefix (print (normalize (index .Labels "com.docker.stack.namespace")) "-") .Name }}.domain.me`)
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    deploy:
+      labels:
+        # Automatically available at traefik.domain.me
+        - traefik.enable=true
+        - traefik.http.routers.traefik.service=api@internal
+        - traefik.http.services.traefik.loadbalancer.server.port=8080
+
+  whoami:
+    image: containous/whoami:latest
+    deploy:
+      labels:
+        # Automatically available at whoami.domain.me
+        - traefik.enable=true
+        - traefik.http.services.whoami.loadbalancer.server.port=80

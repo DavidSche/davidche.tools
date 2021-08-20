@@ -15,9 +15,12 @@ echo "Linux虚拟机内核版本信息 !"
 cat /proc/version
 # DNS
 #vi或者vim /etc/resolv.conf    #一般情况下是设置nameserver 114.114.114.114
+read -p "Worker Domain Name? (e.g. worker1.example.com): " DOMAIN
+echo $DOMAIN | sudo tee /etc/hostname > /dev/null 2>&1
+sudo hostname -F /etc/hostname
 
-echo "setting hostname !"
-hostnamectl --static set-hostname cqy-devlop-db 
+echo "setting hostname to $DOMAIN"
+hostnamectl --static set-hostname $DOMAIN
 
 # for 
 echo "setting vm.max_map_count=262144 !"
