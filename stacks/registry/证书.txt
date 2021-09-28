@@ -1,0 +1,51 @@
+自签名私钥和证书
+#!/bin/bash
+#
+read ‐p “请输入存放证书的目录:” dir
+if [ ! ‐d $dir ];then
+echo “该目录不存在”
+exit
+fi
+read ‐p “请输入密钥名称:” name
+#使用 openssl 生成私钥
+openssl genrsa ‐out d i r / {dir}/dir/{name}.key
+#使用 openssl 生成证书
+#subj 选项可以在生成证书时，非交互自动填写 Common Name 信息***
+openssl req ‐new ‐x509 ‐key d i r / {dir}/dir/{name}.key ‐subj “/CN=common” ‐out d i r / {dir}/dir/{name}.crt
+
+registry.mpaas.com
+----------
+
+``` shell
+#!/bin/bash
+cd /opt
+pwd
+# /opt/certs/
+# 生成证书
+#mkdir -p certs -f
+
+openssl req \
+ -newkey rsa:4096 \
+ -nodes -sha256 \
+ -keyout certs/hub.mpaas.com.key \
+ -x509 -days 3600 ‐subj "/CN=hub.mpaas.com"  \
+ -out certs/hub.mpaas.com.crt
+# 将证书复制到系统证书中
+cat certs/hub.mpaas.com.crt >> /etc/ssl/certs/ca-certificates.crt
+
+# 将域名写入/etc/hosts
+hub_url="hub.mpaas.com"
+hub_ip="127.0.0.1"
+
+hub_ip_map="${hub_ip} ${hub_url}"
+#inner_ip_map="${in_ip} ${in_url}"
+echo ${hub_ip_map} >> /etc/hosts
+
+echo "127.0.0.1  hub.mpaas.com" >> /etc/hosts
+
+echo "${hub_ip_map} to hosts success host is `cat /etc/hosts`"
+#设置docker engine 的证书信息
+#mkdir -p /etc/docker/certs.d/
+cp certs/hub.mpaas.com.crt /etc/docker/certs.d/
+echo "copy hub.mpaas.com.crt to /etc/docker/certs.d/ "
+```
