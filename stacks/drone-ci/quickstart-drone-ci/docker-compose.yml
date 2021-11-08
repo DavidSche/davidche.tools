@@ -55,7 +55,7 @@ services:
 
   # Defining a version control service using Gitea(Git with a cup of tea).
   gitea_server: 
-    image: gitea/gitea:1.11.4 # Official image of the Docker Hub.
+    image: gitea/gitea:1.15.6 # Official image of the Docker Hub.
     container_name: gitea_server
     environment:
       - ROOT_URL=http://192.168.0.16:3000
