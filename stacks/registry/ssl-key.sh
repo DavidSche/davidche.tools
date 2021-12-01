@@ -20,7 +20,9 @@ cat certs/hub.mpaas.com.crt >> /etc/ssl/certs/ca-certificates.crt
 
 # 将域名写入/etc/hosts
 hub_url="hub.mpaas.com"
-hub_ip="127.0.0.1"
+#hub_ip="127.0.0.1"
+#获取主机IP 地址
+hub_ip=$(ip route get 8.8.8.8 | awk 'NR==1 {print $NF}')
 
 hub_ip_map="${hub_ip} ${hub_url}"
 #inner_ip_map="${in_ip} ${in_url}"
