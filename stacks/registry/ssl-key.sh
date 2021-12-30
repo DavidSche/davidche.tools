@@ -19,6 +19,7 @@ openssl req \
 cat certs/hub.mpaas.com.crt >> /etc/ssl/certs/ca-certificates.crt
 
 # 将域名写入/etc/hosts
+HOSTNAME=`hostname`
 hub_url="hub.mpaas.com"
 #hub_ip="127.0.0.1"
 #获取主机IP 地址
