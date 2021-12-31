@@ -305,6 +305,7 @@ nomad-configure() {
 				rpc = "${advertise}:4647"
 				serf = "${advertise}:4648"
 			}
+
 		EOF
 	elif [[ $mode == "client" ]]; then
 		tee /usr/lib/systemd/system/nomad.service <<-EOF
@@ -489,6 +490,7 @@ kernel-upgrade() {
 	# Stops Nomad from receiving jobs while the rebooting job kicks in
 	systemctl stop nomad
 
+	#
 	# Schedules shutdown in 1 minute within a coprocess to not block
 	# this script and Nimbul 3 can have a chance to set the server to "ready"
 	coproc shutdown -r +1
