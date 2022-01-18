@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
 cd /opt
 pwd
 # /opt/certs/
@@ -16,7 +17,7 @@ openssl req \
  -x509 -days 3600 -subj "/CN=hub.mpaas.com"  \
  -out certs/hub.mpaas.com.crt
 # 将证书复制到系统证书中
-cat certs/hub.mpaas.com.crt >> /etc/ssl/certs/ca-certificates.crt
+cat /opt/certs/hub.mpaas.com.crt >> /etc/ssl/certs/ca-certificates.crt
 
 # 将域名写入/etc/hosts
 HOSTNAME=`hostname`
@@ -39,5 +40,5 @@ if [ ! -d /etc/docker/certs.d/ ];then
   echo " mkdir /etc/docker/certs.d/ success ! "
 fi
 #exit
-cp certs/hub.mpaas.com.crt /etc/docker/certs.d/
+cp /opt/certs/hub.mpaas.com.crt /etc/docker/certs.d/
 echo "copy hub.mpaas.com.crt to /etc/docker/certs.d/ success ! "

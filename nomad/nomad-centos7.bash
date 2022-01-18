@@ -494,4 +494,4 @@ kernel-upgrade() {
 	# Schedules shutdown in 1 minute within a coprocess to not block
 	# this script and Nimbul 3 can have a chance to set the server to "ready"
 	coproc shutdown -r +1
-}
+}0

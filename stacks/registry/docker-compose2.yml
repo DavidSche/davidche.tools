@@ -10,7 +10,7 @@ services:
     ports:
       - 5000:5000
     networks:
-      - docker-registry-ui
+      - net-registry
     environment:
 #      - TZ=${TIME_ZONE}
       - REGISTRY_HTTP_HEADERS_X-Content-Type-Options=[nosniff]
@@ -43,7 +43,7 @@ services:
     depends_on:
       - registry
     networks:
-      - docker-registry-ui
+      - net-registry
     deploy:
       mode: replicated
       replicas: 1
@@ -57,7 +57,7 @@ services:
         max-file: "3"
 
 networks:
-  docker-registry-ui:
+  net-registry:
 
 volumes:
   registry-data:

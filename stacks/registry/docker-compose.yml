@@ -11,7 +11,7 @@ services:
     ports:
       - 443:443
     networks:
-      - docker-registry-ui
+      - net-registry
     environment:
 #      - TZ=${TIME_ZONE}
       - REGISTRY_HTTP_HEADERS_X-Content-Type-Options=[nosniff]
@@ -21,8 +21,8 @@ services:
       - REGISTRY_HTTP_HEADERS_Access-Control-Max-Age=[1728000]
       - REGISTRY_HTTP_HEADERS_Access-Control-Allow-Credentials=[true]
       - REGISTRY_HTTP_ADDR=0.0.0.0:443
-      - REGISTRY_HTTP_TLS_CERTIFICATE=/certs/mpaas.com.crt
-      - REGISTRY_HTTP_TLS_KEY=/certs/mpaas.com.key
+      - REGISTRY_HTTP_TLS_CERTIFICATE=/certs/hub.mpaas.com.crt
+      - REGISTRY_HTTP_TLS_KEY=/certs/hub.mpaas.com.key
       #      - REGISTRY_HTTP_HEADERS_Access-Control-Allow-Credentials=[true]
       - REGISTRY_STORAGE_DELETE_ENABLED=true
 
@@ -31,6 +31,7 @@ services:
       replicas: 1
       placement:
         # constraints: [node.labels.pm-node == true]  # 部署标签约束
+        # docker node update --label-add registry-node=true
         constraints: [node.labels.registry-node == true]  # 部署标签约束
     logging:
       driver: "json-file"
@@ -44,18 +45,18 @@ services:
     environment:
       - REGISTRY_TITLE=My Private Docker Registry
       - NGINX_PROXY_PASS_URL=https://registry:443
-      - PULL_URL=registry.mpaas.com
+      - PULL_URL=hub.mpaas.com
       - DELETE_IMAGES=true
       - SINGLE_REGISTRY=true
     depends_on:
       - registry
     networks:
-      - docker-registry-ui
+      - net-registry
     deploy:
       mode: replicated
       replicas: 1
       placement:
-        # constraints: [node.labels.pm-node == true]  # 部署标签约束
+        # constraints: [node.labels.pm-node == true]  # 部署标签约束  docker node update --label-add registry-node=true
         constraints: [node.labels.registry-node == true]  # 部署标签约束
     logging:
       driver: "json-file"
@@ -64,7 +65,7 @@ services:
         max-file: "3"
 
 networks:
-  docker-registry-ui:
+  net-registry:
 
 volumes:
   registry-data:
