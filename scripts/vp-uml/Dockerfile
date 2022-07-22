@@ -20,6 +20,7 @@ RUN yum install -y wget unzip curl fontconfig libfreetype6 ;
 #    tar -xvf jdk.tar.gz; \
 #    rm jdk.tar.gz
 #
++
 #RUN cd /opt/jdk-$JAVA_VER; \
 #    alternatives --install /usr/bin/java java /opt/jdk-$JAVA_VER/bin/java 2
 RUN yum clean all

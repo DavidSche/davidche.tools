@@ -1,0 +1,33 @@
+serversTransport:
+  insecureSkipVerify: true
+entryPoints:
+  web:
+    address: ":80"
+  websecure:
+    address: ":443"
+  metrics:
+    address: ":8082"
+api:
+  dashboard: true
+  insecure: true
+  debug: true
+ping: { }
+accessLog: { }
+log:
+  level: DEBUG
+metrics:
+  prometheus:
+    entryPoint: metrics
+providers:
+  providersThrottleDuration: 15s
+  file:
+    watch: true
+    filename: "/local/dynamic.yml"
+  consulCatalog:
+    endpoint:
+      scheme: http
+      address: http://localhost:8500
+      token: <<TOKEN>>
+    cache: true
+    prefix: traefik
+    exposedByDefault: false

@@ -1,0 +1,5 @@
+accessLog:
+  filePath: "/path/to/access.log"
+  format: json
+log:
+  filePath: "/path/to/Traefik.log"

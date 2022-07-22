@@ -1,0 +1,31 @@
+version: "3.7"
+
+services:
+  app:
+    build: .
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@db
+      - RCLONE_CONFIG_MYS3_TYPE=s3
+      - RCLONE_CONFIG_MYS3_ACCESS_KEY_ID=minioadmin
+      - RCLONE_CONFIG_MYS3_SECRET_ACCESS_KEY=minioadmin
+      - RCLONE_CONFIG_MYS3_ENDPOINT=http://minio:9000
+      - RCLONE_TARGET=mys3:backup
+      # optional
+      # - HEALTHCHECKS_URL=https://healthchecks.example.com/ping/8382dda-5d12-475c-bd16-17a0a975e11d
+    volumes:
+      - ./example/public_key:/run/secrets/public_key:ro
+    depends_on:
+      - db
+      - minio
+
+  db:
+    image: postgres:14
+    environment:
+      - POSTGRES_PASSWORD=postgres
+
+  minio:
+    image: minio/minio
+    command: server /data
+    ports:
+      - 9000:9000/tcp
+      - 9001:9001/tcp

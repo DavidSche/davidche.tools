@@ -1,0 +1,3 @@
+accessLog: {}
+log:
+  level: DEBUG
