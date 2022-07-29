@@ -22,7 +22,10 @@ job "outer_service" {
 #      address  = "${attr.unique.platform.aws.public-ipv4}"
       tags     = [
         "traefik.enable=true",
-        "traefik.http.routers.http.rule=Path(`/outer`)"
+        "traefik.http.routers.http.rule=Path(`/outer`)",
+        # SSL 使用
+        "traefik.http.routers.http.tls=true",
+        "traefik.http.routers.http.tls.certresolver=myresol",
       ]
     }
 
@@ -52,4 +55,4 @@ EOH
       }
     }
   }
-}
+} 

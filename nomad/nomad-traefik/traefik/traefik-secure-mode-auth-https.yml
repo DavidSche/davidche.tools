@@ -1,0 +1,84 @@
+# secure mode with https and basic auth
+version: '3.8'
+
+services:
+  reverse_proxy:
+    image: traefik:v2.8
+    command:
+      # - "--log.level=DEBUG"
+      # Enable Docker in Traefik, so that it reads labels from Docker services
+      - "--providers.docker"
+      # Do not expose all Docker services, only the ones explicitly exposed
+      - "--providers.docker.exposedbydefault=false"
+      # Set default Docker network used
+      - "--providers.docker.network=traefik-public"
+      # Enable Docker Swarm mode
+      - "--providers.docker.swarmmode"
+      # Create an entrypoint "http" listening on port 80
+      - "--entrypoints.web.address=:80"
+      # Create an entrypoint "https" listening on port 443
+      - "--entrypoints.websecure.address=:443"
+      # Enable the access log, with HTTP requests
+      # - "--accesslog"
+      # Enable the Traefik log, for configurations and errors
+      - "--log"
+      # Enable the Dashboard and API
+      - "--api.dashboard=true"
+      # Use the Http Challenge for Let's Encrypt
+      - "--certificatesresolvers.letsencryptresolver.acme.httpchallenge=true"
+      # Use the HTTP Challenge
+      - "--certificatesresolvers.letsencryptresolver.acme.httpchallenge.entrypoint=web"
+      # Create the certificate resolver "le" for Let's Encrypt, uses the environment variable EMAIL
+      - "--certificatesresolvers.letsencryptresolver.acme.email=your_email@example.com"
+      # Store the Let's Encrypt certificates in the mounted volume
+      - "--certificatesresolvers.letsencryptresolver.acme.storage=/letsencrypt/acme.json"
+      # If you uncommented the acme.caserver line, you will get an SSL error, but if you display the certificate and see it was emitted by Fake LE Intermediate X1 then it means all is good. (It is the staging environment intermediate certificate used by let's encrypt). You can now safely comment the acme.caserver line, remove the letsencrypt/acme.json file and restart Traefik to issue a valid certificate.
+      - "--certificatesresolvers.letsencryptresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # So that Traefik can listen to the Docker events
+      - /var/run/docker.sock:/var/run/docker.sock
+      - certificates:/letsencrypt
+    # Since the Swarm API is only exposed on the manager nodes, these are the nodes that Traefik should be scheduled on by deploying Traefik with a constraint on the node "role":
+    deploy:
+      placement:
+          constraints:
+            - node.role == manager
+      labels:
+        # Enable Traefik for this service, to make it available in the public network
+        - "traefik.enable=true"
+        # Use the traefik-public network
+        - "traefik.docker.network=traefik-public"
+        # http
+        - "traefik.http.routers.dashboardhttp.rule=Host(`traefik.example.com`)"
+        - "traefik.http.routers.dashboardhttp.entrypoints=web"
+        - "traefik.http.routers.dashboardhttp.service=api@internal"
+        # https
+        - "traefik.http.routers.dashboardhttps.rule=Host(`traefik.example.com`)"
+        - "traefik.http.routers.dashboardhttps.entrypoints=websecure"
+        - "traefik.http.routers.dashboardhttps.service=api@internal"
+        - "traefik.http.routers.dashboardhttps.tls.certresolver=letsencryptresolver"
+        # Dummy service for Swarm port detection. The port can be any valid integer value.
+        - "traefik.http.services.dummy-svc.loadbalancer.server.port=9999"
+        # dashboard-auth middleware with HTTP Basic auth
+        - "traefik.http.middlewares.auth.basicauth.users=your_username:$$apr1$$MjQrynku$$iSdz67CS8wZvCaqm7qYBC/"
+        - "traefik.http.routers.dashboardhttp.middlewares=auth"
+        - "traefik.http.routers.dashboardhttps.middlewares=auth"
+
+    networks:
+      # Use the public network created to be shared between Traefik and
+      # any other service that needs to be publicly available with HTTPS
+      - traefik-public
+
+volumes:
+  # Create a volume to store the certificates, there is a constraint to make sure
+  # Traefik is always deployed to the same Docker node with the same volume containing
+  # the HTTPS certificates
+  certificates:
+
+networks:
+  # services that need to be publicly available via this Traefik
+  traefik-public:
+    external: true

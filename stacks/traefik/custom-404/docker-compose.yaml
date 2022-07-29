@@ -1,0 +1,93 @@
+version: '3.7'
+
+services:
+  # A cool reverse-proxy / load balancer
+  traefik:
+    # The official v2 Traefik docker image
+    image: traefik:2.8
+    container_name: traefik
+    security_opt:
+      - no-new-privileges:true
+    restart: always
+    volumes:
+      # So that Traefik can listen to the Docker events
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      # http
+      - 80:80
+    command:
+      ###########################################
+      #   Static Configuration harnessing CLI   #
+      ###########################################
+      # Activate dashboard.
+      - --api.dashboard=true
+
+      # Enable Docker backend with default settings.
+      - --providers.docker=true
+      # Do not expose containers by default.
+      - --providers.docker.exposedbydefault=false
+      # Default Docker network used.
+      - --providers.docker.network=proxy
+
+      # --entrypoints.<name>.address for ports
+      # 80 (i.e., name = webinsecure)
+      - --entrypoints.webinsecure.address=:80
+
+    networks:
+      # This is the network over which Traefik communicates with other containers.
+      - proxy
+
+    labels:
+      ################################################
+      #   Dynamic configuration with Docker Labels   #
+      ################################################
+      # You can tell Traefik to consider (or not) this container by setting traefik.enable to true or false.
+      # We need it for the dashboard
+      traefik.enable: true
+
+      # Dashboard
+      traefik.http.routers.traefik.rule: Host(`traefik.localhost`)
+      traefik.http.routers.traefik.service: api@internal
+      traefik.http.routers.traefik.entrypoints: webinsecure
+
+
+  # The error pages server
+  nginxError:
+    image: nginx:latest
+    volumes:
+      - ./error-pages:/usr/share/nginx/error-pages
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      # This is the network over which Traefik communicates with other containers.
+      - proxy
+    labels:
+      traefik.enable: true
+
+      traefik.http.routers.error-router.rule: HostRegexp(`{host:.+}`)
+      traefik.http.routers.error-router.priority: 1
+      traefik.http.routers.error-router.entrypoints: webinsecure
+      traefik.http.routers.error-router.middlewares: error-pages-middleware
+  
+      traefik.http.middlewares.error-pages-middleware.errors.status: 400-599
+      traefik.http.middlewares.error-pages-middleware.errors.service: error-pages-service
+      traefik.http.middlewares.error-pages-middleware.errors.query: /{status}.html
+
+      traefik.http.services.error-pages-service.loadbalancer.server.port: 80
+
+
+  # A defined service
+  my-test-app:
+    image: containous/whoami
+    networks:
+      # This is the network over which Traefik communicates with other containers.
+      - proxy
+    labels:
+      traefik.enable: true
+      traefik.http.routers.my-test-app.rule: Host(`test.localhost`)
+      traefik.http.routers.my-test-app.entrypoints: webinsecure
+      traefik.http.services.my-test-app.loadbalancer.server.port: 80
+
+
+networks:
+  proxy:
+    external: true
