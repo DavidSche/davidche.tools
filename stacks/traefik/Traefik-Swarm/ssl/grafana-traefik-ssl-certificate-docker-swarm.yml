@@ -1,9 +1,5 @@
 # Grafana with SSL Certificate in a Docker Swarm
 
-# Vladimir Mikhalev
-# callvaldemar@gmail.com
-# www.heyvaldemar.com
-
 # Configure Traefik and create secrets for storing the passwords on the Docker Swarm manager node before applying the configuration.
 # Traefik configuration: https://github.com/heyValdemar/traefik-ssl-certificate-docker-swarm
 
@@ -60,7 +56,7 @@ services:
   postgres:
     <<: *default-opts
     # Image tag (replace with yours)
-    image: postgres:13.2
+    image: postgres:14
     volumes:
       - grafana-postgres:/var/lib/postgresql/data
     environment:
@@ -97,7 +93,7 @@ services:
   grafana:
     <<: *default-opts
     # Image tag (replace with yours)
-    image: grafana/grafana:7.5.5
+    image: grafana/grafana:9.0.6
     environment:
       GF_DATABASE_TYPE: postgres
       GF_DATABASE_HOST: postgres:5432
