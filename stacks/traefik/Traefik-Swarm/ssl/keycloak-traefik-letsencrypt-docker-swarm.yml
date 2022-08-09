@@ -1,0 +1,207 @@
+# Keycloak with Let's Encrypt in a Docker Swarm
+
+# Vladimir Mikhalev
+# callvaldemar@gmail.com
+# www.heyvaldemar.com
+
+# Configure Traefik and create secrets for storing the passwords on the Docker Swarm manager node before applying the configuration.
+# Traefik configuration: https://github.com/heyValdemar/traefik-letsencrypt-docker-swarm
+
+# Create a secret for storing the password for Keycloak database using the command:
+# printf "YourPassword" | docker secret create keycloak-postgres-password -
+
+# Create a secret for storing the password for Keycloak administrator using the command:
+# printf "YourPassword" | docker secret create keycloak-application-password -
+
+# Clear passwords from bash history using the command:
+# history -c && history -w
+
+# Run keycloak-restore-database.sh on the Docker Swarm node where the container for backups is running to restore database if needed.
+# Run docker stack ps keycloak | grep keycloak_backups | awk 'NR > 0 {print $4}' on the Docker Swarm manager node to find on which node container for backups is running.
+
+# Deploy Keycloak in a Docker Swarm using the command:
+# docker stack deploy -c keycloak-letsencrypt-docker-swarm.yml keycloak
+
+version: '3.8'
+
+x-default-opts:
+  &default-opts
+  logging:
+    options:
+      max-size: "10m"
+
+networks:
+  keycloak-network:
+    driver: overlay
+  traefik-network:
+    external: true
+
+volumes:
+  keycloak-postgres:
+  keycloak-postgres-backups:
+
+secrets:
+  keycloak-postgres-password:
+    external: true
+  keycloak-application-password:
+    external: true
+
+services:
+  postgres:
+    <<: *default-opts
+    # Image tag (replace with yours)
+    image: postgres:13.2
+    volumes:
+      - keycloak-postgres:/var/lib/postgresql/data
+    environment:
+      # Database name (replace with yours)
+      POSTGRES_DB: keycloakdb
+      # Database user (replace with yours)
+      POSTGRES_USER: keycloakdbuser
+      POSTGRES_PASSWORD_FILE: /run/secrets/keycloak-postgres-password
+    networks:
+      - keycloak-network
+    secrets:
+      - keycloak-postgres-password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -h 127.0.0.1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
+      update_config:
+        delay: 15s
+        parallelism: 1
+        monitor: 10s
+        failure_action: rollback
+        max_failure_ratio: 0.55
+      # Container resources (replace with yours)
+      resources:
+        limits:
+          cpus: '0.55'
+          memory: 1G
+        reservations:
+          cpus: '0.35'
+          memory: 512M
+
+  keycloak:
+    <<: *default-opts
+    # Image tag (replace with yours)
+    image: jboss/keycloak:13.0.0
+    environment:
+      DB_VENDOR: postgres
+      DB_ADDR: postgres
+      DB_PORT: 5432
+      # Database name (replace with yours)
+      DB_DATABASE: keycloakdb
+      # Database user (replace with yours)
+      DB_USER: keycloakdbuser
+      DB_PASSWORD_FILE: /run/secrets/keycloak-postgres-password
+      # Keycloak user (replace with yours)
+      KEYCLOAK_USER: keycloakadmin
+      KEYCLOAK_PASSWORD_FILE: /run/secrets/keycloak-application-password
+      JGROUPS_DISCOVERY_PROTOCOL: JDBC_PING
+      JGROUPS_DISCOVERY_PROPERTIES: datasource_jndi_name=java:jboss/datasources/KeycloakDS,info_writer_sleep_time=500,initialize_sql="CREATE TABLE IF NOT EXISTS JGROUPSPING ( own_addr varchar(200) NOT NULL, cluster_name varchar(200) NOT NULL, created timestamp default current_timestamp, ping_data BYTEA, constraint PK_JGROUPSPING PRIMARY KEY (own_addr, cluster_name))"
+      PROXY_ADDRESS_FORWARDING: 'true'
+      KEYCLOAK_LOGLEVEL: WARN
+    networks:
+      - keycloak-network
+      - traefik-network
+    secrets:
+      - keycloak-postgres-password
+      - keycloak-application-password
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 120s
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
+      update_config:
+        delay: 15s
+        parallelism: 1
+        monitor: 10s
+        failure_action: rollback
+        max_failure_ratio: 0.55
+      # Container resources (replace with yours)
+      resources:
+        limits:
+          cpus: '0.55'
+          memory: 2G
+        reservations:
+          cpus: '0.35'
+          memory: 1G
+      labels:
+        - "traefik.enable=true"
+        # Keycloak URL (replace with yours)
+        - "traefik.http.routers.keycloak.rule=Host(`keycloak.heyvaldemar.net`)"
+        - "traefik.http.routers.keycloak.service=keycloak"
+        - "traefik.http.routers.keycloak.entrypoints=websecure"
+        - "traefik.http.services.keycloak.loadbalancer.server.port=8080"
+        - "traefik.http.routers.keycloak.tls=true"
+        - "traefik.http.routers.keycloak.tls.certresolver=letsencrypt"
+        - "traefik.http.services.keycloak.loadbalancer.passhostheader=true"
+        - "traefik.http.routers.keycloak.middlewares=compresstraefik"
+        - "traefik.http.middlewares.compresstraefik.compress=true"
+    depends_on:
+      - postgres
+
+  backups:
+    <<: *default-opts
+    # Image tag (replace with yours)
+    image: postgres:13.2
+    # Database backups prune interval (replace with yours). Default is 7 days.
+    # find /srv/keycloak-postgres/backups -type f -mtime +7 | xargs rm -f
+
+    # Keycloak backups interval (replace with yours). Default is 1 day.
+    # sleep 24h
+
+    # Run keycloak-restore-database.sh on the Docker Swarm node where the container for backups is running to restore database if needed.
+    # Run docker stack ps keycloak | grep keycloak_backups | awk 'NR > 0 {print $4}' on the Docker Swarm manager node to find on which node container for backups is running.
+    command: sh -c 'sleep 30m
+             && while true; do
+             PGPASSWORD="$$(cat $$POSTGRES_PASSWORD_FILE)"
+             pg_dump
+             -h postgres
+             -p 5432
+             -d keycloakdb
+             -U keycloakdbuser | gzip > /srv/keycloak-postgres/backups/keycloak-postgres-backup-$$(date "+%Y-%m-%d_%H-%M").gz
+             && find /srv/keycloak-postgres/backups -type f -mtime +7 | xargs rm -f;
+             sleep 24h; done'
+    volumes:
+      # Database backups location
+      - keycloak-postgres-backups:/srv/keycloak-postgres/backups
+    environment:
+      POSTGRES_PASSWORD_FILE: /run/secrets/keycloak-postgres-password
+    networks:
+      - keycloak-network
+    secrets:
+      - keycloak-postgres-password
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
+      # Container resources (replace with yours)
+      resources:
+        limits:
+          cpus: '0.55'
+          memory: 1G
+        reservations:
+          cpus: '0.35'
+          memory: 512M
+    depends_on:
+      - postgres
+      - keycloak

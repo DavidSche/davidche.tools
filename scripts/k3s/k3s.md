@@ -1,4 +1,4 @@
-# K3S 环境搭建
+# K3S 国内环境搭建
 
 ## 准备环境
 
@@ -66,7 +66,7 @@ sudo yum-config-manager \
     --add-repo \
     https://download.docker.com/linux/centos/docker-ce.repo
 
-sudo yum install docker-ce docker-ce-cli containerd.io docker-compose-plugin
+sudo yum install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
 
 echo "config docker"
 sudo systemctl enable docker
@@ -74,6 +74,40 @@ sudo systemctl start docker
 sudo systemctl stop docker
 
 echo "write  docker config to /etc/docker/daemon.json "
+
+cat << EOF > /etc/docker/daemon.json
+{
+    "insecure-registries": [
+        "0.0.0.0:5000"
+    ],
+    "registry-mirrors": [
+        "https://um1k3l1w.mirror.aliyuncs.com"
+    ],  
+    "log-driver": "json-file",
+    "log-opts": {
+    "max-size": "300m",
+    "max-file": "3",
+    "labels": "production_status",
+    "env": "os,customer"
+    }
+}
+EOF
+
+cat << EOF > /etc/docker/daemon.json
+{
+    "insecure-registries": [
+        "192.168.9.10:5000"
+    ],
+    "registry-mirrors": [
+        "https://um1k3l1w.mirror.aliyuncs.com"
+    ],
+    "graph": "/home/docker",
+    "storage-driver": "overlay2",
+    "storage-opts": [
+        "overlay2.override_kernel_check=true"
+    ]
+}
+EOF
 
 #应用最新的BUILDKIT构建架构
 export DOCKER_BUILDKIT=1
@@ -93,6 +127,7 @@ systemctl daemon-reload && systemctl restart docker
 
 echo "restart docker ok! "
 
+# another demo 
 
 cat << EOF > /etc/docker/daemon.json
 {

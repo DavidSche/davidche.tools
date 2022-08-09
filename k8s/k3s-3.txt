@@ -1,0 +1,272 @@
+<pre><code>三台主机
+IP:  192.168.153.34     主机名: k8s-master    系统: centos 7.6      配置:  2C 2G
+IP:  192.168.153.35     主机名: k8s-node1     系统:  centos 7.6      配置:  2C 2G
+IP:  192.168.153.36     主机名: k8s-node2     系统:  centos 7.6      配置:  2C 2G
+</code></pre> 
+<pre><code>三台主机全部关闭防火墙:
+# systemctl stop firewalld && systemctl disable firewalld
+
+三台主机全部关闭selinux: 
+# sed -i 's/enforcing/disabled/' /etc/selinux/config 
+# setenforce 0
+
+三台主机全部关闭swap: 
+# swapoff -a  # 临时关闭
+# vim /etc/fstab 注释到swap那一行 # 永久关闭
+
+timedatectl set-timezone "Asia/Shanghai"
+
+添加主机名与IP对应关系(三台主机都执行): 
+# cat >> /etc/hosts << EOF
+192.168.153.34 k8s-master
+192.168.153.35 k8s-node1
+192.168.153.36 k8s-node2
+EOF
+
+设置 192.168.153.34主机主机名
+# hostnamectl set-hostname  k8s-master
+
+设置 192.168.153.35主机主机名
+# hostnamectl set-hostname  k8s-node1
+
+设置 192.168.153.36主机主机名
+# hostnamectl set-hostname  k8s-node2
+
+将桥接的IPv4流量传递到iptables的链(三台主机都执行): 
+# cat > /etc/sysctl.d/k8s.conf << EOF
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1
+EOF
+# sysctl --system
+
+
+
+关闭swap，注释swap分区
+swapoff -a
+vi /etc/fstab
+
+
+配置内核参数，将桥接的IPv4流量传递到iptables的链
+
+[root@master01 ~]# cat > /etc/sysctl.d/k8s.conf <<EOF
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1
+EOF
+sysctl --system
+
+
+ sudo yum install -y yum-utils
+ sudo yum-config-manager \
+    --add-repo \
+    https://download.docker.com/linux/centos/docker-ce.repo
+
+sudo yum install docker-ce docker-ce-cli containerd.io docker-compose-plugin
+
+
+curl -sfL https://rancher-mirror.oss-cn-beijing.aliyuncs.com/k3s/k3s-install.sh | INSTALL_K3S_VERSION=v1.23.9+k3s1 INSTALL_K3S_MIRROR=cn K3S_NODE_NAME=k8s-53 \
+    INSTALL_K3S_EXEC="--docker" sh -
+
+ | INSTALL_K3S_VERSION=v1.23.9+k3s1
+
+sudo cat /var/lib/rancher/k3s/server/token
+
+
+curl -sfL https://rancher-mirror.oss-cn-beijing.aliyuncs.com/k3s/k3s-install.sh |  INSTALL_K3S_VERSION=v1.23.9+k3s1  INSTALL_K3S_MIRROR=cn K3S_URL=https://10.10.100.53:6443 K3S_TOKEN=K103110d9db14ba7bf014d0c710c5ec9c59055ec729223b5c750b5ca04f61816fbb::server:f9d81a1ccb996a715f936b9417b76d8c    INSTALL_K3S_EXEC="--docker" sh -
+
+ curl -sfL http://rancher-mirror.cnrancher.com/k3s/k3s-install.sh | \
+    INSTALL_K3S_MIRROR=cn K3S_URL=https://192.168.64.3:6443 \
+    K3S_TOKEN=xxx sh -s - --node-name k3s2
+
+
+
+curl -sfL https://rancher-mirror.oss-cn-beijing.aliyuncs.com/k3s/k3s-install.sh |  INSTALL_K3S_VERSION=v1.23.9+k3s1  INSTALL_K3S_MIRROR=cn  sh -
+
+
+curl -sfL https://rancher-mirror.oss-cn-beijing.aliyuncs.com/k3s/k3s-install.sh | INSTALL_K3S_MIRROR=cn K3S_NODE_NAME=k8s_53 \
+    K3S_KUBECONFIG_OUTPUT=/home/k3s/.kube/config \
+    INSTALL_K3S_EXEC="--docker" sh -
+
+curl -sfL https://rancher-mirror.oss-cn-beijing.aliyuncs.com/k3s/k3s-install.sh | INSTALL_K3S_MIRROR=cn K3S_URL=https://k8s_53:6443 K3S_TOKEN=mynodetoken sh -
+
+
+Job for k3s.service failed because the control process exited with error code.
+See "systemctl status k3s.service" and "journalctl -xe" for details
+
+ journalctl -r -u k3s
+ journalctl -r -u kubelet
+
+
+VER=$(curl -s https://api.github.com/repos/Mirantis/cri-dockerd/releases/latest|grep tag_name | cut -d '"' -f 4|sed 's/v//g')
+echo $VER
+
+enp1s0
+
+kubectl describe pods helm-install-traefik-tcvjk -n kube-system
+
+kube-system   metrics-server-668d979685-l28d5           0/1     Pending   0          12m
+kube-system   local-path-provisioner-7b7dc8d6f5-7sm58   0/1     Pending   0          12m
+kube-system   coredns-b96499967-2dbxd                   0/1     Pending   0          12m
+kube-system   helm-install-traefik-tsx99                0/1     Pending   0          12m
+kube-system   helm-install-traefik-crd-xfh2x            0/1     Pending   0          1
+
+
+kubectl describe pods portainer-679cd4fd6c-96lkx -n portainer
+
+
+/usr/local/bin/k3s-uninstall.sh
+curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=v1.23.9+k3s1 sh -s server \
+--cluster-init \
+--flannel-backend=wireguard \
+--write-kubeconfig-mode 644 && \
+export KUBECONFIG=/etc/rancher/k3s/k3s.yaml && \
+cat ./manifests/traefik-config.yaml | envsubst | kubectl apply -f -
+
+v1.23.9+k3s1
+
+docker.service
+
+
+/usr/lib/systemd/system/docker.service
+
+/etc/systemd/system/k3s.service
+
+systemctl daemon-reload && systemctl status  k3s-agent 
+
+export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+
+手动配置 KUBECONFIG环境变量
+
+临时解决: export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+
+永久解决:
+
+执行: vi /etc/profile
+写入内容: export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+执行: source /etc/profile
+ 
+
+$ curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+$ chmod 700 get_helm.sh
+$ ./get_helm.sh
+
+
+在 100.53 上用k3s搭建了一个kubernetes 的集群(两个节点 53，54 )， 安装了一个管理工具portainer 
+
+https://10.10.100.53:30779/ 
+admin  admin1234567  
+
+
+
+
+#!/bin/bash
+
+FILES="$1/*"
+for f in $FILES
+do
+  echo "Processing $f file..."
+  # take action on each file. $f store current file name
+  # perform some operation with the file
+done
+
+
+https://gitclone.com/github.com/mikenomitch/nomad-traefik.git
+
+
+https://github.com/shufflewzc/faker3.git
+
+ql repo https://ghproxy.com/https://github.com/shufflewzc/faker2.git "jd_|jx_|getJDCookie" "activity|backUp" "^jd[^_]|USER|ZooFaker_Necklace"
+
+
+
+docker run -dit \
+  -v $PWD/ql:/ql/data \
+  -p 5700:5700 \
+  --name qinglong \
+  --hostname qinglong \
+  --restart unless-stopped \
+  whyour/qinglong:latest
+
+docker run -d -p 8000:8000 -p 9443:9443 --name portainer \
+    --restart=always \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    -v portainer_data:/data \
+    portainer/portainer-ce:2.9
+
+
+docker run -it --rm -e CMP1=2.14.1 -e CMP2=origin/br-lang3 -v /home/output:/output registry.cn-shenzhen.aliyuncs.com/infrastlabs/lang-replacement:dict
+
+
+      # Configure entrypoint
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      # SSL configuration
+      - "--certificatesresolvers.letsencryptresolver.acme.httpchallenge=true"
+      - "--certificatesresolvers.letsencryptresolver.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.letsencryptresolver.acme.email=user@domaine.com"
+      - "--certificatesresolvers.letsencryptresolver.acme.storage=/letsencrypt/acme.json"
+      # Global HTTP -> HTTPS
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+
+三种一次性执行目录下所有脚本的方法。
+
+1. run-parts
+首先推荐一个很实用，但大家不是很熟悉的命令：run-parts 。它的基本用法如下：
+
+$ run-parts option <directory-path>
+但是，并不是目录下所有的脚本都会被执行，还是会有一些命名要求的。脚本的名字满足以下条件才会被执行：大/小写、数字、下划线（_）、短杠线（-）。
+
+为了能选出满足条件的脚本，我们通常需要加上 --regex 选项。假如我们的目录下有这些脚本：
+由于脚本一般是以 .sh 结尾，所以如果你的命名都符合规则的话，想要执行所有脚本的话，可以这样操作：
+
+$ run-parts --regex 'sh$' 
+如果你只想要执行以 s 开头，sh 结尾的脚本，可以结合如下正则表达式：
+
+$ run-parts --regex '^s.*sh$' .
+
+为了防止误操作，在脚本真正执行之前，可以先看下将被执行的脚本会有哪些。我们可以加上 --list 选项：
+
+$ run-parts --list --regex '^s.*sh$' .
+
+2. find
+但是，run-parts 这个命令还是比较小众，估计很多人并不知道这个命令，更不用说知道怎么去使用了。另一个执行目录下所有脚本的方法是使用 find 命令
+
+可以使用 find 命令来找到目标目录下所有的脚本，然后再使用 -exec 选项去执行找到的脚本。
+$ find ~/scripts -maxdepth 1 -type f -executable -name 's*' -exec {} \;
+STAY
+HOME
+STAY
+SAFE
+上面的命令是指定了只在 scripts/ 目录这个层级下找脚本，但是，你还可以去掉这个限制，就可以搜索当前目录及其子目录下所有的脚本了：
+$ find -maxdepth 1 -type f -executable -name '*.sh' -exec {} \;
+
+3. for
+如果你 Shell 的水平不错的话，那么 for 循环也是一个不错的选择。比如你想执行目录下所有以 s 开头的脚本，可以这样写：
+
+$ for f in ~/scripts/s* ; do [ -x "$f" ] && [ ! -d "$f" ] && "$f" ; done
+STAY
+HOME
+STAY
+SAFE
+如果你想执行目录下所有的脚本，可以做一个小小的改动：
+
+$ for f in ~/scripts/*.sh ; do [ -x "$f" ] && [ ! -d "$f" ] && "$f" ; done
+公众号：良许Linux
+hello world!
+STAY
+
+.export命令设置永久环境变量
+那么如何定义永久环境变量呢？可以采用如下两种方法：
+ （1） 在/etc/profile文件中添加环境变量，对所有用户永久生效。例如通过vim编辑/etc/profile文件，在最后一行添加CLASSPATH变量。
+
+export CLASSPATH=./JAVA_HOME/lib;$JAVA_HOME/jre/lib
+复制
+注意，修改文件后要想马上生效需要执行source /etc/profile，不然只能在下次重新登录时才生效。
+
+（2） 在~/.bash_profile文件中添加环境变量，只对当前用户永久有效。例如通过vim编辑~/.bash_profile文件中添加环境变量。
+
+export CLASSPATH=./JAVA_HOME/lib;$JAVA_HOME/jre/lib
+复制
+注意：修改文件后要想马上生效需要执行source ~/.bash_profile，不然只能在下次重新登录时才生效。
+
+另外，如想删除已设置的环境变量，可以使用unset（builtin）命令来清除环境变量 ，例如$unset CLASSPATH。使用readonly命令可设置只读变量。如果使用了readonly命令的话，变量不可以被修改或清除。

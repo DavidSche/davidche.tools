@@ -1,0 +1,107 @@
+# Keycloak with Amazon RDS and Let's Encrypt in a Docker Swarm
+
+# Vladimir Mikhalev
+# callvaldemar@gmail.com
+# www.heyvaldemar.com
+
+# Create Amazon RDS database instance, configure Traefik and create secrets for storing the passwords on the Docker Swarm manager node before applying the configuration.
+# Traefik configuration: https://github.com/heyValdemar/traefik-letsencrypt-docker-swarm
+
+# Create a secret for storing the password for Keycloak database using the command:
+# printf "YourPassword" | docker secret create keycloak-postgres-password -
+
+# Create a secret for storing the password for Keycloak administrator using the command:
+# printf "YourPassword" | docker secret create keycloak-application-password -
+
+# Clear passwords from bash history using the command:
+# history -c && history -w
+
+# Deploy Keycloak in a Docker Swarm using the command:
+# docker stack deploy -c keycloak-traefik-letsencrypt-rds-docker-swarm.yml keycloak
+
+version: '3.8'
+
+x-default-opts:
+  &default-opts
+  logging:
+    options:
+      max-size: "10m"
+
+networks:
+  keycloak-network:
+    driver: overlay
+  traefik-network:
+    external: true
+
+secrets:
+  keycloak-postgres-password:
+    external: true
+  keycloak-application-password:
+    external: true
+
+services:
+  keycloak:
+    <<: *default-opts
+    # Image tag (replace with yours)
+    image: jboss/keycloak:13.0.0
+    environment:
+      DB_VENDOR: postgres
+      # Database address (replace with yours)
+      DB_ADDR: keycloakdb.endpoint.availability-zone.rds.amazonaws.com
+      DB_PORT: 5432
+      # Database name (replace with yours)
+      DB_DATABASE: keycloakdb
+      # Database user (replace with yours)
+      DB_USER: keycloakdbuser
+      DB_PASSWORD_FILE: /run/secrets/keycloak-postgres-password
+      # Keycloak user (replace with yours)
+      KEYCLOAK_USER: keycloakadmin
+      KEYCLOAK_PASSWORD_FILE: /run/secrets/keycloak-application-password
+      JGROUPS_DISCOVERY_PROTOCOL: JDBC_PING
+      JGROUPS_DISCOVERY_PROPERTIES: datasource_jndi_name=java:jboss/datasources/KeycloakDS,info_writer_sleep_time=500,initialize_sql="CREATE TABLE IF NOT EXISTS JGROUPSPING ( own_addr varchar(200) NOT NULL, cluster_name varchar(200) NOT NULL, created timestamp default current_timestamp, ping_data BYTEA, constraint PK_JGROUPSPING PRIMARY KEY (own_addr, cluster_name))"
+      PROXY_ADDRESS_FORWARDING: 'true'
+      KEYCLOAK_LOGLEVEL: WARN
+    networks:
+      - keycloak-network
+      - traefik-network
+    secrets:
+      - keycloak-postgres-password
+      - keycloak-application-password
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 120s
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
+      update_config:
+        delay: 15s
+        parallelism: 1
+        monitor: 10s
+        failure_action: rollback
+        max_failure_ratio: 0.55
+      # Container resources (replace with yours)
+      resources:
+        limits:
+          cpus: '0.55'
+          memory: 2G
+        reservations:
+          cpus: '0.35'
+          memory: 1G
+      labels:
+        - "traefik.enable=true"
+        # Keycloak URL (replace with yours)
+        - "traefik.http.routers.keycloak.rule=Host(`keycloak.heyvaldemar.net`)"
+        - "traefik.http.routers.keycloak.service=keycloak"
+        - "traefik.http.routers.keycloak.entrypoints=websecure"
+        - "traefik.http.services.keycloak.loadbalancer.server.port=8080"
+        - "traefik.http.routers.keycloak.tls=true"
+        - "traefik.http.routers.keycloak.tls.certresolver=letsencrypt"
+        - "traefik.http.services.keycloak.loadbalancer.passhostheader=true"
+        - "traefik.http.routers.keycloak.middlewares=compresstraefik"
+        - "traefik.http.middlewares.compresstraefik.compress=true"

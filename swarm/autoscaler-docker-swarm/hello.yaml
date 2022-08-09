@@ -1,0 +1,13 @@
+version: '3.7'
+services:
+  helloworld:
+    image: app1:v1.0
+    ports:
+      - 8080:80
+    logging:
+      driver: json-file
+    deploy:
+      labels:
+        swarm.autoscaler: 'true'
+        swarm.autoscaler.maximum: '3'
+        swarm.autoscaler.minimum: '1'
