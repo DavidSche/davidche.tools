@@ -1,9 +1,5 @@
 # Portainer with SSL Certificate in a Docker Swarm
 
-# Vladimir Mikhalev
-# callvaldemar@gmail.com
-# www.heyvaldemar.com
-
 # Configure Traefik before applying the configuration.
 # Traefik configuration: https://github.com/heyValdemar/traefik-ssl-certificate-docker-swarm
 

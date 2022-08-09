@@ -18,6 +18,7 @@ What "zero-downtime means":
 All of this above obviously can happen within milliseconds, but I want to make sure I am doing this right. The last 3 steps are the critical part.
 
 ## Questions
+
 1. Is this something is configured in Traefik or in Docker Swarm?
    I know Docker Swarm has this deploy configuration for my "docker-compose.yml" file:
 
@@ -34,15 +35,15 @@ All of this above obviously can happen within milliseconds, but I want to make s
         order: start-first
 ```
 
-
 2. Or is this something that I need to use "priority labels" for?
    I saw on the Traefik docs for the "priority" label. I could probably set the labels to "epoch time", but not sure if I even need this.
 
 There is also this example that does a "blue/green" but I don't know if I need that or not: bluegreen-traefik-docker/docker-stack-appli-blue.yml at master · rodolpheche/bluegreen-traefik-docker · GitHub 2
 
-Configurations
+### Configurations
 
 docker-compose.yml
+
 ```docker-compose.yml
 version: '3.7'
 services:
@@ -201,4 +202,5 @@ certificatesResolvers:
         #
         entryPoint: web
 ```
-Any insight would be greatly appreciated!! 
+
+Any insight would be greatly appreciated!!

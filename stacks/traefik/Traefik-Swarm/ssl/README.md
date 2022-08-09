@@ -231,6 +231,7 @@ GITLAB_RUNNER_CONTAINER_1=$(docker ps -aqf "name=gitlab-runner") \
 --output-limit "50000000" \
 --access-level="not_protected"'
 ```
+
 Run ***docker stack ps gitlab | grep gitlab_gitlab-runner | awk 'NR > 0 {print $4}'*** on the Docker Swarm manager node to find on which node container for GitLab Runner is running.
 
 Login to the Container Registry using GitLab credentials:
@@ -410,3 +411,96 @@ Deploy Zabbix in a Docker Swarm using the command:
 ```shell
 docker stack deploy -c zabbix-traefik-ssl-certificate-docker-swarm.yml zabbix
 ```
+
+## Zabbix with Let's Encrypt in a Docker Swarm
+
+Configure Traefik and create secrets for storing the passwords on the Docker Swarm manager node before applying the configuration.
+
+Traefik configuration: <https://github.com/heyValdemar/traefik-letsencrypt-docker-swarm>
+
+Create a secret for storing the password for Zabbix database using the command:
+
+```shell
+printf "YourPassword" | docker secret create zabbix-postgres-password -
+```
+
+Clear passwords from bash history using the command:
+
+```shell
+history -c && history -w
+```
+
+Run zabbix-restore-database.sh on the Docker Swarm node where the container for backups is running to restore database if needed.
+
+Run docker stack ps zabbix | grep zabbix_backups | awk 'NR > 0 {print $4}' on the Docker Swarm manager node to find on which node container for backups is running.
+
+Deploy Zabbix in a Docker Swarm using the command:
+
+```shell
+docker stack deploy -c zabbix-traefik-letsencrypt-docker-swarm.yml zabbix
+
+```
+
+## Grafana with Let's Encrypt in a Docker Swarm
+
+Configure Traefik and create secrets for storing the passwords on the Docker Swarm manager node before applying the configuration.
+
+Traefik configuration: <https://github.com/heyValdemar/traefik-letsencrypt-docker-swarm>
+
+Create a secret for storing the password for Grafana database using the command:
+
+```shell
+printf "YourPassword" | docker secret create grafana-postgres-password -
+```
+
+Create a secret for storing the password for Grafana administrator using the command:
+
+```shell
+printf "YourPassword" | docker secret create grafana-application-password -
+```
+
+Create a secret for storing the password for Grafana email account using the command:
+
+```shell
+printf "YourPassword" | docker secret create grafana-email-password -
+```
+
+Clear passwords from bash history using the command:
+
+```shell
+history -c && history -w
+```
+
+Create a secret for storing the Grafana configuration using the command:
+
+```shell
+docker secret create ldap.toml /path/to/ldap.toml
+```
+
+Run ***grafana-restore-application-data.sh*** on the Docker Swarm worker node where the container for backups is running to restore application data if needed.
+
+Run ***docker stack ps grafana | grep grafana_backup | awk 'NR > 0 {print $4}'*** on the Docker Swarm manager node to find on which node container for backups is running.
+
+Deploy Grafana in a Docker Swarm using the command:
+
+```shell
+docker stack deploy -c grafana-traefik-letsencrypt-docker-swarm.yml grafana
+```
+
+## SonarQube with Let's Encrypt in a Docker Compose
+
+Install the Docker Engine by following the official guide: <https://docs.docker.com/engine/install/>
+
+Install the Docker Compose by following the official guide: <https://docs.docker.com/compose/install/>
+
+Run ***sonarqube-restore-application-data.sh*** to restore application data if needed.
+
+Run ***sonarqube-restore-database.sh*** to restore database if needed.
+
+Deploy SonarQube server with a Docker Compose using the command:
+
+```shell
+docker-compose -f sonarqube-traefik-letsencrypt-docker-compose.yml -p sonarqube up -d
+```
+
+

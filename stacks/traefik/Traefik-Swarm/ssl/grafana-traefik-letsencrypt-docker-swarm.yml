@@ -1,0 +1,219 @@
+# Grafana with Let's Encrypt in a Docker Swarm
+
+# Configure Traefik and create secrets for storing the passwords on the Docker Swarm manager node before applying the configuration.
+# Traefik configuration: https://github.com/heyValdemar/traefik-letsencrypt-docker-swarm
+
+# Create a secret for storing the password for Grafana database using the command:
+# printf "YourPassword" | docker secret create grafana-postgres-password -
+
+# Create a secret for storing the password for Grafana administrator using the command:
+# printf "YourPassword" | docker secret create grafana-application-password -
+
+# Create a secret for storing the password for Grafana email account using the command:
+# printf "YourPassword" | docker secret create grafana-email-password -
+
+# Clear passwords from bash history using the command:
+# history -c && history -w
+
+# Create a secret for storing the Grafana configuration using the command:
+# docker secret create ldap.toml /path/to/ldap.toml
+
+# Run grafana-restore-application-data.sh on the Docker Swarm worker node where the container for backups is running to restore application data if needed.
+# Run docker stack ps grafana | grep grafana_backup | awk 'NR > 0 {print $4}' on the Docker Swarm manager node to find on which node container for backups is running.
+
+# Deploy Grafana in a Docker Swarm using the command:
+# docker stack deploy -c grafana-traefik-letsencrypt-docker-swarm.yml grafana
+
+version: '3.8'
+
+x-default-opts:
+  &default-opts
+  logging:
+    options:
+      max-size: "10m"
+
+networks:
+  grafana-network:
+    driver: overlay
+  traefik-network:
+    external: true
+
+volumes:
+  grafana-postgres:
+  grafana-postgres-backups:
+
+secrets:
+  grafana-postgres-password:
+    external: true
+  grafana-application-password:
+    external: true
+  grafana-email-password:
+    external: true
+  ldap.toml:
+    external: true
+
+services:
+  postgres:
+    <<: *default-opts
+    # Image tag (replace with yours)
+    image: postgres:14
+    volumes:
+      - grafana-postgres:/var/lib/postgresql/data
+    environment:
+      # Database name (replace with yours)
+      POSTGRES_DB: grafanadb
+      # Database user (replace with yours)
+      POSTGRES_USER: grafanadbuser
+      POSTGRES_PASSWORD_FILE: /run/secrets/grafana-postgres-password
+    networks:
+      - grafana-network
+    secrets:
+      - grafana-postgres-password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -h 127.0.0.1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
+      # Container resources (replace with yours)
+      resources:
+        limits:
+          cpus: '0.55'
+          memory: 1G
+        reservations:
+          cpus: '0.35'
+          memory: 512M
+
+  grafana:
+    <<: *default-opts
+    # Image tag (replace with yours)
+    image: grafana/grafana:9.0.6
+    environment:
+      GF_DATABASE_TYPE: postgres
+      GF_DATABASE_HOST: postgres:5432
+      # Database name (replace with yours)
+      GF_DATABASE_NAME: grafanadb
+      # Database user (replace with yours)
+      GF_DATABASE_USER: grafanadbuser
+      GF_DATABASE_PASSWORD__FILE: /run/secrets/grafana-postgres-password
+      # Grafana domain (replace with yours)
+      GF_SERVER_DOMAIN: grafana.heyvaldemar.net
+      # Grafana URL (replace with yours)
+      GF_SERVER_ROOT_URL: https://grafana.heyvaldemar.net
+      # Grafana user (replace with yours)
+      GF_SECURITY_ADMIN_USER: grafanaadmin
+      GF_SECURITY_ADMIN_PASSWORD__FILE: /run/secrets/grafana-application-password
+      GF_AUTH_ANONYMOUS_ENABLED: 'false'
+      GF_AUTH_ANONYMOUS_DISABLE_LOGIN_FORM: 'false'
+      GF_USERS_ALLOW_SIGN_UP: 'false'
+      GF_AUTH_LDAP_ENABLED: 'true'
+      GF_AUTH_LDAP_ALLOW_SIGN_UP: 'true'
+      GF_AUTH_LDAP_CONFIG_FILE: /etc/grafana/ldap.toml
+      # Grafana plugins (replace with yours)
+      GF_INSTALL_PLUGINS: alexanderzobnin-zabbix-app
+      GF_USERS_LOGIN_HINT: username
+      GF_SMTP_ENABLED: 'true'
+      # SMTP host (replace with yours)
+      GF_SMTP_HOST: smtp-relay.gmail.com:587
+      # SMTP user (replace with yours)
+      GF_SMTP_USER: grafana@heyvaldemar.net
+      # SMTP password (replace with yours)
+      GF_SMTP_PASSWORD__FILE: /run/secrets/grafana-email-password
+      GF_SMTP_FROM_NAME: Grafana Alert
+      GF_SMTP_FROM_ADDRESS: grafana@heyvaldemar.net
+    networks:
+      - grafana-network
+      - traefik-network
+    secrets:
+      - source: grafana-postgres-password
+      - source: grafana-application-password
+      - source: grafana-email-password
+      - source: ldap.toml
+        target: /etc/grafana/ldap.toml
+    healthcheck:
+      test: ["CMD", "wget", "http://localhost:3000/","--spider"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
+      # Container resources (replace with yours)
+      resources:
+        limits:
+          cpus: '1.75'
+          memory: 6G
+        reservations:
+          cpus: '0.55'
+          memory: 2G
+      labels:
+        - "traefik.enable=true"
+        # Grafana URL (replace with yours)
+        - "traefik.http.routers.grafana.rule=Host(`grafana.heyvaldemar.net`)"
+        - "traefik.http.routers.grafana.service=grafana"
+        - "traefik.http.routers.grafana.entrypoints=websecure"
+        - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+        - "traefik.http.routers.grafana.tls=true"
+        - "traefik.http.routers.grafana.tls.certresolver=letsencrypt"
+        - "traefik.http.services.grafana.loadbalancer.passhostheader=true"
+        - "traefik.http.routers.grafana.middlewares=compresstraefik"
+        - "traefik.http.middlewares.compresstraefik.compress=true"
+
+  backups:
+    <<: *default-opts
+    # Image tag (replace with yours)
+    image: postgres:14
+    # Database backups prune interval (replace with yours). Default is 7 days.
+    # find /srv/grafana-postgres/backups -type f -mtime +7 | xargs rm -f
+
+    # Grafana backups interval (replace with yours). Default is 1 day.
+    # sleep 24h
+
+    # Run grafana-restore-database.sh on the Docker Swarm node where the container for backups is running to restore database if needed.
+    # Run docker stack ps grafana | grep grafana_backups | awk 'NR > 0 {print $4}' on the Docker Swarm manager node to find on which node container for backups is running.
+    command: sh -c 'sleep 30m
+             && while true; do
+             PGPASSWORD="$$(cat $$POSTGRES_PASSWORD_FILE)"
+             pg_dump
+             -h postgres
+             -p 5432
+             -d grafanadb
+             -U grafanadbuser | gzip > /srv/grafana-postgres/backups/grafana-postgres-backup-$$(date "+%Y-%m-%d_%H-%M").gz
+             && find /srv/grafana-postgres/backups -type f -mtime +7 | xargs rm -f;
+             sleep 24h; done'
+    volumes:
+      # Database backups location
+      - grafana-postgres-backups:/srv/grafana-postgres/backups
+    environment:
+      POSTGRES_PASSWORD_FILE: /run/secrets/grafana-postgres-password
+    networks:
+      - grafana-network
+    secrets:
+      - grafana-postgres-password
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
+      # Container resources (replace with yours)
+      resources:
+        limits:
+          cpus: '0.55'
+          memory: 1G
+        reservations:
+          cpus: '0.35'
+          memory: 512M
+    depends_on:
+      - postgres
+      - grafana

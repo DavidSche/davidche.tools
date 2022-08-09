@@ -1,8 +1,7 @@
-# Zabbix with SSL Certificate in a Docker Swarm
-
+# Zabbix with Let's Encrypt in a Docker Swarm
 
 # Configure Traefik and create secrets for storing the passwords on the Docker Swarm manager node before applying the configuration.
-# Traefik configuration: https://github.com/heyValdemar/traefik-ssl-certificate-docker-swarm
+# Traefik configuration: https://github.com/heyValdemar/traefik-letsencrypt-docker-swarm
 
 # Create a secret for storing the password for Zabbix database using the command:
 # printf "YourPassword" | docker secret create zabbix-postgres-password -
@@ -14,7 +13,7 @@
 # Run docker stack ps zabbix | grep zabbix_backups | awk 'NR > 0 {print $4}' on the Docker Swarm manager node to find on which node container for backups is running.
 
 # Deploy Zabbix in a Docker Swarm using the command:
-# docker stack deploy -c zabbix-traefik-ssl-certificate-docker-swarm.yml zabbix
+# docker stack deploy -c zabbix-traefik-letsencrypt-docker-swarm.yml zabbix
 
 version: '3.8'
 
@@ -42,7 +41,7 @@ services:
   postgres:
     <<: *default-opts
     # Image tag (replace with yours)
-    image: postgres:13.2
+    image: postgres:14
     volumes:
       - zabbix-postgres:/var/lib/postgresql/data
     environment:
@@ -79,7 +78,7 @@ services:
   zabbix:
     <<: *default-opts
     # Image tag (replace with yours)
-    image: zabbix/zabbix-server-pgsql:ubuntu-5.2.6
+    image: zabbix/zabbix-server-pgsql:6.2.0-ubuntu
     environment:
       DB_SERVER_HOST: postgres
       DB_SERVER_PORT: 5432
@@ -117,7 +116,7 @@ services:
   web:
     <<: *default-opts
     # Image tag (replace with yours)
-    image: zabbix/zabbix-web-nginx-pgsql:ubuntu-5.2.6
+    image: zabbix/zabbix-web-nginx-pgsql:6.2.0-ubuntu
     environment:
       DB_SERVER_HOST: postgres
       DB_SERVER_PORT: 5432
@@ -163,6 +162,7 @@ services:
         - "traefik.http.routers.zabbix.entrypoints=websecure"
         - "traefik.http.services.zabbix.loadbalancer.server.port=8080"
         - "traefik.http.routers.zabbix.tls=true"
+        - "traefik.http.routers.zabbix.tls.certresolver=letsencrypt"
         - "traefik.http.services.zabbix.loadbalancer.passhostheader=true"
         - "traefik.http.routers.zabbix.middlewares=compresstraefik"
         - "traefik.http.middlewares.compresstraefik.compress=true"
@@ -173,7 +173,7 @@ services:
   agent:
     <<: *default-opts
     # Image tag (replace with yours)
-    image: zabbix/zabbix-agent:ubuntu-5.2.6
+    image: zabbix/zabbix-agent2:6.2.0-ubuntu
     environment:
       # Zabbix Hostname (replace with yours)
       # Set as DNS name on Zabbix server host configuration screen to make checks of Zabbix server itself
@@ -204,7 +204,7 @@ services:
   backups:
     <<: *default-opts
     # Image tag (replace with yours)
-    image: postgres:13.2
+    image: postgres:14
     # Database backups prune interval (replace with yours). Default is 7 days.
     # find /srv/zabbix-postgres/backups -type f -mtime +7 | xargs rm -f
 

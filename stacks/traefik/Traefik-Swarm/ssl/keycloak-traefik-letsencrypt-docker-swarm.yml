@@ -1,8 +1,5 @@
 # Keycloak with Let's Encrypt in a Docker Swarm
 
-# Vladimir Mikhalev
-# callvaldemar@gmail.com
-# www.heyvaldemar.com
 
 # Configure Traefik and create secrets for storing the passwords on the Docker Swarm manager node before applying the configuration.
 # Traefik configuration: https://github.com/heyValdemar/traefik-letsencrypt-docker-swarm
@@ -50,7 +47,7 @@ services:
   postgres:
     <<: *default-opts
     # Image tag (replace with yours)
-    image: postgres:13.2
+    image: postgres:14
     volumes:
       - keycloak-postgres:/var/lib/postgresql/data
     environment:
@@ -93,7 +90,7 @@ services:
   keycloak:
     <<: *default-opts
     # Image tag (replace with yours)
-    image: jboss/keycloak:13.0.0
+    image: jboss/keycloak:16.1.1
     environment:
       DB_VENDOR: postgres
       DB_ADDR: postgres
