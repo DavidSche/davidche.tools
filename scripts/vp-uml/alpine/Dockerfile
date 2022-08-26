@@ -1,4 +1,4 @@
-FROM alpine:3.14
+FROM alpine:3.16
 
 #RUN apk add --no-cache tar fontconfig freetype-dev libjpeg-turbo-dev libpng-dev
 #
@@ -7,7 +7,9 @@ MAINTAINER David.che <davidche@outlook.com>
 USER root
 ENV JAVA_HOME=/usr/lib/jvm/default-jvm/jre
 
-RUN apk add --no-cache openjdk11-jre; \
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+
+RUN apk add --no-cache openjdk17-jre; \
     rm -rf /tmp/* /var/cache/apk/*
 
 RUN apk add --no-cache  fontconfig && apk add --update ttf-dejavu && fc-cache --force
@@ -19,8 +21,8 @@ COPY ./VPServer/scripts/  /opt/VPServer/scripts/
 
 WORKDIR /opt/VPServer
 
-#RUN tar -xvzf /opt/VP_Server_16_1_20200231_Linux64.tar.gz -C /opt
-#RUN rm /opt/VP_Server_16_1_20200231_Linux64.tar.gz -f
+#RUN tar -xvzf /opt/VP_Server_17_0_20220816_Linux64.tar.gz -C /opt
+#RUN rm /opt/VP_Server_17_0_20220816_Linux64.tar.gz -f
 #RUN rm /opt/VPServer/jre -rf
 
 RUN ln -s /usr/lib/jvm/default-jvm/jre /opt/VPServer/jre

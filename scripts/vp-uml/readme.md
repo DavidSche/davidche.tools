@@ -11,7 +11,7 @@ docker logs -f vp
 
 docker build -t cheshuai/vpserver:16.3 .
 
-docker build -t cheshuai/vpserver:16.3 .
+docker build -t cheshuai/vpserver:17.0 .
 
 docker build -t cheshuai/vps:16.3 .
 
@@ -19,7 +19,7 @@ docker run  -d -p 1998:8080 --name vps cheshuai/vps:16.3
 
 cheshuai/vps:16.3
 
-docker build  --no-cache  -t cheshuai/vps:16.3  . 
+docker build  --no-cache  -t cheshuai/vps:17.0  . 
 
 
 docker run  -d -p 1996:1999 --name vps cheshuai/vps:16
