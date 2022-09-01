@@ -119,4 +119,15 @@ In the "Owner" field, add the name of the organization in gitea you want to buil
 Fill the rest of the form as required. Click "Save". The following scan should list the repositories that the jenkins user can see in the organization selected.
 
 
+##  DRONE 用 GITEA OAUTH2 登录时授权失败
+
+报错：
+授权失败
+Unregistered Redirect URI
+授权失败，这是一个无效的请求。请联系尝试授权应用的管理员。
+运行drone时，传server参数DRONE_SERVER_HOST=www.myci.com
+在gitea应用中指定Redirect URI为https://www.myci.com/login
+
+
+
 

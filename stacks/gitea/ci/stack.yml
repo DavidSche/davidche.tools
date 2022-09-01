@@ -51,10 +51,10 @@ services:
 
   # Defining a version control service using Gitea(Git with a cup of tea).
   gitea_server: 
-    image: gitea/gitea #:1.11.2 # Official image of the Docker Hub.
+    image: gitea/gitea:1.17.1 # Official image of the Docker Hub.
     container_name: gitea_server
     environment:
-      - ROOT_URL=http://192.168.9.45:3000
+      - ROOT_URL=http://${GITEA_IP}:3000
       - DB_TYPE=postgres
       - DB_NAME=gitea
       - DB_HOST=gitea_db:5432
@@ -77,11 +77,11 @@ services:
   # Drone Server is a runner and a standalone daemon that
   # polls the server for pending pipelines to execute.
   drone_server:
-    image: drone/drone:1 # Official image of the Docker Hub.
+    image: drone/drone:2 # Official image of the Docker Hub.
     container_name: drone_server
     environment:
       # Required string value configures the user-facing hostname.
-      - DRONE_SERVER_HOST=192.168.9.45:8000
+      - DRONE_SERVER_HOST=${GITEA_IP}:8100
       #- DRONE_SERVER_HOST=droneserver.docker.localhost
       # Required string value configures the user-facing protocol.
       - DRONE_SERVER_PROTO=http
@@ -98,7 +98,7 @@ services:
 
       # GITEA params:
       # Require string value provides your Gitea server address.
-      - DRONE_GITEA_SERVER=http://192.168.9.45:3000
+      - DRONE_GITEA_SERVER=http://${GITEA_IP}:3000
       # Required string value provides your Gitea oauth Client ID.
       - DRONE_GITEA_CLIENT_ID=890286d7-f4dd-4afa-b28a-f65590cf164f
       # Required string value provides your Gitea oauth Client Secret.
@@ -127,7 +127,7 @@ services:
       - "vol_drone_server:/var/lib/drone"
     restart: always
     ports:
-      - "8000:80"
+      - "8100:80"
       - "8443:443"
     networks:
       - network_devops
@@ -148,7 +148,7 @@ services:
       - DRONE_UI_PASSWORD=root
 
       # Required string values. Defines the hostname (and optional port) used to connect to the Drone server.
-      - DRONE_RPC_HOST=192.168.9.45:8000
+      - DRONE_RPC_HOST=${GITEA_IP}:8100
       # Required string value. Defines the protocol used to connect to the Drone server. The value must be either http or https.
       - DRONE_RPC_PROTO=http
       # Required string value. Provides the shared secret used by the Drone server to authenticate http requests.
