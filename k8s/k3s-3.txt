@@ -13,6 +13,8 @@ IP:  192.168.153.36     主机名: k8s-node2     系统:  centos 7.6      配置
 三台主机全部关闭swap: 
 # swapoff -a  # 临时关闭
 # vim /etc/fstab 注释到swap那一行 # 永久关闭
+#sudo sed -i '/ swap / s/^ (.*)$/#1/g' /etc/fstab
+
 
 timedatectl set-timezone "Asia/Shanghai"
 
@@ -70,8 +72,14 @@ curl -sfL https://rancher-mirror.oss-cn-beijing.aliyuncs.com/k3s/k3s-install.sh 
 
 sudo cat /var/lib/rancher/k3s/server/token
 
+curl -sfL https://rancher-mirror.oss-cn-beijing.aliyuncs.com/k3s/k3s-install.sh | INSTALL_K3S_VERSION=v1.24.4+k3s1 INSTALL_K3S_MIRROR=cn K3S_NODE_NAME=k8s-node-53 \
+    INSTALL_K3S_EXEC="--docker" sh -
 
-curl -sfL https://rancher-mirror.oss-cn-beijing.aliyuncs.com/k3s/k3s-install.sh |  INSTALL_K3S_VERSION=v1.23.9+k3s1  INSTALL_K3S_MIRROR=cn K3S_URL=https://10.10.100.53:6443 K3S_TOKEN=K103110d9db14ba7bf014d0c710c5ec9c59055ec729223b5c750b5ca04f61816fbb::server:f9d81a1ccb996a715f936b9417b76d8c    INSTALL_K3S_EXEC="--docker" sh -
+v1.24.3+k3s1
+v1.24.4+k3s1
+
+
+curl -sfL https://rancher-mirror.oss-cn-beijing.aliyuncs.com/k3s/k3s-install.sh |  INSTALL_K3S_VERSION=v1.24.4+k3s1  INSTALL_K3S_MIRROR=cn K3S_URL=https://10.10.102.53:6443 K3S_TOKEN=K104d03311f9ea3224b7a80f7efd694b43e4a7f2304038acf8f0c9afe6aa8e37db4::server:7e847e267919bdd44a1838f7d89f5bed    INSTALL_K3S_EXEC="--docker" sh -
 
  curl -sfL http://rancher-mirror.cnrancher.com/k3s/k3s-install.sh | \
     INSTALL_K3S_MIRROR=cn K3S_URL=https://192.168.64.3:6443 \
@@ -138,16 +146,17 @@ export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
 
 临时解决: export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
 
-永久解决:
+永久解决: 
 
 执行: vi /etc/profile
 写入内容: export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
 执行: source /etc/profile
- 
 
-$ curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
-$ chmod 700 get_helm.sh
-$ ./get_helm.sh
+
+wget https://get.helm.sh/helm-v3.9.4-linux-amd64.tar.gz
+tar -zxvf helm-v3.9.4-linux-amd64.tar.gz
+mv linux-amd64/helm /usr/local/bin/helm
+
 
 
 在 100.53 上用k3s搭建了一个kubernetes 的集群(两个节点 53，54 )， 安装了一个管理工具portainer 

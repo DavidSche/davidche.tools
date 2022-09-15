@@ -53,6 +53,9 @@ services:
   gitea_server: 
     image: gitea/gitea:1.17.1 # Official image of the Docker Hub.
     container_name: gitea_server
+    # set the same environment variable on an Environment file, and the Compose file:
+    env_file:
+      - ./.env
     environment:
       - ROOT_URL=http://${GITEA_IP}:3000
       - DB_TYPE=postgres

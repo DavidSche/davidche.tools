@@ -153,5 +153,17 @@ $ sudo rm -rf /var/lib/docker
 	"max-concurrent-uploads": 5,
 }
 
+三、开启 docker 远程管理接口
+
+修改服务文件 sudo vi /lib/systemd/system/docker.service 添加 -H tcp://0.0.0.0:2375
+
+#修改前：
+ExecStart=/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock
+
+#修改后：
+ExecStart=/usr/bin/dockerd -H fd:// -H tcp://0.0.0.0:2375 --containerd=/run/containerd/containerd.sock
+
+#重启服务
+systemctl daemon-reload &&  systemctl restart docker.service
 
 
