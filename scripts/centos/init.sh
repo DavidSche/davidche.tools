@@ -30,6 +30,9 @@ echo "setting firewall, add swarm port to firewall !"
 # sudo firewall-cmd --reload
 #sudo reboot
 echo "set firewall ok !"
+#firewall-cmd --add-port=5432/tcp --permanent
+
+
 
 # update os kernel
 echo "update kernel to 4.x !"
@@ -257,13 +260,17 @@ curl -sL https://dl.yarnpkg.com/rpm/yarn.repo | sudo tee /etc/yum.repos.d/yarn.r
 ### CentOS / RHEL / Fedora ###
 # yum -y install wget
 
-wget https://storage.googleapis.com/golang/go1.11.5.linux-amd64.tar.gz
-tar -zxvf  go1.11.5.linux-amd64.tar.gz -C /usr/local/
+wget https://storage.googleapis.com/golang/go1.19.4.linux-amd64.tar.gz
+tar -zxvf  go1.19.4.linux-amd64.tar.gz -C /usr/local/
 export PATH=$PATH:/usr/local/go/bin
-mkdir -p /opt/work
-export GOPATH=/opt/work 
+mkdir -p /opt/go/work
+export GOPATH=/opt/go/work 
 echo -e "export PATH=$PATH:/usr/local/go/bin  " >> /etc/profile
-echo -e "export GOPATH=/opt/work " >> /etc/profile
+echo -e "export GOPATH=/opt/go/work " >> /etc/profile
+go env -w GOPROXY=https://goproxy.cn
+#touch main.go .env
+
+
 
 #echo -e "export GOROOT=/usr/local/go export PATH=$PATH:$GOROOT/bin export GOPATH=/usr/local/go" >> /etc/profile
 go version

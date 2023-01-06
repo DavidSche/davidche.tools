@@ -1,0 +1,90 @@
+version: '3.8'
+
+services:
+  woodpecker-server:
+    image: woodpeckerci/woodpecker-server:v0.15.5
+    ports:
+      - 80:80
+      - 443:443
+    networks:
+      - woodpecker
+    volumes:
+      - woodpecker-server-data:/var/lib/woodpecker/
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: always
+    environment:
+      - WOODPECKER_OPEN=true
+      - WOODPECKER_GITHUB=true
+      - WOODPECKER_SERVER_ADDR=:80
+      - WOODPECKER_LETS_ENCRYPT=${WOODPECKER_LETS_ENCRYPT}
+      - WOODPECKER_HOST=${WOODPECKER_HOST}
+      - WOODPECKER_ADMIN=${WOODPECKER_ADMIN}
+      - WOODPECKER_ORGS=${WOODPECKER_ORGS}
+      - WOODPECKER_REPO_OWNERS=${WOODPECKER_REPO_OWNERS}
+      - WOODPECKER_GITHUB_CLIENT=${WOODPECKER_GITHUB_CLIENT_ID}
+      - WOODPECKER_GITHUB_SECRET=${WOODPECKER_GITHUB_CLIENT_SECRET}
+      - WOODPECKER_AGENT_SECRET="${WOODPECKER_RPC_SECRET}"
+
+      - WOODPECKER_DATABASE_DRIVER=sqlite3
+      - WOODPECKER_DATABASE_DATASOURCE=/var/lib/woodpecker/woodpecker.sqlite
+      - WOODPECKER_DEBUG=true
+
+
+  woodpecker-agent:
+    image: woodpeckerci/woodpecker-agent:v0.15.5
+    command: agent
+    restart: always
+    depends_on:
+      - woodpecker-server
+    networks:
+      - woodpecker
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /root/.docker/:/root/.docker/ # docker login on host if file does not exist
+
+    environment:
+      - WOODPECKER_AGENT_SECRET="${WOODPECKER_RPC_SECRET}"
+      - WOODPECKER_SERVER=woodpecker-server:9000
+      - WOODPECKER_DEBUG=true
+      - WOODPECKER_DOCKER_CONFIG=/root/.docker/config.json
+
+  woodpecker-agent2:
+    image: woodpeckerci/woodpecker-agent:v0.15.5
+    command: agent
+    restart: always
+    depends_on:
+      - woodpecker-server
+    networks:
+      - woodpecker
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /root/.docker/:/root/.docker/ # docker login on host if file does not exist
+    environment:
+      - WOODPECKER_AGENT_SECRET="${WOODPECKER_RPC_SECRET}"
+      - WOODPECKER_SERVER=woodpecker-server:9000
+      - WOODPECKER_DEBUG=true
+      - WOODPECKER_DOCKER_CONFIG=/root/.docker/config.json
+
+  woodpecker-agent3:
+    image: woodpeckerci/woodpecker-agent:v0.15.5
+    command: agent
+    restart: always
+    depends_on:
+      - woodpecker-server
+    networks:
+      - woodpecker
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /root/.docker/:/root/.docker/ # docker login on host if file does not exist
+    environment:
+      - WOODPECKER_AGENT_SECRET="${WOODPECKER_RPC_SECRET}"
+      - WOODPECKER_SERVER=woodpecker-server:9000
+      - WOODPECKER_DEBUG=true
+      - WOODPECKER_DOCKER_CONFIG=/root/.docker/config.json
+
+networks:
+  woodpecker:
+    name: woodpecker_network
+
+volumes:
+  woodpecker-server-data:
