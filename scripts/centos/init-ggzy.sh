@@ -89,11 +89,7 @@ cat << EOF > /etc/docker/daemon.json
     "registry-mirrors": [
         "https://um1k3l1w.mirror.aliyuncs.com"
     ],
-    "graph": "/home/docker",
-    "storage-driver": "overlay2",
-    "storage-opts": [
-        "overlay2.override_kernel_check=true"
-    ]
+    "data-root": "/home/docker"
 }
 EOF
 

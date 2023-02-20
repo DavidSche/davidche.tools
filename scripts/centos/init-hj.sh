@@ -98,11 +98,7 @@ cat << EOF > /etc/docker/daemon.json
       "labels": "production_status",
       "env": "os,customer"
     },
-    "graph": "/home/docker",
-    "storage-driver": "overlay2",
-    "storage-opts": [
-        "overlay2.override_kernel_check=true"
-    ]
+    "data-root": "/home/docker"
 }
 EOF
 

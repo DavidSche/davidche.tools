@@ -55,8 +55,7 @@ sudo dnf install net-tools -y
 sudo dnf install psmisc -y
 sudo dnf install wget -y
 sudo dnf install curl -y
-# sudo dnf install yum-plugin-ovl -y
-# sudo dnf install yum-utils -y
+ sudo dnf install yum-utils -y
 sudo dnf -y install psmisc
 
 # install docker
@@ -70,9 +69,20 @@ echo "install docker engine ！"
 #docker version
 #sudo docker swarm init --advertise-addr 10.140.0.6 --listen-addr 10.140.0.6:2377
 
-sudo dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
-sudo dnf list docker-ce
-sudo dnf install docker-ce --nobest -y
+
+ sudo yum-config-manager \
+    --add-repo \
+    https://download.docker.com/linux/centos/docker-ce.repo
+
+sudo yum install docker-ce docker-ce-cli containerd.io docker-compose-plugin
+
+# yum list docker-ce --showduplicates | sort -r
+#sudo yum install docker-ce-<VERSION_STRING> docker-ce-cli-<VERSION_STRING> containerd.io docker-compose-plugin
+
+
+#sudo dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
+#sudo dnf list docker-ce
+#sudo dnf install docker-ce --nobest -y
 
 # 桥接网络
 sysctl net.ipv4.conf.all.forwarding=1

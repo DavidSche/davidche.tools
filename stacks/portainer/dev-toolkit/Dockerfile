@@ -1,4 +1,4 @@
-From portainer/dev-toolkit:2022.12
+From portainer/dev-toolkit:2023.02
 
 ENV GOPROXY=https://mirrors.aliyun.com/goproxy/
 ENV HOME /root

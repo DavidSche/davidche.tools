@@ -108,10 +108,6 @@ cat << EOF > /etc/docker/daemon.json
     ],
     "registry-mirrors": [
         "https://um1k3l1w.mirror.aliyuncs.com"
-    ],
-    "storage-driver": "overlay2",
-    "storage-opts": [
-        "overlay2.override_kernel_check=true"
     ]
 }
 EOF
