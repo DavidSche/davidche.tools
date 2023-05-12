@@ -1,0 +1,174 @@
+# @Description: Example of a Docker Compose that 
+# implements the services (Traefik, Gitea, Drone CI).
+# @Fonts:
+#   - https://docs.docker.com/compose/compose-file/
+#   - https://docs.docker.com/network/
+#   - https://docs.docker.com/storage/volumes/
+#   - https://github.com/alisonbuss/quickstart-drone-ci/blob/master/docker-compose.yml
+
+version: "3.7"
+
+# Defining docker volumes with the DRIVER(local).
+volumes:
+  vol_git_db:
+    driver: local # Path: /var/lib/docker/volumes/quickstart-drone-ci_vol_gitea_db/_data
+  vol_git_server:
+    driver: local # Path: /var/lib/docker/volumes/quickstart-drone-ci_vol_gitea_server/_data
+  vol_ci_server:
+    driver: local # Path: /var/lib/docker/volumes/quickstart-drone-ci_vol_drone_server/_data
+
+# Defining a local network with the DRIVER(bridge).
+networks:
+  network_local:
+    external: false
+    name: network_local
+
+services:
+  # Defining a database service for Gitea Server.
+  git_db:
+    image: postgres:15.2 # Official image of the Docker Hub.
+    container_name: git_db
+    environment:
+      - POSTGRES_DB=gitea
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - PGDATA=/var/lib/postgresql/data
+    command:
+      - "--logging_collector=on"
+      - "--log_statement=all"
+      - "--log_filename=postgresql-%Y-%m-%d_%H%M%S.log"
+      - "--log_directory=/var/log/postgresql"
+    volumes:
+      - "vol_git_db:/var/lib/postgresql/data"
+    restart: always
+    ports:
+      - "5432:5432"
+    networks:
+      - network_local
+
+
+  # Defining a version control service using Gitea(Git with a cup of tea).
+  git_server: 
+    image: codeberg.org/forgejo/forgejo:1.19.3-0
+    container_name: git_server
+    environment:
+      - ROOT_URL=http://10.10.100.50:3000
+      - DB_TYPE=postgres
+      - DB_NAME=gitea
+      - DB_HOST=git_db:5432
+      - DB_USER=postgres
+      - DB_PASSWD=postgres
+    depends_on:
+      - git_db
+    volumes:
+      - "vol_git_server:/data"
+    restart: unless-stopped
+    ports:
+      - "3022:22"
+      - "3000:3000"
+    networks:
+      - network_local
+
+
+  # Drone Server is a runner and a standalone daemon that
+  # polls the server for pending pipelines to execute.
+  ci_server:
+    image: docker pull woodpeckerci/woodpecker-server:v0.15.8  #drone/drone:2 # Official image of the Docker Hub.
+    container_name: ci_server
+    environment:
+      # Required string value configures the user-facing hostname.
+      - WOODPECKER_HOST=10.10.100.50:6061
+      #- DRONE_SERVER_HOST=droneserver.docker.localhost
+      - WOODPECKER_ADMIN=johnsmith,janedoe
+      - WOODPECKER_OPEN=true
+      # Required string value configures the user-facing protocol.
+      - WOODPECKER_SERVER_PROTO=http
+      # Automatically generates an SSL certificate using Lets Encrypt,
+      # and configures the server to accept HTTPS requests.
+      - WOODPECKER_TLS_AUTOCERT=false
+      # Required literal value provides the Drone shared secret.
+      # This is used to authenticate the RPC connection to the server. 
+      - WOODPECKER_RPC_SECRET=secret
+      # Configures the database driver name. 
+      - WOODPECKER_DATABASE_DRIVER=sqlite3
+      # Configures the database connection string.
+      - WOODPECKER_DATABASE_DATASOURCE=/var/lib/woodpecker/woodpecker.sqlite
+
+      # GITEA params:
+      # Require string value provides your Gitea server address.
+      - WOODPECKER_GITEA_SERVER=http://10.10.100.50:3000
+      # Required string value provides your Gitea oauth Client ID.
+      - WOODPECKER_GITEA_CLIENT_ID=ca1df381-0dd8-4356-9db0-cc3587b44ebc
+      # Required string value provides your Gitea oauth Client Secret.
+      - WOODPECKER_GITEA_CLIENT_SECRET=F23ZKzWL2Kdj63zJ_F1hcQlCwoNYX6KCrRh0BAW-Y4Y=
+      
+      # Enables trace logging. 
+      - DRONE_LOGS_TRACE=true
+      # Enables debug logging:
+      - DRONE_LOGS_DEBUG=true
+      - DRONE_LOGS_TEXT=true
+      - DRONE_LOGS_PRETTY=true
+      - DRONE_LOGS_COLOR=true
+
+      # TODO: CHECK PARAMETERS!
+      - DRONE_AGENTS_ENABLED=true
+
+      # Optional comma separated list. Provides a list of Docker networks
+      # that are attached to every pipeline step.
+      - DRONE_RUNNER_NETWORKS=network_local
+    depends_on:
+      - git_server
+    volumes:
+      - "vol_ci_server:/var/lib/woodpecker"
+    restart: always
+    ports:
+      - "6060:80"
+      - "6061:443"
+    networks:
+      - network_local
+
+
+  # Drone Agents is a runners poll the server for workloads to execute.
+  drone_agent:
+    image: drone/drone-runner-docker:2 # Official image of the Docker Hub.
+    container_name: drone_agent
+    environment:
+      # Enable and setup the Dashboard:
+      # Disables the runner’s user interface.
+      - DRONE_UI_DISABLE=false # (Default is true)
+      # Access with username and password: root
+      # Sets the basic authentication username used to authenticate and access the web dashboard.
+      - DRONE_UI_USERNAME=root
+      # Sets the basic authentication password used to authenticate and access the web dashboard.
+      - DRONE_UI_PASSWORD=root
+
+      # Required string values. Defines the hostname (and optional port) used to connect to the Drone server.
+      - DRONE_RPC_HOST=10.10.100.50:6061
+      # Required string value. Defines the protocol used to connect to the Drone server. The value must be either http or https.
+      - DRONE_RPC_PROTO=http
+      # Required string value. Provides the shared secret used by the Drone server to authenticate http requests.
+      - DRONE_RPC_SECRET=secret
+
+      # Limits the number of concurrent pipelines that a runner can execute.
+      - DRONE_RUNNER_CAPACITY=2
+      # Optional comma separated list. Provides a list of Docker networks
+      # that are attached to every pipeline step.
+      - DRONE_RUNNER_NETWORKS=network_local
+
+      # Setup Logging:
+      # Enables debug level logging.
+      - DRONE_DEBUG=true
+      # Enables trace level logging.
+      - DRONE_TRACE=true
+      # should only be enabled to troubleshoot communication issues.
+      - DRONE_RPC_DUMP_HTTP=true
+      - DRONE_RPC_DUMP_HTTP_BODY=true
+    depends_on:
+      - drone_server
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    restart: always
+    ports:
+      - "3030:3000"
+    networks:
+      - network_local

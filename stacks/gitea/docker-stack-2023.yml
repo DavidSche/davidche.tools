@@ -1,0 +1,172 @@
+# @Description: Example of a Docker Compose that 
+# implements the services (Traefik, Gitea, Drone CI).
+# @Fonts:
+#   - https://docs.docker.com/compose/compose-file/
+#   - https://docs.docker.com/network/
+#   - https://docs.docker.com/storage/volumes/
+#   - https://github.com/alisonbuss/quickstart-drone-ci/blob/master/docker-compose.yml
+
+version: "3.7"
+
+# Defining docker volumes with the DRIVER(local).
+volumes:
+  vol_git_db:
+    driver: local # Path: /var/lib/docker/volumes/quickstart-drone-ci_vol_gitea_db/_data
+  vol_git_server:
+    driver: local # Path: /var/lib/docker/volumes/quickstart-drone-ci_vol_gitea_server/_data
+  vol_ci_server:
+    driver: local # Path: /var/lib/docker/volumes/quickstart-drone-ci_vol_drone_server/_data
+
+# Defining a local network with the DRIVER(bridge).
+networks:
+  network_local:
+    external: false
+    name: network_local
+
+services:
+  # Defining a database service for Gitea Server.
+  gitea_db:
+    image: postgres:12.1 # Official image of the Docker Hub.
+    container_name: gitea_db
+    environment:
+      - POSTGRES_DB=gitea
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - PGDATA=/var/lib/postgresql/data
+    command:
+      - "--logging_collector=on"
+      - "--log_statement=all"
+      - "--log_filename=postgresql-%Y-%m-%d_%H%M%S.log"
+      - "--log_directory=/var/log/postgresql"
+    volumes:
+      - "vol_gitea_db:/var/lib/postgresql/data"
+    restart: always
+    ports:
+      - "5432:5432"
+    networks:
+      - network_local
+
+
+  # Defining a version control service using Gitea(Git with a cup of tea).
+  gitea_server: 
+    image: gitea/gitea:1.10.2 # Official image of the Docker Hub.
+    container_name: gitea_server
+    environment:
+      - ROOT_URL=http://192.168.0.16:3000
+      - DB_TYPE=postgres
+      - DB_NAME=gitea
+      - DB_HOST=gitea_db:5432
+      - DB_USER=postgres
+      - DB_PASSWD=postgres
+    depends_on:
+      - gitea_db
+    volumes:
+      - "vol_gitea_server:/data"
+    restart: unless-stopped
+    ports:
+      - "22:22"
+      - "3000:3000"
+    networks:
+      - network_local
+
+
+  # Drone Server is a runner and a standalone daemon that
+  # polls the server for pending pipelines to execute.
+  drone_server:
+    image: drone/drone:1 # Official image of the Docker Hub.
+    container_name: drone_server
+    environment:
+      # Required string value configures the user-facing hostname.
+      - DRONE_SERVER_HOST=192.168.0.16:9090
+      #- DRONE_SERVER_HOST=droneserver.docker.localhost
+      # Required string value configures the user-facing protocol.
+      - DRONE_SERVER_PROTO=http
+      # Automatically generates an SSL certificate using Lets Encrypt,
+      # and configures the server to accept HTTPS requests.
+      - DRONE_TLS_AUTOCERT=false
+      # Required literal value provides the Drone shared secret.
+      # This is used to authenticate the RPC connection to the server. 
+      - DRONE_RPC_SECRET=secret
+      # Configures the database driver name. 
+      - DRONE_DATABASE_DRIVER=sqlite3
+      # Configures the database connection string.
+      - DRONE_DATABASE_DATASOURCE=/var/lib/drone/drone.sqlite
+
+      # GITEA params:
+      # Require string value provides your Gitea server address.
+      - DRONE_GITEA_SERVER=http://192.168.0.16:3000
+      # Required string value provides your Gitea oauth Client ID.
+      - DRONE_GITEA_CLIENT_ID=ca1df381-0dd8-4356-9db0-cc3587b44ebc
+      # Required string value provides your Gitea oauth Client Secret.
+      - DRONE_GITEA_CLIENT_SECRET=F23ZKzWL2Kdj63zJ_F1hcQlCwoNYX6KCrRh0BAW-Y4Y=
+      
+      # Enables trace logging. 
+      - DRONE_LOGS_TRACE=true
+      # Enables debug logging:
+      - DRONE_LOGS_DEBUG=true
+      - DRONE_LOGS_TEXT=true
+      - DRONE_LOGS_PRETTY=true
+      - DRONE_LOGS_COLOR=true
+
+      # TODO: CHECK PARAMETERS!
+      - DRONE_AGENTS_ENABLED=true
+
+      # Optional comma separated list. Provides a list of Docker networks
+      # that are attached to every pipeline step.
+      - DRONE_RUNNER_NETWORKS=network_local
+    depends_on:
+      - gitea_server
+    volumes:
+      - "vol_drone_server:/var/lib/drone"
+    restart: always
+    ports:
+      - "9090:80"
+      - "9000:443"
+    networks:
+      - network_local
+
+
+  # Drone Agents is a runners poll the server for workloads to execute.
+  drone_agent:
+    image: drone/drone-runner-docker:1 # Official image of the Docker Hub.
+    container_name: drone_agent
+    environment:
+      # Enable and setup the Dashboard:
+      # Disables the runner’s user interface.
+      - DRONE_UI_DISABLE=false # (Default is true)
+      # Access with username and password: root
+      # Sets the basic authentication username used to authenticate and access the web dashboard.
+      - DRONE_UI_USERNAME=root
+      # Sets the basic authentication password used to authenticate and access the web dashboard.
+      - DRONE_UI_PASSWORD=root
+
+      # Required string values. Defines the hostname (and optional port) used to connect to the Drone server.
+      - DRONE_RPC_HOST=192.168.0.16:9090
+      # Required string value. Defines the protocol used to connect to the Drone server. The value must be either http or https.
+      - DRONE_RPC_PROTO=http
+      # Required string value. Provides the shared secret used by the Drone server to authenticate http requests.
+      - DRONE_RPC_SECRET=secret
+
+      # Limits the number of concurrent pipelines that a runner can execute.
+      - DRONE_RUNNER_CAPACITY=2
+      # Optional comma separated list. Provides a list of Docker networks
+      # that are attached to every pipeline step.
+      - DRONE_RUNNER_NETWORKS=network_local
+
+      # Setup Logging:
+      # Enables debug level logging.
+      - DRONE_DEBUG=true
+      # Enables trace level logging.
+      - DRONE_TRACE=true
+      # should only be enabled to troubleshoot communication issues.
+      - DRONE_RPC_DUMP_HTTP=true
+      - DRONE_RPC_DUMP_HTTP_BODY=true
+    depends_on:
+      - drone_server
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    restart: always
+    ports:
+      - "3030:3000"
+    networks:
+      - network_local
