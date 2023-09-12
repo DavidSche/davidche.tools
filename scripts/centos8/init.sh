@@ -107,16 +107,18 @@ echo "write  docker config to /etc/docker/daemon.json "
 cat << EOF > /etc/docker/daemon.json
 {
     "insecure-registries": [
-        "192.168.9.10:5000"
+        "0.0.0.0:5000"
     ],
     "registry-mirrors": [
         "https://um1k3l1w.mirror.aliyuncs.com"
     ],
-    "graph": "/home/docker",
-    "storage-driver": "overlay2",
-    "storage-opts": [
-        "overlay2.override_kernel_check=true"
-    ]
+    "log-driver": "json-file",
+    "log-opts": {
+      "max-size": "100m",
+      "max-file": "3",
+      "labels": "production_status",
+      "env": "os,customer"
+    }
 }
 EOF
 
