@@ -807,7 +807,7 @@ cat << EOF > ./main.go
  		logger.Fatalf("database DbConnection error: %s", err)
  	}
  	//later separate migration
- 	//migrations.Migrate()
+ 	migrations.Migrate()
 
  	router := routers.SetupRoute()
  	logger.Fatalf("%v", router.Run(config.ServerConfig()))
