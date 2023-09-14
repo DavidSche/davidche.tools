@@ -8,7 +8,8 @@ go env -w  GO111MODULE=on
 
 go env -w CGO_ENABLED=0
 
-go env -w GOPROXY=https://mirrors.aliyun.com/goproxy/
+#go env -w GOPROXY=https://mirrors.aliyun.com/goproxy/,direct
+go env -w GOPROXY=https://goproxy.cn,direct
 
 echo "创建 $1 应用";
 
@@ -830,7 +831,7 @@ import (
 // Migrate Add list of model add for migrations
 // TODO later separate migration each models
 func Migrate() {
-	var migrationModels = []interface{}{&models.Example{}}
+	var migrationModels = []interface{}{&models.User{}}
 	err := database.DB.AutoMigrate(migrationModels...)
 	if err != nil {
 		return
