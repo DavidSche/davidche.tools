@@ -2,6 +2,8 @@
 # author:David
 # url:davidsche.github.io
 
+ VAR PROJECT = $PROJECT
+
 echo "设置Aliyun代理";
 
 go env -w  GO111MODULE=on
@@ -11,19 +13,19 @@ go env -w CGO_ENABLED=0
 #go env -w GOPROXY=https://mirrors.aliyun.com/goproxy/,direct
 go env -w GOPROXY=https://goproxy.cn,direct
 
-echo "创建 $1 应用";
+echo "创建 $PROJECTE 应用";
 
-echo "创建目录：$1";
-mkdir $1
-cd ./$1
+echo "创建目录：$PROJECT";
+mkdir "$PROJECT"
+cd ./$PROJECT
 
-echo "初始化应用：$1";
-go mod init $1
+echo "初始化应用：$PROJECT";
+go mod init $PROJECT
 mkdir -p  cmd config  deployments internal test pkg/inits
 mkdir -p  pkg/controllers/ pkg/repository pkg/helpers pkg/models pkg/routers  pkg/routers/middleware pkg/migrations
 mkdir -p  internal/infra/database internal/infra/logger
 
-echo "获取$1 依赖:";
+echo "获取$PROJECT 依赖:";
 echo "github.com/githubnemo/CompileDaemon:";
 go get github.com/githubnemo/CompileDaemon
 
@@ -61,7 +63,13 @@ go get -u golang.org/x/crypto/bcrypt
 echo "github.com/golang-jwt/jwt/v5:";
 go get -u github.com/golang-jwt/jwt/v5
 
-echo "write  project $1 source code files :";
+echo "github.com/google/uuid:";
+go get -u github.com/google/uuid
+
+echo "github.com/redis/go-redis/v9:";
+go get -u go get github.com/redis/go-redis/v9
+
+echo "write  project $PROJECT source code files :";
 
 echo "write  ./.env source code files :";
 
@@ -69,7 +77,9 @@ cat << EOF > ./internal/infra/database/database.go
 package database
 
 import (
+	_redis "github.com/redis/go-redis/v9"
 	"github.com/spf13/viper"
+	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -94,11 +104,20 @@ func DbConnection(masterDSN, replicaDSN string) error {
 		loglevel = logger.Info
 	}
 
-	db, err = gorm.Open(postgres.Open(masterDSN), &gorm.Config{
-		Logger: logger.Default.LogMode(loglevel),
-	})
+	dbType := viper.GetString("DB_TYPE")
+
+	if dbType == "MYSQL" {
+		db, err = gorm.Open(postgres.Open(masterDSN), &gorm.Config{
+			Logger: logger.Default.LogMode(loglevel),
+		})
+	} else if dbType == "POSTGRESQL" {
+		db, err = gorm.Open(mysql.Open(masterDSN), &gorm.Config{
+			Logger: logger.Default.LogMode(loglevel),
+		})
+	}
+
 	if !debug {
-		db.Use(dbresolver.Register(dbresolver.Config{
+		err = db.Use(dbresolver.Register(dbresolver.Config{
 			Replicas: []gorm.Dialector{
 				postgres.Open(replicaDSN),
 			},
@@ -116,6 +135,38 @@ func DbConnection(masterDSN, replicaDSN string) error {
 // GetDB connection
 func GetDB() *gorm.DB {
 	return DB
+}
+
+// RedisClient ...
+var RedisClient *_redis.Client
+
+// InitRedis ...
+func InitRedis(selectDB ...int) {
+
+	var redisHost = viper.GetString("REDIS_HOST")
+	var redisPassword = viper.GetString("REDIS_PASSWORD")
+
+	RedisClient = _redis.NewClient(&_redis.Options{
+		Addr:     redisHost,
+		Password: redisPassword,
+		DB:       selectDB[0],
+		// DialTimeout:        10 * time.Second,
+		// ReadTimeout:        30 * time.Second,
+		// WriteTimeout:       30 * time.Second,
+		// PoolSize:           10,
+		// PoolTimeout:        30 * time.Second,
+		// IdleTimeout:        500 * time.Millisecond,
+		// IdleCheckFrequency: 500 * time.Millisecond,
+		// TLSConfig: &tls.Config{
+		// 	InsecureSkipVerify: true,
+		// },
+	})
+
+}
+
+// GetRedis ...
+func GetRedis() *_redis.Client {
+	return RedisClient
 }
 
 EOF
@@ -252,7 +303,7 @@ cat << EOF > ./config/config.go
 package config
 
 import (
-	"$1/internal/infra/logger"
+	"$PROJECT/internal/infra/logger"
 	"github.com/spf13/viper"
 )
 
@@ -564,18 +615,23 @@ cat << EOF > ./pkg/controllers/userController.go
  package controllers
 
  import (
- 	"$1/pkg/models"
- 	"$1/pkg/repository"
+ 	"$PROJECT/pkg/models"
+ 	"$PROJECT/pkg/repository"
  	"github.com/gin-gonic/gin"
  	"net/http"
  )
 
- func GetData(ctx *gin.Context) {
+ func UserGetData(ctx *gin.Context) {
  	var user []*models.User
  	repository.Get(&user)
  	ctx.JSON(http.StatusOK, &user)
 
  }
+func UserCreate(ctx *gin.Context) {
+  user := new(models.User)
+  repository.Save(&user)
+  ctx.JSON(http.StatusOK, &user)
+}
 
 EOF
 
@@ -616,6 +672,192 @@ EOF
 
 echo "------ ./pkg/helpers/search.go ------------";
 
+echo "write  ./pkg/helpers/auth.go source code files :";
+
+cat << EOF > ./pkg/helpers/auth.go
+package helpers
+
+import (
+	"context"
+	"fmt"
+	jwt "github.com/golang-jwt/jwt/v5"
+	uuid "github.com/google/uuid"
+	"$PROJECT/internal/infra/database"
+	"net/http"
+	"os"
+	"strconv"
+	"strings"
+	"time"
+)
+
+// TokenDetails ...
+type TokenDetails struct {
+	AccessToken  string
+	RefreshToken string
+	AccessUUID   string
+	RefreshUUID  string
+	AtExpires    int64
+	RtExpires    int64
+}
+
+// AccessDetails ...
+type AccessDetails struct {
+	AccessUUID string
+	UserID     int64
+}
+
+// Token ...
+type Token struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+}
+
+// AuthModel ...
+type AuthModel struct{}
+
+var ctx = context.Background()
+
+// CreateToken ...
+func (m AuthModel) CreateToken(userID int64) (*TokenDetails, error) {
+
+	td := &TokenDetails{}
+	td.AtExpires = time.Now().Add(time.Minute * 15).Unix()
+	td.AccessUUID = uuid.New().String()
+
+	td.RtExpires = time.Now().Add(time.Hour * 24 * 7).Unix()
+	td.RefreshUUID = uuid.New().String()
+
+	var err error
+	//Creating Access Token
+	atClaims := jwt.MapClaims{}
+	atClaims["authorized"] = true
+	atClaims["access_uuid"] = td.AccessUUID
+	atClaims["user_id"] = userID
+	atClaims["exp"] = td.AtExpires
+
+	at := jwt.NewWithClaims(jwt.SigningMethodHS256, atClaims)
+	td.AccessToken, err = at.SignedString([]byte(os.Getenv("ACCESS_SECRET")))
+	if err != nil {
+		return nil, err
+	}
+	//Creating Refresh Token
+	rtClaims := jwt.MapClaims{}
+	rtClaims["refresh_uuid"] = td.RefreshUUID
+	rtClaims["user_id"] = userID
+	rtClaims["exp"] = td.RtExpires
+	rt := jwt.NewWithClaims(jwt.SigningMethodHS256, rtClaims)
+	td.RefreshToken, err = rt.SignedString([]byte(os.Getenv("REFRESH_SECRET")))
+	if err != nil {
+		return nil, err
+	}
+	return td, nil
+}
+
+// CreateAuth ...
+func (m AuthModel) CreateAuth(userid int64, td *TokenDetails) error {
+	at := time.Unix(td.AtExpires, 0) //converting Unix to UTC(to Time object)
+	rt := time.Unix(td.RtExpires, 0)
+	now := time.Now()
+
+	errAccess := database.GetRedis().Set(ctx, td.AccessUUID, strconv.Itoa(int(userid)), at.Sub(now)).Err()
+	if errAccess != nil {
+		return errAccess
+	}
+	errRefresh := database.GetRedis().Set(ctx, td.RefreshUUID, strconv.Itoa(int(userid)), rt.Sub(now)).Err()
+	if errRefresh != nil {
+		return errRefresh
+	}
+	return nil
+}
+
+// ExtractToken ...
+func (m AuthModel) ExtractToken(r *http.Request) string {
+	bearToken := r.Header.Get("Authorization")
+	//normally Authorization the_token_xxx
+	strArr := strings.Split(bearToken, " ")
+	if len(strArr) == 2 {
+		return strArr[1]
+	}
+	return ""
+}
+
+// VerifyToken ...
+func (m AuthModel) VerifyToken(r *http.Request) (*jwt.Token, error) {
+	tokenString := m.ExtractToken(r)
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		//Make sure that the token method conform to "SigningMethodHMAC"
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(os.Getenv("ACCESS_SECRET")), nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return token, nil
+}
+
+// TokenValid ...
+func (m AuthModel) TokenValid(r *http.Request) error {
+	token, err := m.VerifyToken(r)
+	if err != nil {
+		return err
+	}
+	if _, ok := token.Claims.(jwt.Claims); !ok && !token.Valid {
+		return err
+	}
+	return nil
+}
+
+// ExtractTokenMetadata ...
+func (m AuthModel) ExtractTokenMetadata(r *http.Request) (*AccessDetails, error) {
+	token, err := m.VerifyToken(r)
+	if err != nil {
+		return nil, err
+	}
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if ok && token.Valid {
+		accessUUID, ok := claims["access_uuid"].(string)
+		if !ok {
+			return nil, err
+		}
+		userID, err := strconv.ParseInt(fmt.Sprintf("%.f", claims["user_id"]), 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		return &AccessDetails{
+			AccessUUID: accessUUID,
+			UserID:     userID,
+		}, nil
+	}
+	return nil, err
+}
+
+// FetchAuth ...
+func (m AuthModel) FetchAuth(authD *AccessDetails) (int64, error) {
+	userid, err := database.GetRedis().Get(ctx, authD.AccessUUID).Result()
+	if err != nil {
+		return 0, err
+	}
+	userID, _ := strconv.ParseInt(userid, 10, 64)
+	return userID, nil
+}
+
+// DeleteAuth ...
+func (m AuthModel) DeleteAuth(givenUUID string) (int64, error) {
+	deleted, err := database.GetRedis().Del(ctx, givenUUID).Result()
+	if err != nil {
+		return 0, err
+	}
+	return deleted, nil
+}
+
+EOF
+
+echo "------ ./pkg/helpers/search.go ------------";
+
+
+
 echo "write  ./pkg/models/userModel.go source code files :";
 
 cat << EOF > ./pkg/models/userModel.go
@@ -626,12 +868,12 @@ import (
 )
 
 type User struct {
-	Id        int        `json:"id"`
-	name      string     `json:"name" binding:"required"`
-	password  string     `json:"password" binding:"required"`
-	Data      string     `json:"data" binding:"required"`
-	CreatedAt *time.Time `json:"created_at,string,omitempty"`
-	UpdatedAt *time.Time `json:"updated_at_at,string,omitempty"`
+	Id        int        \`json:"id"\`
+	name      string     \`json:"name" binding:"required"\`
+	password  string     \`json:"password" binding:"required"\`
+	Data      string     \`json:"data" binding:"required"\`
+	CreatedAt *time.Time \`json:"created_at,string,omitempty"\`
+	UpdatedAt *time.Time \`json:"updated_at_at,string,omitempty"\`
 }
 
 // TableName is Database TableName of this model
@@ -649,8 +891,8 @@ cat << EOF > ./pkg/repository/sqlRepo.go
 package repository
 
 import (
-	"gin-boilerplate/internal/infra/database"
-	"gin-boilerplate/internal/infra/logger"
+	"$PROJECT/internal/infra/database"
+	"$PROJECT/internal/infra/logger"
 )
 
 func Save(model interface{}) interface{} {
@@ -718,8 +960,8 @@ cat << EOF > ./pkg/routers/router.go
 package routers
 
 import (
-	"$1/internal/infra/logger"
-	"$1/pkg/routers/middleware"
+	"$PROJECT/internal/infra/logger"
+	"$PROJECT/pkg/routers/middleware"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 )
@@ -758,6 +1000,8 @@ cat << EOF > ./pkg/routers/index.go
 package routers
 
 import (
+
+  "$PROJECT/pkg/controllers"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -768,6 +1012,9 @@ func RegisterRoutes(route *gin.Engine) {
 		ctx.JSON(http.StatusNotFound, gin.H{"status": http.StatusNotFound, "message": "Route Not Found"})
 	})
 	route.GET("/health", func(ctx *gin.Context) { ctx.JSON(http.StatusOK, gin.H{"live": "ok"}) })
+ //added new
+  route.GET("/v1/user/", controllers.UserGetData)
+  route.POST("/v1/user/", controllers.UserCreate)
 
 	//Add All route
 	//TestRoutes(route)
@@ -782,11 +1029,11 @@ cat << EOF > ./main.go
  package main
 
  import (
- 	"$1/config"
- 	"$1/internal/infra/database"
- 	"$1/internal/infra/logger"
- 	"$1/pkg/migrations"
- 	"$1/pkg/routers"
+ 	"$PROJECT/config"
+ 	"$PROJECT/internal/infra/database"
+ 	"$PROJECT/internal/infra/logger"
+ 	"$PROJECT/pkg/migrations"
+ 	"$PROJECT/pkg/routers"
  	"github.com/spf13/viper"
  	"time"
  )
@@ -824,8 +1071,8 @@ cat << EOF > ./pkg/migrations/migration.go
 package migrations
 
 import (
-	"$1/internal/infra/database"
-	"$1/pkg/models"
+	"$PROJECT/internal/infra/database"
+	"$PROJECT/pkg/models"
 )
 
 // Migrate Add list of model add for migrations
@@ -841,6 +1088,34 @@ func Migrate() {
 EOF
 
 echo "------ ./pkg/migrations/migration.go ------------";
+
+echo "write cmd/generate-certificate.sh:";
+
+cat << EOF > ./cmd/generate-certificate.sh
+#!/usr/bin/bash
+
+cd .. && mkdir -p cert
+
+cd cert/
+
+ip=$(ifconfig | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p')
+echo $ip
+
+openssl genrsa -out myCA.key 2048
+
+openssl req -x509 -new -key myCA.key -out myCA.cer -days 730 -subj /CN=$ip
+
+openssl genrsa -out mycert1.key 2048
+
+openssl req -new -out mycert1.req -key mycert1.key -subj /CN=$ip
+
+openssl x509 -req -in mycert1.req -out mycert1.cer -CAkey myCA.key -CA myCA.cer -days 365 -CAcreateserial -CAserial serial
+
+cd ../
+
+EOF
+
+echo "-------./cmd/generate-certificate.sh-----------";
 
 echo "write test/test.http:";
 
@@ -1036,4 +1311,4 @@ echo "Run ./cmd/migrations.sh:";
 
 echo "Run CompileDaemon:";
 
-CompileDaemon -command="./$1"
+CompileDaemon -command="./$PROJECT"
