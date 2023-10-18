@@ -2994,9 +2994,35 @@ echo "-------./cmd/generate-certificate.sh-----------";
 echo "write test/test.http:";
 
 cat << EOF > ./test/test.http
+### TEST API 
 
-### TEST REST API
-### CREATE USER
+###  获取 user token
+#GET http://127.0.0.1:6060/v1/user/login?email=dav@ml.com&password=12345
+POST http://localhost:6060/v1/user/login
+Accept: application/json
+
+{
+    "email":"dav@ml.com",
+    "password": "12345"
+}
+
+> {%
+
+    client.log(JSON.stringify(response.body));
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+    client.test("Response content-type is json", function () {
+        var type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+    });
+    client.test("Request code success", function () {
+        client.global.set("token", response.body.token.access_token);
+    });
+
+%}
+
+### 创建用户
 POST http://localhost:6060/v1/user/
 Accept: application/json
 
@@ -3004,37 +3030,91 @@ Accept: application/json
     "email":"dav@ml.com",
     "password": "12345"
 }
-### GET ALL USER
-GET http://localhost:6060/v1/user/
-Accept: application/json
 
-### GET ALL POST
+
+### 获取 post 列表
 GET http://localhost:6060/v1/post/
 Accept: application/json
+Authorization: Bearer {{token}}
 
-### USER REGISTER
+### 获取用户列表
+GET http://localhost:6060/v1/user/
+Accept: application/json
+Authorization: Bearer {{token}}
+
+###
+GET http://localhost:6060/v1/user/
+Accept: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3NfdXVpZCI6IjdkOGZjNDYxLTdkMzgtNGVmOS1hNTM4LWZiZDU4ODBjOTRhNyIsImF1dGhvcml6ZWQiOnRydWUsImV4cCI6MTY5Njg0MzExMCwidXNlcl9pZCI6IjUzOTExYTlhLTBkMTctNDc1My04YmZmLTVhYTE4YjU5NDllZiJ9.Uq2Mbaj9XcqElT45ZQHrauXAs9RUYlF0IRMSQA7G9TU
+
+###
+GET http://localhost:6060/v1/user/00a10add-162d-4e63-97b2-c1b7525471b4
+Accept: application/json
+
+###
+###
+PATCH http://localhost:6060/v1/user/00a10add-162d-4e63-97b2-c1b7525471b4
+Accept: application/json
+
+{
+    "email":"dav@ml.com",
+    "password": "12345"
+}
+
+###
+DELETE http://localhost:6060/v1/user/00a10add-162d-4e63-97b2-c1b7525471b4
+Accept: application/json
+
+
+### post-getall
+GET http://localhost:6060/v1/post/
+Accept: application/json
+Authorization: Bearer {{token}}
+
+
+### post-getall
+GET http://localhost:6060/v1/post/
+Accept: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3NfdXVpZCI6Ijc5MGI4OWU5LWM5MjUtNDgwYi05Y2RiLTJmMWVjMWZmNWM5ZCIsImF1dGhvcml6ZWQiOnRydWUsImV4cCI6MTY5NzU5ODE2OCwidXNlcl9pZCI6IjUzOTExYTlhLTBkMTctNDc1My04YmZmLTVhYTE4YjU5NDllZiJ9.JoeYlENhAxokb4zsZzTIDXnsyby8EWs_0glJ9EvAvp8
+
+### index
+GET http://localhost:6060/
+Accept: application/json
+
+### user-register
 POST http://localhost:6060/v1/user/register
 Accept: application/json
 
 {
-    "name":"adea@ml.com",
-    "email":"adea@ml.com",
+    "name":"dav@ml.com",
+    "email":"dav@ml.com",
     "password": "12345"
 }
 
 
-###
+### user-login
 POST http://localhost:6060/v1/user/login
 Accept: application/json
 
 {
-    "email":"adea@ml.com",
+    "email":"dav@ml.com",
     "password": "12345"
 }
+
+> {%
+    // TODO: migrate to HTTP Client Response handler API
+    // pm.test("Status code is 200", function () {
+    //     pm.response.to.have.status(200);
+    //
+    //     var jsonData = JSON.parse(responseBody);
+    //     pm.globals.set("token", jsonData.token.access_token);
+    //     pm.globals.set("refresh_token", jsonData.token.refresh_token);
+    //
+    // });
+%}
 ###
 GET http://localhost:6060/auth
 Accept: application/json
-
 
 EOF
 
