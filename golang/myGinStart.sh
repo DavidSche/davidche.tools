@@ -2,7 +2,9 @@
 # author:David
 # url:davidsche.github.io
 #ps aux |grep  wvp
-
+# https://github.com/akmamun/gin-boilerplate#lets-build-an-api
+#  systemctl list-units --type=service --state=run
+#
   PROJECT=$1
 
 echo "设置 Aliyun 代理";
@@ -83,213 +85,18 @@ go get -u github.com/swaggo/swag
 
 echo "---  BEGIN WRITE  PROJECT $PROJECT SOURCE CODE FILES :";
 
-echo "--- WRITE  ./internal/infra/database/database.go SOURCE CODE FILE :";
-
-cat << EOF > ./internal/infra/database/database.go
-package database
-
-import (
-	_redis "github.com/redis/go-redis/v9"
-	"github.com/spf13/viper"
-	"gorm.io/driver/mysql"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
-	"gorm.io/plugin/dbresolver"
-	"log"
-)
-
-var (
-	DB  *gorm.DB
-	err error
-)
-
-// DbConnection create database connection
-func DbConnection(masterDSN, replicaDSN string) error {
-	var db = DB
-
-	logMode := viper.GetBool("DB_LOG_MODE")
-	debug := viper.GetBool("DEBUG")
-
-	loglevel := logger.Silent
-	if logMode {
-		loglevel = logger.Info
-	}
-
-	dbType := viper.GetString("DB_TYPE")
-
-	var replicaDb gorm.Dialector
-
-	if dbType == "MYSQL" {
-		db, err = gorm.Open(mysql.Open(masterDSN), &gorm.Config{
-			Logger: logger.Default.LogMode(loglevel),
-		})
-		replicaDb = mysql.Open(replicaDSN)
-	} else if dbType == "POSTGRESQL" {
-		db, err = gorm.Open(postgres.Open(masterDSN), &gorm.Config{
-			Logger: logger.Default.LogMode(loglevel),
-		})
-		replicaDb = postgres.Open(replicaDSN)
-	}
-
-	if !debug {
-		err = db.Use(dbresolver.Register(dbresolver.Config{
-			Replicas: []gorm.Dialector{
-				replicaDb,
-			},
-			Policy: dbresolver.RandomPolicy{},
-		}))
-	}
-	if err != nil {
-		log.Fatalf("Db connection error")
-		return err
-	}
-	DB = db
-	return nil
-}
-
-// GetDB connection
-func GetDB() *gorm.DB {
-	return DB
-}
-
-var RedisClient *_redis.Client
-
-// InitRedis ...
-func InitRedis(selectDB ...int) {
-
-	var redisHost = viper.GetString("REDIS_HOST")
-	var redisPassword = viper.GetString("REDIS_PASSWORD")
-	var redisDb = viper.GetInt("REDIS_DB")
-
-	RedisClient = _redis.NewClient(&_redis.Options{
-		Addr:     redisHost,
-		Password: redisPassword,
-		DB:       selectDB[redisDb],
-		// DialTimeout:        10 * time.Second,
-		// ReadTimeout:        30 * time.Second,
-		// WriteTimeout:       30 * time.Second,
-		// PoolSize:           10,
-		// PoolTimeout:        30 * time.Second,
-		// IdleTimeout:        500 * time.Millisecond,
-		// IdleCheckFrequency: 500 * time.Millisecond,
-		// TLSConfig: &tls.Config{
-		// 	InsecureSkipVerify: true,
-		// },
-	})
-
-}
-
-// GetRedis ...
-func GetRedis() *_redis.Client {
-	return RedisClient
-}
-
-EOF
-
-echo "------ ./internal/infra/database/database.go ------------";
-
-echo "WRITE  ./internal/infra/logger SOURCE CODE FILE :";
-
-cat << EOF > ./internal/infra/logger/logger.go
-package logger
-
-import (
-	"bytes"
-	"github.com/sirupsen/logrus"
-	"strings"
-	"time"
-)
-
-var logger = logrus.New()
-
-func init() {
-	logger.Level = logrus.InfoLevel
-	logger.Formatter = &formatter{}
-
-	logger.SetReportCaller(true)
-}
-
-func SetLogLevel(level logrus.Level) {
-	logger.Level = level
-}
-
-type Fields logrus.Fields
-
-// Debugf logs a message at level Debug on the standard logger.
-func Debugf(format string, args ...interface{}) {
-	if logger.Level >= logrus.DebugLevel {
-		entry := logger.WithFields(logrus.Fields{})
-		entry.Debugf(format, args...)
-	}
-}
-
-// Infof logs a message at level Info on the standard logger.
-func Infof(format string, args ...interface{}) {
-	if logger.Level >= logrus.InfoLevel {
-		entry := logger.WithFields(logrus.Fields{})
-		entry.Infof(format, args...)
-	}
-}
-
-// Warnf logs a message at level Warn on the standard logger.
-func Warnf(format string, args ...interface{}) {
-	if logger.Level >= logrus.WarnLevel {
-		entry := logger.WithFields(logrus.Fields{})
-		entry.Warnf(format, args...)
-	}
-}
-
-// Errorf logs a message at level Error on the standard logger.
-func Errorf(format string, args ...interface{}) {
-	if logger.Level >= logrus.ErrorLevel {
-		entry := logger.WithFields(logrus.Fields{})
-		entry.Errorf(format, args...)
-	}
-}
-
-// Fatalf logs a message at level Fatal on the standard logger.
-func Fatalf(format string, args ...interface{}) {
-	if logger.Level >= logrus.FatalLevel {
-		entry := logger.WithFields(logrus.Fields{})
-		entry.Fatalf(format, args...)
-	}
-}
-
-// Formatter implements logrus.Formatter interface.
-type formatter struct {
-	prefix string
-}
-
-// Format building log message.
-func (f *formatter) Format(entry *logrus.Entry) ([]byte, error) {
-	var sb bytes.Buffer
-
-	sb.WriteString(strings.ToUpper(entry.Level.String()))
-	sb.WriteString(" ")
-	sb.WriteString(entry.Time.Format(time.RFC3339))
-	sb.WriteString(" ")
-	sb.WriteString(f.prefix)
-	sb.WriteString(entry.Message)
-
-	return sb.Bytes(), nil
-}
-
-EOF
-
-echo "------ ./internal/infra/logger/logger.go ------------";
-
 echo "WRITE  ./.env  FILE :";
 
 cat << EOF > ./.env
-
 # Server Config
 
 SECRET=h9wt*pasj6796j##w(w8=xaje8tpi6h*r&hzgrz065u&ed+k2)
-DEBUG=False
+#DEBUG=False
+DEBUG=True
 ALLOWED_HOSTS=0.0.0.0
 SERVER_HOST=0.0.0.0
 SERVER_PORT=6060
+SERVER_SSL=FALSE
 
 #gorm:gorm@tcp(localhost:9910)/gorm?charset=utf8&parseTime=True&loc=Local
 # Database Config  parseTime=True&loc=Local
@@ -300,7 +107,7 @@ MASTER_DB_PASSWORD=rootroot
 MASTER_DB_HOST=192.168.108.180
 MASTER_DB_PORT=3306
 MASTER_DB_LOG_MODE=True
-MASTER_DB_PARAM=charset=utf8&parseTime=True&loc=Local
+MASTER_DB_PARAM=charset=utf8mb4&parseTime=True&loc=Local
 MASTER_SSL_MODE=disable
 
 REPLICA_DB_NAME=mydemo
@@ -315,7 +122,7 @@ ACCESS_SECRET="ashasdjhjhjadhasdaa123"
 REFERSH_SECRET="hjsajdhkjhf41jhagggdga"
 
 REDIS_SECRET="hjfhjhasdfkyuy2"
-REDIS_HOST=127.0.0.1:6379
+REDIS_HOST=192.168.108.180:6379
 REDIS_PASSWORD=
 
 EOF
@@ -477,6 +284,7 @@ cat << EOF > ./internal/infra/database/database.go
 package database
 
 import (
+	"context"
 	_redis "github.com/redis/go-redis/v9"
 	"github.com/spf13/viper"
 	"gorm.io/driver/mysql"
@@ -485,6 +293,7 @@ import (
 	"gorm.io/gorm/logger"
 	"gorm.io/plugin/dbresolver"
 	"log"
+	"time"
 )
 
 var (
@@ -571,6 +380,13 @@ func InitRedis(selectDB ...int) {
 // GetRedis ...
 func GetRedis() *_redis.Client {
 	return RedisClient
+}
+
+// set data to Redisdb
+func RedisSet(key string, value interface{}, expiration time.Duration) (err error) {
+	var ctx = context.Background()
+
+	return RedisClient.Set(ctx, key, value, expiration).Err()
 }
 
 EOF
@@ -1541,7 +1357,6 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	jwt "github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
 	"$PROJECT/pkg/forms"
 	"$PROJECT/pkg/models"
 	"net/http"
@@ -1611,11 +1426,11 @@ func (ctl AuthController) Refresh(c *gin.Context) {
 			return
 		}
 		//userID, err := strconv.ParseInt(fmt.Sprintf("%.f", claims["user_id"]), 10, 64)
-		userID, err := uuid.Parse(fmt.Sprintf("%.f", claims["user_id"]))
-		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid authorization, please login again"})
-			return
-		}
+		userID := fmt.Sprintf("%.f", claims["user_id"])
+		//if err != nil {
+		//	c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid authorization, please login again"})
+		//	return
+		//}
 		//Delete the previous Refresh Token
 		deleted, delErr := authModel.DeleteAuth(refreshUUID)
 		if delErr != nil || deleted == 0 { //if any goes wrong
@@ -1655,8 +1470,12 @@ cat << EOF > ./pkg/controllers/userController.go
 package controllers
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"math"
+	"$PROJECT/pkg/common"
+	"$PROJECT/pkg/common/crud"
 	"$PROJECT/pkg/forms"
 	"$PROJECT/pkg/models"
 	"$PROJECT/pkg/repository"
@@ -1680,7 +1499,7 @@ func (ctrl UserController) UserCreate(c *gin.Context) {
 	}
 
 	user := new(models.User)
-	user.ID = uuid.New()
+	user.ID = uuid.New().String()
 	user.Password = loginForm.Password
 	user.Email = loginForm.Email
 	user.Name = loginForm.Email
@@ -1698,9 +1517,9 @@ type UserController struct {
 var userForm = new(forms.UserForm)
 
 // getUserID ...
-func (ctrl UserController) getUserID(c *gin.Context) (userID int64) {
+func (ctrl UserController) getUserID(c *gin.Context) (userID uuid.UUID) {
 	//MustGet returns the value for the given key if it exists, otherwise it panics.
-	return c.MustGet("userID").(int64)
+	return c.MustGet("userID").(uuid.UUID)
 }
 
 // Login ...
@@ -1765,6 +1584,142 @@ func NewUserController(service *service.UserService) *UserController {
 	}
 }
 
+// @Success  200  {array}  model
+// @Tags     posts
+// @param    s       query  string    false  "{”: [ {'title': { ”:'cul' } } ]}"
+// @param    fields  query  string    false  "fields to select eg: name,age"
+// @param    page    query  int       false  "page of pagination"
+// @param    limit   query  int       false  "limit of pagination"
+// @param    join    query  string    false  "join relations eg: category, parent"
+// @param    filter  query  []string  false  "filters eg: name||||ad price||||200"
+// @param    sort    query  []string  false  "filters eg: created_at,desc title,asc"
+// @Router   /posts [get]
+func (c *UserController) FindAllUser(ctx *gin.Context) {
+	var api crud.GetAllRequest
+	if api.Limit == 0 {
+		api.Limit = 20
+	}
+	if err := ctx.ShouldBindQuery(&api); err != nil {
+		ctx.JSON(400, gin.H{"message": err.Error()})
+		return
+	}
+
+	var result []repository.UserModel
+	var totalRows int64
+	err := c.service.Find(api, &result, &totalRows)
+	if err != nil {
+		ctx.JSON(400, gin.H{"message": err.Error()})
+		return
+	}
+
+	var data interface{}
+	if api.Page > 0 {
+		data = map[string]interface{}{
+			"data":       result,
+			"total":      totalRows,
+			"totalPages": int(math.Ceil(float64(totalRows) / float64(api.Limit))),
+		}
+	} else {
+		data = result
+	}
+	ctx.JSON(200, data)
+}
+
+// @Success  200  {object}  model
+// @Tags     posts
+// @param    id    path  string  true  "uuid of item"
+// @Router   /posts/{id} [get]
+func (c *UserController) FindOneUser(ctx *gin.Context) {
+	var api crud.GetAllRequest
+	var item common.ById
+	if err := ctx.ShouldBindQuery(&api); err != nil {
+		ctx.JSON(400, gin.H{"message": err.Error()})
+		return
+	}
+	if err := ctx.ShouldBindUri(&item); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
+	}
+
+	api.Filter = append(api.Filter, fmt.Sprintf("id||eq||%s", item.ID))
+
+	var result repository.UserModel
+
+	err := c.service.FindOne(api, &result)
+	if err != nil {
+		ctx.JSON(400, gin.H{"message": err.Error()})
+		return
+	}
+	ctx.JSON(200, result)
+}
+
+// @Success  201  {object}  model
+// @Tags     posts
+// @param    {object}  body  model  true  "item to create"
+// @Router   /posts [post]
+func (c *UserController) CreateUser(ctx *gin.Context) {
+	var item repository.UserModel
+	if err := ctx.ShouldBind(&item); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
+	}
+	item.ID = uuid.New().String()
+	err := c.service.Create(&item)
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"message": err.Error()})
+		return
+	}
+	ctx.JSON(http.StatusCreated, gin.H{"data": item})
+}
+
+// @Success  200  {string}  string  "ok"
+// @Tags     posts
+// @param    id  path  string  true  "uuid of item"
+// @Router   /posts/{id} [delete]
+func (c *UserController) DeleteUser(ctx *gin.Context) {
+	var item common.ById
+	if err := ctx.ShouldBindUri(&item); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
+	}
+
+	err := c.service.Delete(&repository.UserModel{ID: item.ID})
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"message": err.Error()})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{"message": "deleted"})
+}
+
+// @Success  200  {string}  string  "ok"
+// @Tags     posts
+// @param    id  path  string  true  "uuid of item"
+// @param    item  body  model   true  "update body"
+// @Router   /posts/{id} [put]
+func (c *UserController) UpdateUser(ctx *gin.Context) {
+	var item repository.UserModel
+	var byId common.ById
+	if err := ctx.ShouldBind(&item); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
+	}
+	if err := ctx.ShouldBindUri(&byId); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
+	}
+
+	if err := ctx.ShouldBindUri(&byId); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
+	}
+	err := c.service.Update(&repository.UserModel{ID: byId.ID}, &item)
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"message": err.Error()})
+		return
+	}
+	ctx.JSON(http.StatusOK, item)
+}
+
 EOF
 
 echo "------ ./pkg/controllers/userController.go ------------";
@@ -1777,10 +1732,10 @@ package controllers
 import (
 	"fmt"
 	"math"
+	"$PROJECT/pkg/common"
 	"$PROJECT/pkg/common/crud"
 	"$PROJECT/pkg/repository"
 	"$PROJECT/pkg/service"
-	"$PROJECT/pkg/common"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -1793,12 +1748,12 @@ type PostController struct {
 
 // @Success  200  {array}  model
 // @Tags     posts
-// @param    s       query  string    false  "{'\$and': [ {'title': { '\$cont':'cul' } } ]}"
+// @param    s       query  string    false  "{”: [ {'title': { ”:'cul' } } ]}"
 // @param    fields  query  string    false  "fields to select eg: name,age"
 // @param    page    query  int       false  "page of pagination"
 // @param    limit   query  int       false  "limit of pagination"
 // @param    join    query  string    false  "join relations eg: category, parent"
-// @param    filter  query  []string  false  "filters eg: name||\$eq||ad price||\$gte||200"
+// @param    filter  query  []string  false  "filters eg: name||||ad price||||200"
 // @param    sort    query  []string  false  "filters eg: created_at,desc title,asc"
 // @Router   /posts [get]
 func (c *PostController) FindAll(ctx *gin.Context) {
@@ -1871,7 +1826,7 @@ func (c *PostController) Create(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
-	item.ID = uuid.New()
+	item.ID = uuid.New().String()
 	err := c.service.Create(&item)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{"message": err.Error()})
@@ -1891,13 +1846,13 @@ func (c *PostController) Delete(ctx *gin.Context) {
 		return
 	}
 
-	id, err := uuid.ParseBytes([]byte(item.ID))
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
-		return
-	}
+	//id, err := uuid.ParseBytes([]byte(item.ID))
+	//if err != nil {
+	//	ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+	//	return
+	//}
 
-	err = c.service.Delete(&repository.PostMo{ID: id})
+	err := c.service.Delete(&repository.PostMo{ID: item.ID})
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{"message": err.Error()})
 		return
@@ -1921,16 +1876,16 @@ func (c *PostController) Update(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
-	id, err := uuid.Parse(byId.ID)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
-		return
-	}
+	//id, err := uuid.Parse(byId.ID)
+	//if err != nil {
+	//	ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+	//	return
+	//}
 	if err := ctx.ShouldBindUri(&byId); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
-	err = c.service.Update(&repository.PostMo{ID: id}, &item)
+	err := c.service.Update(&repository.PostMo{ID: byId.ID}, &item)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{"message": err.Error()})
 		return
@@ -1985,19 +1940,28 @@ echo "------ ./pkg/helpers/search.go ------------";
 echo "WRITE  ./pkg/helpers/auth.go SOURCE CODE FILE :";
 
 cat << EOF > ./pkg/helpers/auth.go
-package helpers
+
+EOF
+
+echo "------ ./pkg/helpers/auth.go ------------";
+
+echo "WRITE  ./pkg/models/authModel.go SOURCE CODE FILE:";
+
+cat << EOF > ./pkg/models/authModel.go
+package models
 
 import (
 	"context"
 	"fmt"
-	jwt "github.com/golang-jwt/jwt/v5"
-	uuid "github.com/google/uuid"
 	"$PROJECT/internal/infra/database"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	jwt "github.com/golang-jwt/jwt/v5"
+	uuid "github.com/google/uuid"
 )
 
 // TokenDetails ...
@@ -2013,7 +1977,7 @@ type TokenDetails struct {
 // AccessDetails ...
 type AccessDetails struct {
 	AccessUUID string
-	UserID     int64
+	UserID     string
 }
 
 // Token ...
@@ -2028,7 +1992,7 @@ type AuthModel struct{}
 var ctx = context.Background()
 
 // CreateToken ...
-func (m AuthModel) CreateToken(userID int64) (*TokenDetails, error) {
+func (m AuthModel) CreateToken(userID string) (*TokenDetails, error) {
 
 	td := &TokenDetails{}
 	td.AtExpires = time.Now().Add(time.Minute * 15).Unix()
@@ -2064,16 +2028,18 @@ func (m AuthModel) CreateToken(userID int64) (*TokenDetails, error) {
 }
 
 // CreateAuth ...
-func (m AuthModel) CreateAuth(userid int64, td *TokenDetails) error {
+func (m AuthModel) CreateAuth(userid string, td *TokenDetails) error {
 	at := time.Unix(td.AtExpires, 0) //converting Unix to UTC(to Time object)
 	rt := time.Unix(td.RtExpires, 0)
 	now := time.Now()
 
-	errAccess := database.GetRedis().Set(ctx, td.AccessUUID, strconv.Itoa(int(userid)), at.Sub(now)).Err()
+	//errAccess := db.GetRedis().Set(td.AccessUUID, strconv.Itoa(int(userid)), at.Sub(now)).Err()
+	errAccess := database.RedisSet(td.AccessUUID, userid, at.Sub(now))
 	if errAccess != nil {
 		return errAccess
 	}
-	errRefresh := database.GetRedis().Set(ctx, td.RefreshUUID, strconv.Itoa(int(userid)), rt.Sub(now)).Err()
+	//errRefresh := db.GetRedis().Set(td.RefreshUUID, strconv.Itoa(int(userid)), rt.Sub(now)).Err()
+	errRefresh := database.RedisSet(td.RefreshUUID, userid, rt.Sub(now))
 	if errRefresh != nil {
 		return errRefresh
 	}
@@ -2131,10 +2097,11 @@ func (m AuthModel) ExtractTokenMetadata(r *http.Request) (*AccessDetails, error)
 		if !ok {
 			return nil, err
 		}
-		userID, err := strconv.ParseInt(fmt.Sprintf("%.f", claims["user_id"]), 10, 64)
-		if err != nil {
-			return nil, err
-		}
+		userID := claims["user_id"].(string)
+		//userID, err := strconv.ParseInt(fmt.Sprintf("%.f", claims["user_id"]), 10, 64)
+		//if err != nil {
+		//	return nil, err
+		//}
 		return &AccessDetails{
 			AccessUUID: accessUUID,
 			UserID:     userID,
@@ -2145,6 +2112,7 @@ func (m AuthModel) ExtractTokenMetadata(r *http.Request) (*AccessDetails, error)
 
 // FetchAuth ...
 func (m AuthModel) FetchAuth(authD *AccessDetails) (int64, error) {
+	//userid, err := db.GetRedis().Get(authD.AccessUUID).Result()
 	userid, err := database.GetRedis().Get(ctx, authD.AccessUUID).Result()
 	if err != nil {
 		return 0, err
@@ -2155,199 +2123,13 @@ func (m AuthModel) FetchAuth(authD *AccessDetails) (int64, error) {
 
 // DeleteAuth ...
 func (m AuthModel) DeleteAuth(givenUUID string) (int64, error) {
+	//deleted, err := db.GetRedis().Del(givenUUID).Result()
 	deleted, err := database.GetRedis().Del(ctx, givenUUID).Result()
 	if err != nil {
 		return 0, err
 	}
 	return deleted, nil
 }
-
-EOF
-
-echo "------ ./pkg/helpers/auth.go ------------";
-
-echo "WRITE  ./pkg/models/authModel.go SOURCE CODE FILE:";
-
-cat << EOF > ./pkg/models/authModel.go
-package models
-
-import (
-	"context"
-	"fmt"
-	jwt "github.com/golang-jwt/jwt/v5"
-	uuid "github.com/google/uuid"
-	"github.com/spf13/viper"
-	"$PROJECT/internal/infra/database"
-	"net/http"
-	"strconv"
-	"strings"
-	"time"
-)
-
-// TokenDetails ...
-type TokenDetails struct {
-	AccessToken  string
-	RefreshToken string
-	AccessUUID   string
-	RefreshUUID  string
-	AtExpires    int64
-	RtExpires    int64
-}
-
-// AccessDetails ...
-type AccessDetails struct {
-	AccessUUID string
-	UserID     int64
-}
-
-// Token ...
-type Token struct {
-	AccessToken  string \`json:"access_token"\`
-	RefreshToken string \`json:"refresh_token"\`
-}
-
-// AuthModel ...
-type AuthModel struct{}
-
-var ctx = context.Background()
-
-// CreateToken ...
-func (m AuthModel) CreateToken(userID uuid.UUID) (*TokenDetails, error) {
-
-	td := &TokenDetails{}
-	td.AtExpires = time.Now().Add(time.Minute * 15).Unix()
-	td.AccessUUID = uuid.New().String()
-
-	td.RtExpires = time.Now().Add(time.Hour * 24 * 7).Unix()
-	td.RefreshUUID = uuid.New().String()
-
-	var err error
-	//Creating Access Token
-	atClaims := jwt.MapClaims{}
-	atClaims["authorized"] = true
-	atClaims["access_uuid"] = td.AccessUUID
-	atClaims["user_id"] = userID
-	atClaims["exp"] = td.AtExpires
-
-	at := jwt.NewWithClaims(jwt.SigningMethodHS256, atClaims)
-	td.AccessToken, err = at.SignedString([]byte(viper.GetString("ACCESS_SECRET")))
-	if err != nil {
-		return nil, err
-	}
-	//Creating Refresh Token
-	rtClaims := jwt.MapClaims{}
-	rtClaims["refresh_uuid"] = td.RefreshUUID
-	rtClaims["user_id"] = userID
-	rtClaims["exp"] = td.RtExpires
-	rt := jwt.NewWithClaims(jwt.SigningMethodHS256, rtClaims)
-	td.RefreshToken, err = rt.SignedString([]byte(viper.GetString("REFRESH_SECRET")))
-	if err != nil {
-		return nil, err
-	}
-	return td, nil
-}
-
-// CreateAuth ...
-func (m AuthModel) CreateAuth(userid uuid.UUID, td *TokenDetails) error {
-	at := time.Unix(td.AtExpires, 0) //converting Unix to UTC(to Time object)
-	rt := time.Unix(td.RtExpires, 0)
-	now := time.Now()
-
-	errAccess := database.GetRedis().Set(ctx, td.AccessUUID, userid, at.Sub(now)).Err()
-	if errAccess != nil {
-		return errAccess
-	}
-	errRefresh := database.GetRedis().Set(ctx, td.RefreshUUID, userid, rt.Sub(now)).Err()
-	if errRefresh != nil {
-		return errRefresh
-	}
-	return nil
-}
-
-// ExtractToken ...
-func (m AuthModel) ExtractToken(r *http.Request) string {
-	bearToken := r.Header.Get("Authorization")
-	//normally Authorization the_token_xxx
-	strArr := strings.Split(bearToken, " ")
-	if len(strArr) == 2 {
-		return strArr[1]
-	}
-	return ""
-}
-
-// VerifyToken ...
-func (m AuthModel) VerifyToken(r *http.Request) (*jwt.Token, error) {
-	tokenString := m.ExtractToken(r)
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		//Make sure that the token method conform to "SigningMethodHMAC"
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
-		return []byte(viper.GetString("ACCESS_SECRET")), nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	return token, nil
-}
-
-// TokenValid ...
-func (m AuthModel) TokenValid(r *http.Request) error {
-	token, err := m.VerifyToken(r)
-	if err != nil {
-		return err
-	}
-	if _, ok := token.Claims.(jwt.Claims); !ok && !token.Valid {
-		return err
-	}
-	return nil
-}
-
-// ExtractTokenMetadata ...
-func (m AuthModel) ExtractTokenMetadata(r *http.Request) (*AccessDetails, error) {
-	token, err := m.VerifyToken(r)
-	if err != nil {
-		return nil, err
-	}
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if ok && token.Valid {
-		accessUUID, ok := claims["access_uuid"].(string)
-		if !ok {
-			return nil, err
-		}
-		userID, err := strconv.ParseInt(fmt.Sprintf("%.f", claims["user_id"]), 10, 64)
-		if err != nil {
-			return nil, err
-		}
-		return &AccessDetails{
-			AccessUUID: accessUUID,
-			UserID:     userID,
-		}, nil
-	}
-	return nil, err
-}
-
-// FetchAuth ...
-func (m AuthModel) FetchAuth(authD *AccessDetails) (uuid.UUID, error) {
-	userid, err := database.GetRedis().Get(ctx, authD.AccessUUID).Result()
-	if err != nil {
-		return uuid.UUID{}, err
-	}
-	//userID, _ := strconv.ParseInt(userid, 10, 64)
-	userID, _ := uuid.Parse(userid)
-	return userID, nil
-}
-
-// DeleteAuth ...
-func (m AuthModel) DeleteAuth(givenUUID string) (int64, error) {
-	deleted, err := database.GetRedis().Del(ctx, givenUUID).Result()
-	if err != nil {
-		return 0, err
-	}
-	return deleted, nil
-}
-
-
 
 EOF
 
@@ -2360,12 +2142,11 @@ cat << EOF > ./pkg/models/userModel.go
 package models
 
 import (
-	"github.com/google/uuid"
 	"time"
 )
 
 type User struct {
-	ID        uuid.UUID  \`json:"id,omitempty" gorm:"type:char(128);primaryKey"\`
+	ID        string  \`json:"id,omitempty" gorm:"type:char(128);primaryKey"\`
 	Name      string     \`json:"name" binding:"required"\`
 	Password  string     \`json:"password" binding:"required"\`
 	Email     string     \`json:"email" binding:"required"\`
@@ -2389,7 +2170,6 @@ cat << EOF > ./pkg/models/postModel.go
 package models
 
 import (
-	"github.com/google/uuid"
 	"time"
 )
 
@@ -2398,10 +2178,10 @@ type Post struct {
 	//CategoryID uint64 \`gorm:"primaryKey;autoIncrement:false"\`
 	//aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee
 	//gorm.Model
-	ID          uuid.UUID \`json:"id,omitempty" gorm:"type:char(128);primaryKey"\`
+	ID          string    \`json:"id,omitempty" gorm:"type:VARCHAR(128);primaryKey"\`
 	Title       string    \`json:"title,omitempty"\`
 	Description string    \`json:"description,omitempty"\`
-	CategoryID  uuid.UUID \`json:"category_id,omitempty" gorm:"type:char(128)"\`
+	CategoryID  string    \`json:"category_id,omitempty" gorm:"type:VARCHAR(128)"\`
 	Category    *Category \`json:"category,omitempty"\`
 	Price       uint32    \`json:"price,omitempty"\`
 	UpdatedAt   time.Time \`json:"updated_at,omitempty"\`
@@ -2411,9 +2191,9 @@ type Post struct {
 type Category struct {
 	//ID        uuid.UUID \`json:"id,omitempty" gorm:"type:uuid; default:uuid_generate_v4()"\`
 	//gorm.Model
-	ID    uuid.UUID \`json:"id,omitempty" gorm:"type:char(128);primaryKey"\`
-	Name  string    \`json:"name,omitempty"\`
-	Posts *[]Post   \`json:"posts,omitempty"\`
+	ID        string    \`json:"id,omitempty" gorm:"type:VARCHAR(128);primaryKey"\`
+	Name      string    \`json:"name,omitempty"\`
+	Posts     *[]Post   \`json:"posts,omitempty"\`
 	UpdatedAt time.Time \`json:"updated_at,omitempty"\`
 	CreatedAt time.Time \`json:"created_at,omitempty"\`
 }
@@ -2431,18 +2211,18 @@ import (
 	"$PROJECT/pkg/models"
 )
 
-type UserMo = models.User
+type UserModel = models.User
 
 type UserRepository struct {
-	crud.Repository[UserMo]
+	crud.Repository[UserModel]
 	user interface{}
 }
 
 func InitUserRepository() *UserRepository {
 	return &UserRepository{
-		Repository: crud.Repository[UserMo]{
+		Repository: crud.Repository[UserModel]{
 			DB:    database.DB,
-			Model: UserMo{},
+			Model: UserModel{},
 		},
 	}
 }
@@ -2461,6 +2241,7 @@ import (
 	"$PROJECT/pkg/models"
 )
 
+
 type PostMo = models.Post
 
 type PostRepository struct {
@@ -2476,6 +2257,7 @@ func InitPostRepository() *PostRepository {
 		},
 	}
 }
+
 EOF
 echo "-------END ./pkg/repository/postRepository.go -----------";
 
@@ -2555,8 +2337,10 @@ package service
 
 import (
 	"errors"
+	"fmt"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
-	"$PROJECT/internal/infra/database"
+	"$PROJECT/internal/infra/logger"
 	"$PROJECT/pkg/common/crud"
 	"$PROJECT/pkg/forms"
 	"$PROJECT/pkg/models"
@@ -2564,13 +2348,13 @@ import (
 )
 
 type UserService struct {
-	crud.Service[rep.UserMo]
+	crud.Service[rep.UserModel]
 	repo *rep.UserRepository
 }
 
 func NewUserService(repository *rep.UserRepository) *UserService {
 	return &UserService{
-		Service: *crud.NewService[rep.UserMo](repository),
+		Service: *crud.NewService[rep.UserModel](repository),
 		repo:    repository,
 	}
 }
@@ -2578,7 +2362,7 @@ func NewUserService(repository *rep.UserRepository) *UserService {
 func InitUserService() *UserService {
 	return &UserService{
 		repo:    rep.InitUserRepository(),
-		Service: *crud.NewService[rep.UserMo](rep.InitUserRepository()),
+		Service: *crud.NewService[rep.UserModel](rep.InitUserRepository()),
 	}
 }
 
@@ -2587,17 +2371,18 @@ type UserModel struct{}
 
 var authModel = new(models.AuthModel)
 
-func (s UserService) Login(form forms.LoginForm) (user models.User, token models.Token, err error) {
+func (s UserService) Login(form forms.LoginForm) (user rep.UserModel, token models.Token, err error) {
 
-	//err = db.GetDB().SelectOne(&user, "SELECT id, email, password, name, updated_at, created_at FROM public.user WHERE email=LOWER($1) LIMIT 1", form.Email)
 	// Get first matched record
-	result := database.DB.Find(&user)
-	//result = database.DB.Where("email = ?", form.Email)
+	var api crud.GetAllRequest
+	var userModel rep.UserModel
+	api.Filter = append(api.Filter, fmt.Sprintf("email||eq||%s", form.Email))
+	err = s.FindOne(api, &userModel)
 
 	if err != nil {
-		return user, token, result.Error
+		return user, token, err
 	}
-
+	user = userModel
 	//Compare the password form and database if match
 	bytePassword := []byte(form.Password)
 	byteHashedPassword := []byte(user.Password)
@@ -2627,13 +2412,15 @@ func (s UserService) Login(form forms.LoginForm) (user models.User, token models
 func (s UserService) Register(form forms.RegisterForm) (user models.User, err error) {
 
 	//Check if the user exists in database
-	//result, err := getDb.SelectInt("SELECT count(id) FROM public.user WHERE email=LOWER($1) LIMIT 1", form.Email)
+	var api crud.GetAllRequest
+	//var userModel rep.UserModel
+	var result []rep.UserModel
+	var checkUser int64
+	api.Limit = 20
+	api.Filter = append(api.Filter, fmt.Sprintf("email||eq||%s", form.Email))
+	err = s.Find(api, &result, &checkUser)
 
-	// Get first matched record
-	result := database.DB.Where("email = ?", form.Email).Find(&user)
-	checkUser := result.RowsAffected
-
-	if result.Error != nil {
+	if err != nil {
 		return user, errors.New("something went wrong, please try again later")
 	}
 
@@ -2648,18 +2435,15 @@ func (s UserService) Register(form forms.RegisterForm) (user models.User, err er
 	}
 
 	//Create the user and return back the user ID
-	// err = getDb.QueryRow("INSERT INTO public.user(email, password, name) VALUES($1, $2, $3) RETURNING id", form.Email, string(hashedPassword), form.Name).Scan(&user.ID)
 
+	user.ID = uuid.New().String()
 	user.Email = form.Email
 	user.Password = string(hashedPassword)
 	user.Name = form.Name
 
-	result = database.DB.Create(&user) // 通过数据的指针来创建
-
-	//user.ID             // 返回插入数据的主键
-
-	if result.Error != nil {
-		return user, errors.New("something went wrong, please try again later")
+	err = s.Create(&user)
+	if err != nil {
+		logger.Errorf("creat user error, please try again later:", err)
 	}
 
 	return user, err
@@ -2838,6 +2622,9 @@ cat << EOF > ./main.go
  	}
  	//later separate migration
  	migrations.Migrate()
+
+ 	//初始化数据库
+  database.InitRedis(3)
 
  	router := routers.SetupRoute()
  	logger.Fatalf("%v", router.Run(config.ServerConfig()))
@@ -3208,7 +2995,7 @@ echo "write test/test.http:";
 
 cat << EOF > ./test/test.http
 
-### TEST REST API 
+### TEST REST API
 ### CREATE USER
 POST http://localhost:6060/v1/user/
 Accept: application/json
